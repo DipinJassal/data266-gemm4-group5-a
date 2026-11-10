@@ -47,7 +47,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 ## Status (last updated Nov 9, 2026)
 
 **Done**
-- Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. Sarvesh, Poushali and Khushi invited (write access).
+- Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
 - Kaggle CLI installed on Dipin's Mac; competition data downloaded into `data/` (git-ignored; snapshots, 21.5 GB, not yet downloaded).
 - Rules section above updated from Kaggle's official `HARNESS_README.md`.
 - `harness/make_splits.py` → `harness/splits/`: **dev 30** (fastapi 15, rich 11, requests 3, httpx 1), **train 99**,
@@ -61,7 +61,6 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   Validated offline; not yet scored. The numbers get tuned after the first smoke timings.
 
 **Next for Dipin**
-- [ ] Invite Bhoomika to the GitHub repo (need Bhoomika's GitHub username).
 - [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
 - [ ] First real harness run (2 smoke tasks) once `baseline/` has the sample agent, to confirm the GPU type
