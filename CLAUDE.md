@@ -54,8 +54,10 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   **smoke 10** (a subset of train, so tuning on smoke never touches dev). Deterministic (seed 266).
 - `harness/validate.py`: offline pre-check of a variant folder (rule 6 items) and `--zip` to build `submission.zip`.
 - `harness/run_kaggle.py` + `kaggle_runner.py` + `summarize.py`: score a variant on a split in a Kaggle GPU kernel
-  from your laptop, then get per-task pass/fail, time, tool calls and a baseline comparison. Tested offline (dry run, fake results);
-  **not yet run on a real Kaggle GPU**.
+  from your laptop, then get per-task pass/fail, time, tool calls and a baseline comparison.
+  **Confirmed on a real Kaggle GPU (Nov 9, 2 smoke tasks):** `NvidiaL4` = 4 GPUs (tp=4); package install ~1.5 min, vLLM start ~7.5 min,
+  plus queueing before the kernel starts (~30 min that time). Baseline: **0/2, both empty patches, both cut off at the 1-minute limit**
+  after 8–9 tool calls (~7 s per tool call). In both tasks the agent had already found the right file (`fastapi/dependencies/utils.py`) but hadn't edited it yet.
 - `baseline/` filled with Kaggle's unmodified `sample_submission/` (byte-identical; Dipin, Nov 9, so the harness could be tested).
 - Draft **V2** `variants/dipin-step-budget-v1/`: only `eval_config.yaml` changed (4.5 min / 50 tool calls instead of 1 min / 10).
   Validated offline; not yet scored. The numbers get tuned after the first smoke timings.
@@ -63,8 +65,9 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 **Next for Dipin**
 - [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
-- [ ] First real harness run (2 smoke tasks) once `baseline/` has the sample agent, to confirm the GPU type
-  (`NvidiaL4` gives 4 GPUs?), the input paths and the result fields. Fix anything that breaks, then announce the harness to the team.
+- [x] First real harness run (2 smoke tasks). Three launcher bugs were found and fixed along the way (Python literal, push hang, pinned Python 3.12 image).
+- [ ] Announce the harness to the team (`harness/README.md`).
+- [ ] Run V2 (`dipin-step-budget-v1`) on smoke, then dev; run baseline on dev for the comparison. Tune V2's numbers from the smoke timings.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
 - [ ] Ask the team: should V1 variants be built on top of the budget-fixed V2 instead of the 1-minute baseline? (See findings.)
@@ -82,6 +85,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - **Poushali:** the allowed tools and skill format are listed in the Rules section above (from `data/HARNESS_README.md` §2 and §6), which covers most of the Nov 11 setup task.
 - **Bhoomika:** the sample adapters are dummies (rank 4, layer 0 only, `q_proj`/`o_proj`). Limits: `.safetensors`, rank ≤ 128, whole zip < 3 GiB (§3.4 of the harness doc).
 - **Dipin (V2):** the per-task budget lives in `eval_config.yaml`; 12 h / ~120 tasks leaves about 5 minutes of agent time after setup.
+- **Khushi:** in the first real run the agent re-read the same file range three times in a row and once invented an argument name
+  (`start_line"`). That's early evidence for the anti-looping prompt. Traces are in `harness/runs/.../swegemma/traces/` after a run.
 - **Everyone (proposal, needs a team decision):** because the baseline is capped at 1 minute / 10 tool calls, a prompt or sampling
   change built on it will barely show an effect. Proposal: score V2 (budget fix) first, then build V1 variants on top of it.
   "One change" is then measured against V2, and the report states this.
@@ -139,7 +144,7 @@ Each variant `README.md` has exactly three lines:
 - Check a variant and build its zip (works on any laptop, no GPU):
   `python harness/validate.py variants/<folder> --zip submission.zip`
 - Score a variant on a split (Kaggle GPU, your quota): `python harness/run_kaggle.py variants/<folder> smoke` (or `dev`).
-  Results go to `harness/runs/`; details in `harness/README.md`. *(Not yet confirmed on a real GPU run; see Status.)*
+  Results go to `harness/runs/`; details in `harness/README.md`. Expect ~10 min of start-up per run, plus Kaggle queue time.
 
 ## Individual tasks
 
@@ -148,7 +153,7 @@ Each variant `README.md` has exactly three lines:
 **Setup (starting today):**
 - [ ] **Nov 9–10:** Confirm the rules on the Kaggle Rules tab and post them to the team. Create the Kaggle team and invite all 4. Agree the team name (`Group_5_a` or `Group_5_b`) with the other team. *(Rules mostly confirmed from the official harness doc; Rules-tab items and Kaggle team still open.)*
 - [x] **Nov 10:** Create this repo with the layout above and the README template. *(Done Nov 9; public on GitHub.)*
-- [ ] **Nov 12:** Local harness, with `smoke.txt` (10 tasks), `dev.txt` (30 tasks, covering all 4 repos) and `train.txt` (the other 99). *(Splits ✅, validator ✅, Kaggle runner + summary written ✅, first real GPU run ⏳.)*
+- [ ] **Nov 12:** Local harness, with `smoke.txt` (10 tasks), `dev.txt` (30 tasks, covering all 4 repos) and `train.txt` (the other 99). *(Splits ✅, validator ✅, Kaggle runner + summary ✅, confirmed on a real GPU run Nov 9 ✅.)*
 
 **Variants:**
 - **V1, Nov 16 — Output trimming:** cap long tool outputs (file reads, test logs) and summarize older turns.
