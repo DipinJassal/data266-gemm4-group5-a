@@ -56,6 +56,9 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - `harness/run_kaggle.py` + `kaggle_runner.py` + `summarize.py`: score a variant on a split in a Kaggle GPU kernel
   from your laptop, then get per-task pass/fail, time, tool calls and a baseline comparison. Tested offline (dry run, fake results);
   **not yet run on a real Kaggle GPU**.
+- `baseline/` filled with Kaggle's unmodified `sample_submission/` (byte-identical; Dipin, Nov 9, so the harness could be tested).
+- Draft **V2** `variants/dipin-step-budget-v1/`: only `eval_config.yaml` changed (4.5 min / 50 tool calls instead of 1 min / 10).
+  Validated offline; not yet scored. The numbers get tuned after the first smoke timings.
 
 **Next for Dipin**
 - [ ] Invite Bhoomika to the GitHub repo (need Bhoomika's GitHub username).
@@ -64,8 +67,11 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [ ] First real harness run (2 smoke tasks) once `baseline/` has the sample agent, to confirm the GPU type
   (`NvidiaL4` gives 4 GPUs?), the input paths and the result fields. Fix anything that breaks, then announce the harness to the team.
 
+- [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
+- [ ] Ask the team: should V1 variants be built on top of the budget-fixed V2 instead of the 1-minute baseline? (See findings.)
+
 **Next for others**
-- [ ] **Sarvesh:** put the unmodified `sample_submission/` into `baseline/` (it's in the competition data; see "How to run"). The harness needs it.
+- [ ] **Sarvesh:** `baseline/` is already filled (unmodified sample). Still yours: run guide, baseline submission on Nov 10, baseline profile.
 - [ ] **Everyone:** install the Kaggle CLI, accept the competition rules, save your API token (see `harness/README.md`), so you can run the harness on your own GPU quota.
 
 **Findings the team needs to know**
@@ -77,6 +83,13 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - **Poushali:** the allowed tools and skill format are listed in the Rules section above (from `data/HARNESS_README.md` §2 and §6), which covers most of the Nov 11 setup task.
 - **Bhoomika:** the sample adapters are dummies (rank 4, layer 0 only, `q_proj`/`o_proj`). Limits: `.safetensors`, rank ≤ 128, whole zip < 3 GiB (§3.4 of the harness doc).
 - **Dipin (V2):** the per-task budget lives in `eval_config.yaml`; 12 h / ~120 tasks leaves about 5 minutes of agent time after setup.
+- **Everyone (proposal, needs a team decision):** because the baseline is capped at 1 minute / 10 tool calls, a prompt or sampling
+  change built on it will barely show an effect. Proposal: score V2 (budget fix) first, then build V1 variants on top of it.
+  "One change" is then measured against V2, and the report states this.
+- **Submissions are declarative only** (YAML + prompts + skills), with no Python hooks. Output caps (5,000 chars per command,
+  150 lines per `read_file`) and the summarizing of older turns are fixed by Kaggle's harness, so a variant can't change them.
+  That affects Dipin's V1 (output trimming → do it through prompt rules or an `agent_tool` sub-agent that reads files)
+  and the patch-hygiene check in the combined agent (→ a prompt checklist).
 
 ## Repo layout
 
@@ -140,7 +153,10 @@ Each variant `README.md` has exactly three lines:
 
 **Variants:**
 - **V1, Nov 16 — Output trimming:** cap long tool outputs (file reads, test logs) and summarize older turns.
+  *Kaggle's harness fixes the caps and the summarizing, so do it either through prompt rules for output (head/grep/line ranges/`pytest -q --tb=short`)
+  or through an `agent_tool` sub-agent that reads files and returns a short report. Pick one.*
 - **V2, Nov 21 — Step and time budget:** per-task step cap sized to about 6 minutes, with a forced submission of the best diff so far.
+  *Drafted as `variants/dipin-step-budget-v1` (eval_config only). The harness already scores unsubmitted diffs, so forced submission needs no change. Proposed to move earlier (spare slot Nov 11/12).*
 - **Combined agent, Nov 23:** merge everyone's best variant into one `agent.yaml`, and add a patch-hygiene check (reject empty or non-applying diffs, strip stray debug files).
 
 **Other:** owns the submission calendar and slot swaps; reviews Sarvesh; picks the 2 final submissions by Dec 2; sends Kaggle evidence (team name, members, submission history, scores, best result, screenshots) for the report on Nov 24 and after Dec 2.
