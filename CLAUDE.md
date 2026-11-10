@@ -47,18 +47,26 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 ## Status (last updated Nov 9, 2026)
 
 **Done**
-- Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. Sarvesh invited (write access).
+- Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. Sarvesh and Poushali invited (write access).
 - Kaggle CLI installed on Dipin's Mac; competition data downloaded into `data/` (git-ignored; snapshots, 21.5 GB, not yet downloaded).
 - Rules section above updated from Kaggle's official `HARNESS_README.md`.
 - `harness/make_splits.py` → `harness/splits/`: **dev 30** (fastapi 15, rich 11, requests 3, httpx 1), **train 99**,
   **smoke 10** (a subset of train, so tuning on smoke never touches dev). Deterministic (seed 266).
 - `harness/validate.py`: offline pre-check of a variant folder (rule 6 items) and `--zip` to build `submission.zip`.
+- `harness/run_kaggle.py` + `kaggle_runner.py` + `summarize.py`: score a variant on a split in a Kaggle GPU kernel
+  from your laptop, then get per-task pass/fail, time, tool calls and a baseline comparison. Tested offline (dry run, fake results);
+  **not yet run on a real Kaggle GPU**.
 
 **Next for Dipin**
-- [ ] Invite Khushi, Poushali, Bhoomika to the GitHub repo (need their GitHub usernames).
+- [ ] Invite Khushi and Bhoomika to the GitHub repo (need their GitHub usernames).
 - [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
-- [ ] Harness: Kaggle runner (notebook that runs a variant on a split on L4×4 and saves per-task results) and results summary script.
+- [ ] First real harness run (2 smoke tasks) once `baseline/` has the sample agent, to confirm the GPU type
+  (`NvidiaL4` gives 4 GPUs?), the input paths and the result fields. Fix anything that breaks, then announce the harness to the team.
+
+**Next for others**
+- [ ] **Sarvesh:** put the unmodified `sample_submission/` into `baseline/` (it's in the competition data; see "How to run"). The harness needs it.
+- [ ] **Everyone:** install the Kaggle CLI, accept the competition rules, save your API token (see `harness/README.md`), so you can run the harness on your own GPU quota.
 
 **Findings the team needs to know**
 - **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
@@ -79,6 +87,10 @@ variants/<owner>-<name>-v1/ One folder per variant: agent.yaml + README.md (+ sk
 harness/                    Local evaluation harness and task splits (Dipin)
   make_splits.py            Rebuilds the splits from data/tasks.jsonl
   validate.py               Offline variant check + submission.zip builder
+  run_kaggle.py             Laptop: launch a scored run on a Kaggle GPU, fetch + summarize results
+  kaggle_runner.py          Runs inside the Kaggle kernel (vLLM + official swegemma Evaluator)
+  summarize.py              Per-task table, score, time per task, baseline comparison
+  runs/                     Downloaded run results (git-ignored)
   splits/smoke.txt          10 tasks for quick checks (subset of train)
   splits/dev.txt            30 tasks for scoring; never train or tune on these
   splits/train.txt          The other 99 public tasks (LoRA training data)
@@ -114,9 +126,8 @@ Each variant `README.md` has exactly three lines:
 - Run the sample agent and build a submission: see `docs/run_guide.md` (Sarvesh, Nov 10).
 - Check a variant and build its zip (works on any laptop, no GPU):
   `python harness/validate.py variants/<folder> --zip submission.zip`
-- Score a variant on a split: Kaggle runner coming (Dipin, Nov 12). It will accept a variant folder and a split (`smoke` or `dev`) and save per-task pass/fail, runtime and run logs.
-
-Until the runner exists, check that your variant runs 5 tasks without errors.
+- Score a variant on a split (Kaggle GPU, your quota): `python harness/run_kaggle.py variants/<folder> smoke` (or `dev`).
+  Results go to `harness/runs/`; details in `harness/README.md`. *(Not yet confirmed on a real GPU run; see Status.)*
 
 ## Individual tasks
 
@@ -125,7 +136,7 @@ Until the runner exists, check that your variant runs 5 tasks without errors.
 **Setup (starting today):**
 - [ ] **Nov 9–10:** Confirm the rules on the Kaggle Rules tab and post them to the team. Create the Kaggle team and invite all 4. Agree the team name (`Group_5_a` or `Group_5_b`) with the other team. *(Rules mostly confirmed from the official harness doc; Rules-tab items and Kaggle team still open.)*
 - [x] **Nov 10:** Create this repo with the layout above and the README template. *(Done Nov 9; public on GitHub.)*
-- [ ] **Nov 12:** Local harness, with `smoke.txt` (10 tasks), `dev.txt` (30 tasks, covering all 4 repos) and `train.txt` (the other 99). *(Splits ✅, validator ✅, Kaggle runner + summary ⏳.)*
+- [ ] **Nov 12:** Local harness, with `smoke.txt` (10 tasks), `dev.txt` (30 tasks, covering all 4 repos) and `train.txt` (the other 99). *(Splits ✅, validator ✅, Kaggle runner + summary written ✅, first real GPU run ⏳.)*
 
 **Variants:**
 - **V1, Nov 16 — Output trimming:** cap long tool outputs (file reads, test logs) and summarize older turns.
