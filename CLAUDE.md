@@ -67,7 +67,11 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
 - [x] First real harness run (2 smoke tasks). Three launcher bugs were found and fixed along the way (Python literal, push hang, pinned Python 3.12 image).
 - [ ] Announce the harness to the team (`harness/README.md`).
-- [ ] Run V2 (`dipin-step-budget-v1`) on smoke, then dev; run baseline on dev for the comparison. Tune V2's numbers from the smoke timings.
+- [x] **Baseline on dev (Nov 10): 2/30 = 6.7%**. 20 empty patches, 8 wrong patches; avg 1.1 min per task (1-minute limit).
+  Per repo: fastapi 1/15, rich 1/11, requests 0/3, httpx 0/1. Log this as the team's dev baseline.
+- [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
+  3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
+- [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30, then pick its `Source:` reference and submit on a spare slot.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
 - [ ] Ask the team: should V1 variants be built on top of the budget-fixed V2 instead of the 1-minute baseline? (See findings.)
