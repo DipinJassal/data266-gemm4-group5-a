@@ -53,8 +53,9 @@ def keep_for_dry_run(src: Path, name: str) -> None:
     print(f"[dry-run] wrote {dest}")
 
 
-def kaggle(*args: str, check: bool = True) -> str:
-    proc = subprocess.run(["kaggle", *args], capture_output=True, text=True)
+def kaggle(*args: str, check: bool = True, timeout: int | None = 600) -> str:
+    # stdin closed + timeout: the CLI can stall on a network call long after Kaggle accepted the request.
+    proc = subprocess.run(["kaggle", *args], capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=timeout)
     out = (proc.stdout + proc.stderr).strip()
     if check and proc.returncode != 0:
         raise SystemExit(f"kaggle {' '.join(args)} failed:\n{out}")
@@ -112,7 +113,9 @@ def upload_repo(user: str, message: str) -> str:
 def push_kernel(user: str, kernel_slug: str, run_config: dict, model: str, dataset: str, machine: str, timeout: int | None) -> str:
     kernel_id = f"{user}/{kernel_slug}"
     runner = (HARNESS / "kaggle_runner.py").read_text()
-    runner, n = re.subn(r"^RUN_CONFIG = .*$", "RUN_CONFIG = " + json.dumps(run_config), runner, count=1, flags=re.M)
+    # repr(), not json.dumps(): the line is Python, so booleans must be True/False, not true/false.
+    config_line = "RUN_CONFIG = " + repr(run_config)
+    runner, n = re.subn(r"^RUN_CONFIG = .*$", lambda _: config_line, runner, count=1, flags=re.M)
     assert n == 1, "RUN_CONFIG line not found in kaggle_runner.py"
     with tempfile.TemporaryDirectory() as tmp:
         kdir = Path(tmp)
@@ -133,7 +136,10 @@ def push_kernel(user: str, kernel_slug: str, run_config: dict, model: str, datas
         args = ["kernels", "push", "-p", str(kdir), "--accelerator", machine]
         if timeout:
             args += ["-t", str(timeout)]
-        print(kaggle(*args))
+        try:
+            print(kaggle(*args, timeout=600))
+        except subprocess.TimeoutExpired:
+            print("WARN  `kaggle kernels push` did not return in 10 min; the kernel is usually pushed anyway. Polling its status.")
     return kernel_id
 
 
