@@ -41,6 +41,22 @@ WHEELHOUSE = "metric/gemma-4-developer-agent-wheelhouse"
 DATASET_SLUG = "g5a-agents"
 MODEL_SOURCE = "google/gemma-4/Other/{model}/2"
 DEFAULT_MACHINE = "NvidiaL4"  # same as the official Getting Started notebook
+# The wheelhouse is built for Python 3.12; Kaggle's latest image is 3.13. Use the official notebook's pinned image.
+OFFICIAL_NOTEBOOK = "ryanholbrook/getting-started-gemma-4-developer-agent"
+FALLBACK_DOCKER_IMAGE = "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461"
+
+
+def official_docker_image() -> str:
+    """Docker image pinned by the official Getting Started notebook (falls back to the Nov 2026 value)."""
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            kaggle("kernels", "pull", OFFICIAL_NOTEBOOK, "-m", "-p", tmp, timeout=120)
+            image = json.loads((Path(tmp) / "kernel-metadata.json").read_text()).get("docker_image")
+            if image:
+                return image
+    except Exception as e:  # network hiccup, CLI change, ...
+        print(f"WARN  could not read the official notebook's docker image ({e}); using the fallback.")
+    return FALLBACK_DOCKER_IMAGE
 UPLOAD_DIRS = ("baseline", "variants", "combined", "harness")
 UPLOAD_IGNORE = shutil.ignore_patterns("runs", "results", "__pycache__", "*.pyc", ".DS_Store", "*.zip")
 DRY_RUN: Path | None = None  # set by --dry-run: write the dataset + kernel folders here instead of uploading
@@ -125,6 +141,7 @@ def push_kernel(user: str, kernel_slug: str, run_config: dict, model: str, datas
             "language": "python", "kernel_type": "script", "is_private": True,
             "enable_gpu": True, "enable_tpu": False, "enable_internet": False,
             "machine_shape": machine,
+            "docker_image": official_docker_image(),
             "dataset_sources": [WHEELHOUSE, dataset],
             "competition_sources": [COMPETITION],
             "kernel_sources": [],
