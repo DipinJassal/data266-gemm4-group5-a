@@ -23,3 +23,6 @@ lora/outputs/
 *.safetensors
 *.bin
 *.pt
+
+# Competition data (download with kaggle CLI; never commit)
+data/

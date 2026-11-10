@@ -12,13 +12,25 @@ Kaggle runs hidden tests on each patch; the score is the percentage of issues re
 and which failed. Our group of 9 is split into two Kaggle teams (5 + 4). **This repo is the team of 5.** The
 report and presentation are shared with the other team.
 
-## Competition rules (confirm on the Kaggle Rules tab — Dipin, Nov 9–10)
+## Competition rules
 
-- Every agent and sub-agent must use **`gemma-4-31b-it-qat-w4a16-ct`**. LoRA adapters are optional and may differ per sub-agent.
-- A submission is a **`submission.zip` with `agent.yaml` at the root**. Only harness tools or custom `agent_tool` sub-agents are allowed; paths must stay inside the submission root.
-- **12-hour runtime** for ~120 hidden tasks → about **6 minutes per task**, including setup.
-- **1 submission per team per day** (from a public summary of the rules; to be confirmed). Kaggle's day resets at 4:00 pm Pacific (00:00 UTC).
+Source: Kaggle's official `HARNESS_README.md` in the competition data (download with the Kaggle CLI into `data/`).
+Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
+
+- **One base model per submission**, shared by every agent and sub-agent. Kaggle allows 4 quantized models
+  (`gemma-4-31b-it-qat-w4a16-ct`, `-12b-`, `-e4b-`, `-e2b-`); **our team uses `gemma-4-31b-it-qat-w4a16-ct`** (proposal).
+  LoRA adapters are optional, may differ per sub-agent, `.safetensors` only, rank ≤ 128.
+- A submission is a **`submission.zip` with `agent.yaml` at the root**, declarative YAML only (no Python entry point).
+  Tools: only the 9 harness tools (`run_command`, `submit_patch`, `get_status`, `read_file`, `edit_file`, `write_file`,
+  `get_code_neighbors`, `search_similar_code`, `get_code_subgraph`) or `agent_tool` sub-agents; skills are folders with `SKILL.md`.
+  Allowed file types: `.yaml .yml .md .txt .py .json .safetensors`. No symlinks, no paths outside the root, total < 3 GiB.
+- **12-hour runtime** for ~120 hidden tasks, including sandbox setup, excluding patch validation → about **6 minutes per task**.
+  The per-task agent budget is set in the submission's `eval_config.yaml` (`max_time_minutes`, `max_tool_calls`, `max_turns`).
+- Context window is **32,768 tokens** (`max_output_tokens` and `thinking_budget` ≤ 32,768). Sandbox: offline, 4 GiB RAM, 2 vCPUs.
+- A task counts as resolved only if the hidden tests pass. Changes to test files and test config are stripped before scoring.
+- **1 submission per team per day** *(Rules tab)*. Kaggle's day resets at 4:00 pm Pacific (00:00 UTC). Up to 2 final submissions.
 - Hidden tasks come from **private repos**, not the 4 public ones (FastAPI, Rich, Requests, HTTPX).
+- Winners must release code under Apache 2.0 *(Rules tab)*. This repo is public.
 
 ## Team
 
@@ -32,13 +44,42 @@ report and presentation are shared with the other team.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
+## Status (last updated Nov 9, 2026)
+
+**Done**
+- Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. Sarvesh invited (write access).
+- Kaggle CLI installed on Dipin's Mac; competition data downloaded into `data/` (git-ignored; snapshots, 21.5 GB, not yet downloaded).
+- Rules section above updated from Kaggle's official `HARNESS_README.md`.
+- `harness/make_splits.py` → `harness/splits/`: **dev 30** (fastapi 15, rich 11, requests 3, httpx 1), **train 99**,
+  **smoke 10** (a subset of train, so tuning on smoke never touches dev). Deterministic (seed 266).
+- `harness/validate.py`: offline pre-check of a variant folder (rule 6 items) and `--zip` to build `submission.zip`.
+
+**Next for Dipin**
+- [ ] Invite Khushi, Poushali, Bhoomika to the GitHub repo (need their GitHub usernames).
+- [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
+- [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
+- [ ] Harness: Kaggle runner (notebook that runs a variant on a split on L4×4 and saves per-task results) and results summary script.
+
+**Findings the team needs to know**
+- **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
+  `metric/gemma-4-developer-agent-wheelhouse` inside a Kaggle notebook). Running the agent needs an L4×4 GPU, so scored runs happen on Kaggle, not laptops.
+  The official "Getting Started" notebook (`ryanholbrook/getting-started-gemma-4-developer-agent`) is the reference.
+- **Sarvesh:** the sample `eval_config.yaml` caps each task at **1 minute and 10 tool calls**, so the unmodified baseline will likely score very low.
+  Submit it unchanged (it's the baseline), but note this in `docs/baseline_profile.md`.
+- **Poushali:** the allowed tools and skill format are listed in the Rules section above (from `data/HARNESS_README.md` §2 and §6), which covers most of the Nov 11 setup task.
+- **Bhoomika:** the sample adapters are dummies (rank 4, layer 0 only, `q_proj`/`o_proj`). Limits: `.safetensors`, rank ≤ 128, whole zip < 3 GiB (§3.4 of the harness doc).
+- **Dipin (V2):** the per-task budget lives in `eval_config.yaml`; 12 h / ~120 tasks leaves about 5 minutes of agent time after setup.
+
 ## Repo layout
 
 ```
+data/                       Competition data from Kaggle (git-ignored; see "How to run")
 baseline/                   Unmodified sample agent. Never edit.
 variants/<owner>-<name>-v1/ One folder per variant: agent.yaml + README.md (+ skills/tools/adapters it needs)
 harness/                    Local evaluation harness and task splits (Dipin)
-  splits/smoke.txt          10 tasks for quick checks
+  make_splits.py            Rebuilds the splits from data/tasks.jsonl
+  validate.py               Offline variant check + submission.zip builder
+  splits/smoke.txt          10 tasks for quick checks (subset of train)
   splits/dev.txt            30 tasks for scoring; never train or tune on these
   splits/train.txt          The other 99 public tasks (LoRA training data)
 docs/run_guide.md           How to run the agent and build a submission (Sarvesh)
@@ -68,19 +109,23 @@ Each variant `README.md` has exactly three lines:
 
 ## How to run (filled in during setup)
 
+- Get the competition data (once per machine, after accepting the rules on Kaggle and saving your API token in `~/.kaggle/`):
+  `kaggle competitions download gemma-4-developer-agent -f tasks.jsonl -p data` (repeat `-f` for `HARNESS_README.md`, `sample_submission/...`).
 - Run the sample agent and build a submission: see `docs/run_guide.md` (Sarvesh, Nov 10).
-- Score a variant locally: harness command goes here once it exists (Dipin, Nov 12). It should accept a variant folder and a split (`smoke` or `dev`) and save per-task pass/fail, runtime and run logs.
+- Check a variant and build its zip (works on any laptop, no GPU):
+  `python harness/validate.py variants/<folder> --zip submission.zip`
+- Score a variant on a split: Kaggle runner coming (Dipin, Nov 12). It will accept a variant folder and a split (`smoke` or `dev`) and save per-task pass/fail, runtime and run logs.
 
-Until the harness exists, check that your variant runs 5 tasks without errors.
+Until the runner exists, check that your variant runs 5 tasks without errors.
 
 ## Individual tasks
 
 ### Dipin Jassal — captain, starts the project, Context & time budget
 
 **Setup (starting today):**
-- [ ] **Nov 9–10:** Confirm the rules on the Kaggle Rules tab and post them to the team. Create the Kaggle team and invite all 4. Agree the team name (`Group_5_a` or `Group_5_b`) with the other team.
-- [ ] **Nov 10:** Create this repo with the layout above and the README template.
-- [ ] **Nov 12:** Local harness, with `smoke.txt` (10 tasks), `dev.txt` (30 tasks, covering all 4 repos) and `train.txt` (the other 99).
+- [ ] **Nov 9–10:** Confirm the rules on the Kaggle Rules tab and post them to the team. Create the Kaggle team and invite all 4. Agree the team name (`Group_5_a` or `Group_5_b`) with the other team. *(Rules mostly confirmed from the official harness doc; Rules-tab items and Kaggle team still open.)*
+- [x] **Nov 10:** Create this repo with the layout above and the README template. *(Done Nov 9; public on GitHub.)*
+- [ ] **Nov 12:** Local harness, with `smoke.txt` (10 tasks), `dev.txt` (30 tasks, covering all 4 repos) and `train.txt` (the other 99). *(Splits ✅, validator ✅, Kaggle runner + summary ⏳.)*
 
 **Variants:**
 - **V1, Nov 16 — Output trimming:** cap long tool outputs (file reads, test logs) and summarize older turns.
