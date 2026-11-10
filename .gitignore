@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Local tooling
+.deepeval/
+.DS_Store
+.env
+
+# Build outputs and run artifacts
+submission.zip
+*.zip
+harness/runs/
+harness/results/
+logs/
+
+# LoRA weights and checkpoints (share via Kaggle datasets, not git)
+lora/checkpoints/
+lora/outputs/
+*.safetensors
+*.bin
+*.pt
