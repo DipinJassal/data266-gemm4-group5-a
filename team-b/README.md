@@ -19,5 +19,5 @@ python harness/validate.py team-b/variants/<short> --zip submission.zip
 python harness/run_kaggle.py team-b/variants/<short> smoke --max-tasks 2
 ```
 
-Then smoke (10 tasks), dev (30 tasks), log the row in `docs/experiment_log.csv`, open a PR into
+Then smoke (10 tasks), dev (30 tasks, once the variant is final; see "Evaluation splits" in `TEAM_B_GUIDE.md`), log the row in `docs/experiment_log.csv`, open a PR into
 `group5-team-b` and tag your reviewer (Ashmitha → Parth → Ishan → Naveen → Ashmitha).

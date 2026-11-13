@@ -97,6 +97,22 @@ Each member builds and submits their 2 single-change variants on their calendar 
 develops 2–3 versions and submits them to the leaderboard). The best variants are then merged into the
 **combined agent**, submitted Nov 23. That combined agent is Team B's first model.
 
+## Evaluation splits (what each task list is for)
+
+Each task list has one job, so the scores we report are not biased by how we picked the agent:
+
+| Split | Tasks | Role | How often |
+|---|---|---|---|
+| `smoke` | 10 (part of train) | **Debugging**: crashes, time per task, quick checks | Any number of runs |
+| `train` | 99 | **Tuning**: Phase 2 iteration on the fixed tuning set `train --max-tasks 20`; offline retrieval checks | Any number of runs |
+| `dev` | 30 | **Selection (validation)**: decides which variants go into the combined agent and whether a Phase 2 run is promoted | One full run per finished candidate; no changes after its dev run |
+| Kaggle hidden tasks | ~120 | **Held-out test**: the final score we report; nobody sees these tasks | 1 submission per team per day |
+
+- Never iterate on dev. Changing a variant after its dev run makes it a new candidate (`-2` folder) with its own
+  logged dev run.
+- Because dev is used for selection, its scores are slightly optimistic. In the report, label dev scores
+  "validation (used for selection)" and use the Kaggle score as the held-out result.
+
 ## Phase 2 — free tuning (Nov 24 – Nov 30)
 
 After the first model has run on Kaggle, any member may tune it to get better results. To keep results usable in
@@ -109,12 +125,15 @@ the report:
 3. **Log every run** in `team-b/docs/experiment_log.csv`, including runs that made things worse.
 4. **Book the Kaggle slot the day before** in the team chat. There is 1 submission per day for the whole team.
    First come, first served; nobody takes two days in a row while others are waiting.
-5. **Smoke first, dev once.** Never tune on the 30 dev tasks.
+5. **Tune on smoke and train, select on dev.** Iterate on smoke and the tuning set (`train --max-tasks 20`), never
+   on dev. Run dev only on a finished candidate: at most 2 dev runs per member in Phase 2, and no further change
+   after a candidate's dev run (see "Evaluation splits").
 6. **Tuning means prompts, settings and sub-agents.** No LoRA training (Team A covers LoRA; too slow to start now).
 7. **Report cutoff: Nov 30.** Results after that do not go into the report or slides. Dec 1–2 is only for picking the
    2 final submissions.
-8. If a tuning run beats the combined agent on dev, it becomes the new combined agent: open a PR that updates
-   `team-b/combined/` and note it in the log.
+8. **Promotion uses dev as the selection set.** A tuning run becomes the new combined agent only if it beats
+   the combined agent on the tuning set **and** on its one dev run. Open a PR that updates `team-b/combined/`, and
+   mark the dev score as "used for selection" in the log. Its held-out result is its Kaggle score.
 
 ## Status (last updated Nov 13, 2026)
 
@@ -190,7 +209,8 @@ tracked in the "Variants and folders" table. Add `-2`, `-3` only when the same i
 
 1. **One change per variant**, relative to `base`. Only `team-b/combined/` mixes changes.
 2. **Never edit Team A's folders or another member's variant folder.** Copy the base into a new folder instead.
-3. **Never train or tune on `harness/splits/dev.txt` tasks.** Tune on smoke/train; report dev once per variant.
+3. **Never train or tune on `harness/splits/dev.txt` tasks.** Iterate on smoke/train; dev is the selection set, run
+   once per finished variant (see "Evaluation splits").
 4. **Keep changes general.** No hard-coded paths, file names or logic for FastAPI, Rich, Requests or HTTPX.
 5. **Stay inside the runtime budget.** Average time per task on smoke must stay under about 6 minutes.
 6. **Before review:** smoke runs with no crashes → dev score logged next to the base → `validate.py` passes → zip has

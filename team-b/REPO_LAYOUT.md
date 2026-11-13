@@ -190,6 +190,6 @@ Messages use the `type(scope): summary` style. Each block is one branch → one 
 - [ ] validate.py passes; zip has agent.yaml at the root; only allowed tools
 - [ ] Smoke ran with no crashes; avg time per task < 6 min
 - [ ] Dev score logged in team-b/docs/experiment_log.csv next to the base agent
-- [ ] No repo-specific logic; nothing tuned on dev tasks
+- [ ] No repo-specific logic; nothing tuned on dev tasks (one dev run, after the variant was final)
 - [ ] Reviewer tagged (rotation: Ashmitha → Parth → Ishan → Naveen → Ashmitha)
 ```

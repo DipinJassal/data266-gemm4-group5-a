@@ -25,7 +25,8 @@ Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali
 | **Phase 2 — Tune** | Nov 24 – Nov 30 | Improve the combined agent (budget, prompt wording, which variants to include) | Best score, 2 final picks |
 
 Phase 2 is free tuning, with the rules in `TEAM_B_GUIDE.md` (Phase 2 section): one change per run, log every run,
-book the Kaggle slot a day ahead, never tune on dev, results after Nov 30 do not go into the report.
+book the Kaggle slot a day ahead, tune on smoke/train, use dev only to select (one run per finished candidate),
+report the Kaggle score as the held-out result, results after Nov 30 do not go into the report.
 
 What Team B reuses and what it does itself is listed in `TEAM_B_GUIDE.md` under "Decisions".
 
@@ -112,8 +113,9 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 3. Make **one** change; fill in the 3-line README (What changed / Why / Source).
 4. `python harness/validate.py team-b/variants/<folder> --zip submission.zip` (no GPU).
 5. Quick test: `python harness/run_kaggle.py team-b/variants/<folder> smoke --max-tasks 2` (no crashes?).
-6. Smoke: `... smoke` (10 tasks). Check avg time per task < 6 min. Iterate on smoke only.
+6. Smoke: `... smoke` (10 tasks). Check avg time per task < 6 min. Iterate on smoke only (never on dev).
 7. Dev once final: `... dev --no-wait`, then `--fetch`. Log the row in `team-b/docs/experiment_log.csv`.
+   Do not change the variant after its dev run; a change means a new folder and a new dev run.
 8. Commit, push, open PR into `group5-team-b`, tag your reviewer. After approval, Ashmitha (or you) submits on your date.
 
 ---
@@ -155,6 +157,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 
 **V2 — Combined agent (draft Nov 20, dev Nov 21–22, slot Nov 23)**
 - [ ] Pick every Team B variant that beat the base agent on dev (and did not raise avg time above ~5.5 min).
+      Dev is the selection set here; the combined agent's Kaggle score is its held-out result.
 - [ ] Merge them into `team-b/combined/agent.yaml` one at a time; smoke after each addition to catch conflicts
       (e.g. critic + regression check may exceed the time budget).
 - [ ] Optionally include Team A ideas that clearly worked (credit them in the README and report).
@@ -277,4 +280,5 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 | Sub-agents push time over 6 min/task | Cap turns in instructions; check smoke avg time | Parth, Naveen |
 | A variant misses its slot | Use spare (Nov 22/24/25); tell Ashmitha the day before | Everyone |
 | Overlap with Team A | Areas chosen to differ; Naveen coordinates with Poushali | Ashmitha, Naveen |
-| Overfitting to the 4 public repos | Never tune on dev; no repo-specific rules | Reviewers |
+| Overfitting to the 4 public repos | Tune on smoke/train only; no repo-specific rules | Reviewers |
+| Selection bias from reusing dev | Dev only for selection, one run per finished candidate; report dev as validation and the Kaggle score as held-out | Ashmitha |
