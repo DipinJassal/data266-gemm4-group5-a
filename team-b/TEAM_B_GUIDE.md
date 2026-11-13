@@ -78,12 +78,43 @@ Every variant is `team-b/variants/base` plus one change. Folder names describe t
 
 `base` is the starting point, not a variant. Phase 2 tuning runs use `tune-<what>`.
 
-## Starting point (decision)
+## Decisions (read this first)
 
-The unmodified sample agent stops each task after **1 minute / 10 tool calls** (Team A baseline: 2/30 on dev).
-Team B submits that baseline once for evidence, then builds every variant on the **budget-fixed base**
-(`team-b/variants/base/`, a copy of Team A's `variants/dipin-step-budget-v1`: 4.5 min / 50 tool calls).
-"One change" is measured against this base, and the report says so. Keep this the same as Team A's decision.
+These are settled. If something here is unclear, ask in the team chat before starting work.
+
+| Topic | Decision |
+|---|---|
+| Baseline agent files | **Reuse** `baseline/` from this repo. It is Kaggle's sample agent, unchanged. Never edit it or copy it into `team-b/`. |
+| Local dev score of the baseline | **Reuse** Team A's run: **2/30 (6.7%)** on Nov 10. Team B does not re-run it. |
+| Kaggle baseline submission | **Team B's own.** Submitted once on Team B's Kaggle team, with a screenshot. This is the official Team B baseline for the report (G.2) and for improvement over baseline (G.6 Part B). |
+| Starting agent for every variant | `team-b/variants/base/`: Team A's budget fix (4.5 min / 50 tool calls instead of 1 min / 10), copied unchanged. "One change" is measured against it, and the report says so. |
+| Harness and task lists | Shared with Team A (`harness/`, `harness/splits/`). Never edited on this branch; harness problems go to Dipin. |
+| How work is organised | **Phase 1** (Nov 13–23): finish the first model with the group plan. **Phase 2** (Nov 24–30): everyone is free to tune it. Rules below. |
+
+## Phase 1 — finish the first model (Nov 13 – Nov 23)
+
+Each member builds and submits their 2 single-change variants on their calendar date (course rule: every member
+develops 2–3 versions and submits them to the leaderboard). The best variants are then merged into the
+**combined agent**, submitted Nov 23. That combined agent is Team B's first model.
+
+## Phase 2 — free tuning (Nov 24 – Nov 30)
+
+After the first model has run on Kaggle, any member may tune it to get better results. To keep results usable in
+the report:
+
+1. **Start from the latest combined agent.** Copy `team-b/combined/` into `team-b/variants/tune-<what>/`
+   (19 characters or less), on a branch `b/tune-<what>`.
+2. **One change per tuning run** where possible (prompt wording, budget, sampling, adding or removing one variant),
+   so the report can link each gain to a change.
+3. **Log every run** in `team-b/docs/experiment_log.csv`, including runs that made things worse.
+4. **Book the Kaggle slot the day before** in the team chat. There is 1 submission per day for the whole team.
+   First come, first served; nobody takes two days in a row while others are waiting.
+5. **Smoke first, dev once.** Never tune on the 30 dev tasks.
+6. **Tuning means prompts, settings and sub-agents.** No LoRA training (Team A covers LoRA; too slow to start now).
+7. **Report cutoff: Nov 30.** Results after that do not go into the report or slides. Dec 1–2 is only for picking the
+   2 final submissions.
+8. If a tuning run beats the combined agent on dev, it becomes the new combined agent: open a PR that updates
+   `team-b/combined/` and note it in the log.
 
 ## Status (last updated Nov 13, 2026)
 
@@ -231,7 +262,8 @@ Full task lists are in `TEAM_B_PLAN.md`. Summary:
 | Mon Nov 23 | Ashmitha | Combined agent |
 | Tue Nov 24 | Ashmitha | Buffer / **freeze**. Kaggle screenshots |
 | Wed Nov 25 | Spare | Kaggle entry deadline |
-| Nov 26 – Dec 2 | Anyone | Phase 2: tuning on top of the combined agent, optional V3s |
+| Nov 24 – Nov 30 | Anyone (booked a day ahead) | Phase 2 tuning on the combined agent (Nov 24 is first used as a buffer if the combined agent needs a resubmit) |
+| Dec 1 – Dec 2 | Ashmitha | Pick the 2 final submissions only |
 
 Not ready on your date? Take the next spare and tell Ashmitha.
 
@@ -240,6 +272,7 @@ Not ready on your date? Take the next spare and tell Ashmitha.
 - **Nov 22:** report section, contribution row and one slide to the group's report editor and slide owner.
 - **Nov 24:** freeze; Kaggle screenshots.
 - **Nov 25:** Kaggle entry and team-merge deadline.
+- **Nov 30:** last day for tuning results that go into the report and slides.
 - **Nov 29:** full rehearsal (all 9). **Dec 1:** presentation and report. Everyone submits the peer review form.
 - **Dec 2:** final Kaggle deadline; Ashmitha picks Team B's 2 final submissions (by 3:59 pm Pacific).
 

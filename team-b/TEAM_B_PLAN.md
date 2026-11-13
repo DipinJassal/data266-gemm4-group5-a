@@ -1,7 +1,7 @@
 # Team B Plan — DATA 266 Group 5, Gemma 4 Developer Agent
 
 Team: **GROUP_PROGRAMMING_05_b** (Kaggle team of 4) · Members: Ashmitha, Parth, Ishan, Naveen
-Period: Nov 13 – Nov 25, 2026 (Kaggle entry deadline), then optional tuning to Dec 2 (final Kaggle deadline).
+Period: Nov 13 – Nov 25, 2026 (Kaggle entry deadline), then free tuning to Nov 30 (report cutoff); Dec 2 is the final Kaggle deadline.
 Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali, Bhoomika).
 
 ---
@@ -14,7 +14,7 @@ Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali
   (prompt, sub-agents, skills, tool usage, settings). We test each variant, submit it to Kaggle, and write up
   what helped and what failed.
 - At the end, Ashmitha merges the best changes into one **combined agent** (Team B's "first full model").
-- After that (Nov 24 – Dec 2), everyone is free to tune the combined agent for a better score. This matches
+- After that (Nov 24 – Nov 30), everyone is free to tune the combined agent for a better score. This matches
   Team A's approach: "finish the first model with the plan, run it on Kaggle, then everyone tunes."
 
 ## 2. Two phases
@@ -22,9 +22,12 @@ Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali
 | Phase | Dates | Goal | Output |
 |---|---|---|---|
 | **Phase 1 — Build the first model** | Nov 13 – Nov 23 | Baseline + 7 single-change variants + combined agent | 10 Kaggle submissions, experiment log, report sections |
-| **Phase 2 — Tune** | Nov 24 – Dec 2 | Improve the combined agent (budget, prompt wording, which variants to include) | Best score, 2 final picks |
+| **Phase 2 — Tune** | Nov 24 – Nov 30 | Improve the combined agent (budget, prompt wording, which variants to include) | Best score, 2 final picks |
 
-Phase 2 is free tuning, but every tuning run still goes into the experiment log (the course grades tracking).
+Phase 2 is free tuning, with the rules in `TEAM_B_GUIDE.md` (Phase 2 section): one change per run, log every run,
+book the Kaggle slot a day ahead, never tune on dev, results after Nov 30 do not go into the report.
+
+What Team B reuses and what it does itself is listed in `TEAM_B_GUIDE.md` under "Decisions".
 
 ## 3. How the course rubric (35 marks) maps to Team B work
 
@@ -95,7 +98,8 @@ at least a day ahead (≈2.5 h run + up to 30 min queue).
 | Mon Nov 23 | Ashmitha: Combined agent | Log, chart |
 | Tue Nov 24 | Buffer / freeze | Kaggle screenshots; Phase 2 starts |
 | Wed Nov 25 | Spare | Kaggle entry deadline |
-| Nov 26 – Dec 2 | Phase 2 tuning slots (one per day) | Dec 2: Ashmitha picks 2 finals by 3:59 pm Pacific |
+| Nov 26 – Nov 30 | Phase 2 tuning slots (booked a day ahead) | Nov 30: report cutoff for tuning results |
+| Dec 1 – Dec 2 | Final picks only | Dec 2: Ashmitha picks 2 finals by 3:59 pm Pacific |
 
 Planned Phase 1 submissions: 10 (baseline, the base agent, 7 variants, combined). Spares: Nov 22, 24, 25.
 
@@ -157,6 +161,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Dev run, log, submit Nov 23.
 
 **Phase 2 and report (Nov 24 – Dec 2)**
+- [ ] Keep the Phase 2 slot bookings in the team chat; make sure every tuning run is logged.
 - [ ] Nov 24: freeze; send Team B Kaggle evidence (team name, members, full history, baseline, best) to the report editor.
 - [ ] Coordinate Phase 2 tuning slots; pick 2 finals by Dec 2 3:59 pm Pacific; final screenshots.
 - [ ] Own report section: setup, baseline, patch hygiene, combined agent, score-over-time chart. Own slide.
