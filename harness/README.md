@@ -29,7 +29,7 @@ python harness/summarize.py harness/runs/<variant>/dev/<stamp> --baseline harnes
 
 Results land in `harness/runs/<variant>/<split>/<UTC stamp>/` (git-ignored): `harness_results.jsonl` (one line per task:
 resolved, wall_seconds, tool_calls, patch_chars, error), `run_info.json` (budgets, model, GPU count, git rev),
-`submission.csv` (the patch per task), `task_details/<id>.json` (every field of swegemma's result object, which should include the Phase 2 test output — not yet confirmed; runs from Nov 12 on), plus swegemma's logs and traces. Uncommitted changes are uploaded too; `run_info.json` marks them `dirty`.
+`submission.csv` (the patch per task), `task_details/<id>.json` (every field of swegemma's result object, which should include the Phase 2 test output — not yet confirmed; runs from Nov 13 on. Saved field by field: trace fields are skipped because they are already in `swegemma/traces/`, and a field that can't be serialized becomes a short note), plus swegemma's logs and traces. Uncommitted changes are uploaded too; `run_info.json` marks them `dirty`.
 
 Each task runs in turn, exactly as on Kaggle, so time per task is realistic. The first ~10–20 minutes of every
 kernel are vLLM start-up, which doesn't count toward task time.

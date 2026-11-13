@@ -44,7 +44,7 @@ Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
-## Status (last updated Nov 12, 2026)
+## Status (last updated Nov 13, 2026)
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -74,6 +74,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30, then pick its `Source:` reference and submit on a spare slot.
 - [ ] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
+- [x] Nov 13: fixed `task_details/` (reported by Khushi): `model_dump(mode="json")` failed on the `SessionTrace` field, so nothing was saved. Now saved field by field; trace fields are skipped (already in `swegemma/traces/`). Tested on a mock result; first real run will confirm the Phase 2 output is in there.
 - [ ] Decide how run results reach the team: ZIPs by hand (now), or commit small run summaries to the repo.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
@@ -82,6 +83,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 **Next for others**
 - [ ] **Sarvesh:** `baseline/` is already filled (unmodified sample). Still yours: run guide, baseline submission on Nov 10, baseline profile.
 - [ ] **Everyone:** install the Kaggle CLI, accept the competition rules, save your API token (see `harness/README.md`), so you can run the harness on your own GPU quota.
+
+- **Khushi (Nov 13):** V1 structured-loop prompt ran on Kaggle (4× L4) on her own quota: **1/2 smoke tasks** (quick check, not a score). Full smoke run next, now that `task_details/` is fixed.
 
 **Findings the team needs to know**
 - **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
