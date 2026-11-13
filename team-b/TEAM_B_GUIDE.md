@@ -97,6 +97,11 @@ Team B submits that baseline once for evidence, then builds every variant on the
 - [ ] Ashmitha: submit Team B baseline (unchanged sample agent) and log it.
 
 **Findings the team needs to know**
+- **Adapter weights are not in git.** `*.safetensors` is git-ignored, so on a fresh clone `validate.py` fails every
+  agent (Team A's `baseline/` too) with "adapter ... missing adapter_model.safetensors". After downloading the
+  competition data, copy Kaggle's dummy weights into each variant folder you build (they stay untracked):
+  `cp data/sample_submission/adapters/main_lora/adapter_model.safetensors team-b/variants/<folder>/adapters/main_lora/`
+  and the same for `tool_lora`. Check the exact path in `data/sample_submission/` first.
 - The sample agent already has an `agent_tool` sub-agent (`sub_agents/code_analyzer.yaml`, prompt `prompts/analyzer.md`).
   Parth's analyzer variant changes how and when it is used; it does not add it from scratch.
 - The sample system prompt already says: never edit tests, run only targeted tests, check `patch_size > 0`.
