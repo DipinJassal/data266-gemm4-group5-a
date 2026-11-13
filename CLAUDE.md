@@ -69,11 +69,13 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [ ] Announce the harness to the team (`harness/README.md`).
 - [x] **Baseline on dev (Nov 10): 2/30 = 6.7%**. 20 empty patches, 8 wrong patches; avg 1.1 min per task (1-minute limit).
   Per repo: fastapi 1/15, rich 1/11, requests 0/3, httpx 0/1. Log this as the team's dev baseline.
+  *Verified by Khushi (Nov 12) from the run ZIP: every figure matches; 28/30 tasks ended on the 1-minute timeout. Details: `docs/error_analysis.md`.*
 - [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30, then pick its `Source:` reference and submit on a spare slot.
-- [ ] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
+- [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
+  *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
 - [ ] Decide how run results reach the team: ZIPs by hand (now), or commit small run summaries to the repo.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
@@ -95,9 +97,22 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - **Khushi:** in the first real run the agent re-read the same file range three times in a row and once invented an argument name
   (`start_line"`). That's early evidence for the anti-looping prompt. Traces are in `harness/runs/.../swegemma/traces/` after a run.
   In the baseline dev run, 10/30 tasks produced a patch; at least one patch includes a stray scratch file (`repro.py`), which matters for patch hygiene in the combined agent.
+- **Everyone (baseline error analysis, Nov 12; full detail in `docs/error_analysis.md`):**
+  23/30 final patches change no source file: 20 empty, plus 3 that contain only a scratch script. In 18 of those 23 the agent had already opened a file
+  from the reference patch; only 7/30 ever made a successful source edit. Of 1,960 s total wall-clock, about 96% was spent waiting for the model
+  (between calls, or after the last call until the cut-off) and 0.4% on tool execution; effective throughput was about 29 tokens/s.
+  Malformed tool-call arguments appear in 8/30 tasks, and in one (`fastapi_14258`) they made every edit fail. No task ran the repo's own tests.
+  6 of the 8 failing patches include scratch files. "Wrong fix" and "broke other tests" can't be separated, because Phase 2 output wasn't saved.
+  These are dev-set patterns: confirm them on smoke/train runs before designing variants around them (rule 3).
+- **Everyone (adapter weights):** `.gitignore` excludes `*.safetensors`, but `harness/validate.py` requires `adapters/*/adapter_model.safetensors`,
+  so validation (and therefore `run_kaggle.py`) fails on every fresh clone, `baseline/` included. Workaround: download Kaggle's
+  `sample_submission/adapters/*/adapter_model.safetensors` into your local folder. Fixed locally for `khushi-structured-prompt-v1` only;
+  a repo-wide fix (commit the two small dummy files or add a `.gitignore` exception) is Dipin's call.
 - **Everyone (proposal, needs a team decision):** because the baseline is capped at 1 minute / 10 tool calls, a prompt or sampling
   change built on it will barely show an effect. Proposal: score V2 (budget fix) first, then build V1 variants on top of it.
   "One change" is then measured against V2, and the report states this.
+  *Status (Nov 12): Khushi's V1 follows this proposal (see her section). It is recorded as **proposed, pending Dipin's formal confirmation**;
+  rule 1 below is unchanged until the team confirms.*
 - **Submissions are declarative only** (YAML + prompts + skills), with no Python hooks. Output caps (5,000 chars per command,
   150 lines per `read_file`) and the summarizing of older turns are fixed by Kaggle's harness, so a variant can't change them.
   That affects Dipin's V1 (output trimming → do it through prompt rules or an `agent_tool` sub-agent that reads files)
@@ -195,10 +210,23 @@ Each variant `README.md` has exactly three lines:
 
 **Setup:**
 - [ ] **Nov 10:** Team experiment log (shared sheet) with columns: variant, owner, one-line change, smoke time, dev score, Kaggle score, status, notes.
-- [ ] **Nov 11–12:** `docs/error_analysis.md`: label every baseline failure as wrong file found, right file but wrong fix, broke other tests, timeout or looping, or empty/invalid diff. Share the counts.
+  *(Nov 12: built as `docs/experiment_log.xlsx` with those columns first; PR #1 open, pending Sarvesh's review. The baseline dev run is verified
+  against the raw run ZIP; all other runs are marked repo-reported. Still to agree: whether the repo file or a shared sheet is the canonical copy.)*
+- [x] **Nov 11–12:** `docs/error_analysis.md`: label every baseline failure as wrong file found, right file but wrong fix, broke other tests, timeout or looping, or empty/invalid diff. Share the counts.
+  *(Nov 12: done from the baseline dev ZIP. Primary labels: resolved 2, empty/invalid diff 23, wrong fix or broke other tests 5 (not separable), wrong file 0;
+  timeout is recorded as a contributing flag in 28/30.)*
 
 **Variants:**
 - **V1, Nov 13 — Structured loop prompt:** reproduce → localize → plan → edit → test → submit, with a short checklist before submitting.
+  *Progress (Nov 12):*
+  - Implemented as `variants/khushi-structured-prompt-v1/` on local branch `khushi/structured-prompt-v1`, commit `1452729` (not pushed yet).
+  - Offline validation passed (`validate.py` OK; zip has `agent.yaml` at root), after downloading the genuine Kaggle sample adapter weights locally (see "adapter weights" above).
+  - GPU smoke and dev runs: **pending**. The Nov 13 Kaggle slot is being rescheduled with Dipin.
+  - *Proposed controlled comparison (pending Dipin's formal confirmation of the rule-1 exception):*
+    - **Control:** `dipin-step-budget-v1` (V2 budget: 4.5 min / 50 tool calls, baseline prompt).
+    - **Treatment:** the same folder copied, with only `prompts/system.md` (and the README) changed.
+    - Model, adapters, sampling, tools, sub-agent and `eval_config.yaml` are byte-identical to the control.
+    - The original 1-minute baseline (2/30) stays as a historical reference only, not V1's comparator.
 - **V2, Nov 18 — Anti-looping prompt:** notice repeated actions and change strategy; always submit a best-effort diff before running out of steps.
 - **V3 (optional):** a prompt targeting the most common failure type in the error analysis.
 
@@ -206,7 +234,7 @@ Each variant `README.md` has exactly three lines:
 
 **Read:** [3] SWE-Protégé, [4] SWE-Master, [11] Survey, [6] Category-aware experts.
 
-**Depends on:** baseline run logs from Sarvesh (Nov 10).
+**Depends on:** baseline run logs from Sarvesh (Nov 10). *(Baseline dev run logs received from Dipin, Nov 12.)*
 
 ### Poushali Deb Purkayastha — Skills & tools
 
@@ -240,7 +268,7 @@ Each variant `README.md` has exactly three lines:
 ## Who waits on whom
 
 - Everyone needs Sarvesh's run guide (Nov 10) and Dipin's harness (Nov 12). Until then: join the Kaggle team, read your papers, and draft V1 on the sample agent.
-- Khushi's error analysis needs the baseline logs (Nov 10).
+- Khushi's error analysis needs the baseline logs (Nov 10). *(Received Nov 12; analysis done.)*
 - Bhoomika's V2 needs successful runs in the log (from about Nov 14).
 - The combined agent (Nov 23) uses everyone's best variant.
 - Nobody else waits on anybody.
@@ -252,7 +280,7 @@ Each variant `README.md` has exactly three lines:
 | Tue Nov 10 | Sarvesh | Baseline (unmodified sample agent) |
 | Wed Nov 11 | Spare | Early variant if someone is ready |
 | Thu Nov 12 | Spare | Early variant if someone is ready |
-| Fri Nov 13 | Khushi | V1 Structured loop prompt |
+| Fri Nov 13 | Khushi | V1 Structured loop prompt *(being rescheduled; new date to agree with Dipin)* |
 | Sat Nov 14 | Sarvesh | V1 Sampling settings |
 | Sun Nov 15 | Poushali | V1 Skills pack |
 | Mon Nov 16 | Dipin | V1 Output trimming |
