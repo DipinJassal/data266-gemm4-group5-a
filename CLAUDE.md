@@ -228,7 +228,8 @@ Each variant `README.md` has exactly three lines:
 ### Bhoomika Lnu — LoRA fine-tuning (highest risk: start today)
 
 **Setup:**
-- [ ] **Go / no-go by Nov 12:** confirm the adapter format the harness accepts for the 31B model; train a tiny adapter for a few steps and confirm it loads and runs; estimate GPU hours. If it isn't feasible, tell Dipin and switch to putting curated successful runs into the prompt as examples.
+- [x] **Go / no-go by Nov 12:** confirm the adapter format the harness accepts for the 31B model; train a tiny adapter for a few steps and confirm it loads and runs; estimate GPU hours. If it isn't feasible, tell Dipin and switch to putting curated successful runs into the prompt as examples.
+  *(Nov 14: **GO**. A tiny QLoRA adapter trained on bf16 31B (Kaggle L4x4) loaded on the QAT model in the harness, all requests routed to `main_lora`, no errors (2-task load test, not a score). V1 training ≈ 2–3 h of quota. Details and Kaggle setup notes: `lora/README.md`.)*
 
 **Variants:**
 - **V1, Nov 17 — LoRA on reference patches:** train on `train.txt` tasks only (never `dev.txt`); attach the adapter to the patch-writing agent.
