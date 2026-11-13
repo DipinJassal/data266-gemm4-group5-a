@@ -72,7 +72,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30, then pick its `Source:` reference and submit on a spare slot.
-- [x] Nov 12: sent Khushi the baseline dev run as a ZIP (`harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
+- [ ] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
 - [ ] Decide how run results reach the team: ZIPs by hand (now), or commit small run summaries to the repo.
 
