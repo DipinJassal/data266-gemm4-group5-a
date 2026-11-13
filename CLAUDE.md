@@ -44,7 +44,7 @@ Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
-## Status (last updated Nov 9, 2026)
+## Status (last updated Nov 12, 2026)
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -72,6 +72,9 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30, then pick its `Source:` reference and submit on a spare slot.
+- [ ] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
+  traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
+- [ ] Decide how run results reach the team: ZIPs by hand (now), or commit small run summaries to the repo.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
 - [ ] Ask the team: should V1 variants be built on top of the budget-fixed V2 instead of the 1-minute baseline? (See findings.)
@@ -91,6 +94,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - **Dipin (V2):** the per-task budget lives in `eval_config.yaml`; 12 h / ~120 tasks leaves about 5 minutes of agent time after setup.
 - **Khushi:** in the first real run the agent re-read the same file range three times in a row and once invented an argument name
   (`start_line"`). That's early evidence for the anti-looping prompt. Traces are in `harness/runs/.../swegemma/traces/` after a run.
+  In the baseline dev run, 10/30 tasks produced a patch; at least one patch includes a stray scratch file (`repro.py`), which matters for patch hygiene in the combined agent.
 - **Everyone (proposal, needs a team decision):** because the baseline is capped at 1 minute / 10 tool calls, a prompt or sampling
   change built on it will barely show an effect. Proposal: score V2 (budget fix) first, then build V1 variants on top of it.
   "One change" is then measured against V2, and the report states this.

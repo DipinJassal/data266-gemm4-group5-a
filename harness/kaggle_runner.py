@@ -137,6 +137,21 @@ def result_record(task, result, wall_seconds: float) -> dict:
     return json.loads(json.dumps(rec, default=str))
 
 
+def save_full_result(folder: Path, instance_id: str, result) -> None:
+    """Dump every field of swegemma's result (incl. Phase 2 test output) for error analysis."""
+    try:
+        if hasattr(result, "model_dump"):
+            data = result.model_dump(mode="json")
+        elif hasattr(result, "__dict__"):
+            data = dict(vars(result))
+        else:
+            data = {"repr": repr(result)}
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{instance_id}.json").write_text(json.dumps(data, indent=2, default=str))
+    except Exception as e:  # never let bookkeeping kill a run
+        log(f"    (could not save full result for {instance_id}: {e})")
+
+
 def main() -> None:
     cfg = RUN_CONFIG
     variant, split = cfg["variant"], cfg["split"]
@@ -275,6 +290,7 @@ def main() -> None:
                 result = run_sync(evaluator.evaluate_task, task=task, task_index=idx, total_tasks=len(tasks))
                 rec = result_record(task, result, time.time() - t_task)
                 patch = (getattr(result, "agent_patch", None) or "").strip()
+                save_full_result(out_dir / "task_details", task.instance_id, result)
             except Exception as e:  # keep going: one crashed task must not kill the run
                 rec = {"instance_id": task.instance_id, "repo": task.repo, "resolved": False,
                        "wall_seconds": round(time.time() - t_task, 1), "error": f"HARNESS_CRASH: {type(e).__name__}: {e}"}
