@@ -1,4 +1,5 @@
-"""LoRA feasibility check (Bhoomika). Runs INSIDE a Kaggle GPU kernel (NvidiaL4 x4, internet ON for pip).
+"""LoRA feasibility check (Bhoomika). Runs INSIDE a Kaggle GPU kernel (NvidiaL4 x4,
+competition attached, internet OFF; packages are installed offline from datasets).
 
 Trains a tiny QLoRA adapter for a few steps on the bf16 Gemma 4 31B (loaded in 4-bit), using 4 train-split tasks,
 then saves it in the exact layout the competition harness expects (adapters/<name>/adapter_config.json +
@@ -82,8 +83,8 @@ def main():
 
     bf16_dir = find_dir("/kaggle/input/**/gemma-4-31b-it/*/config.json", "bf16 Gemma 4 31B")
     qat_dir = find_dir("/kaggle/input/**/gemma-4-31b-it-qat-w4a16-ct/*/config.json", "QAT Gemma 4 31B")
-    # Train-split tasks only (private dataset bhoomikalnu/g5a-lora-data). The competition itself can't be attached:
-    # Kaggle rejects internet-enabled kernels that attach this competition, and we need internet for pip.
+    # Train-split tasks only (private dataset bhoomikalnu/g5a-lora-data), not the competition's tasks.jsonl,
+    # so dev tasks can never end up in the training data.
     tasks_path = Path(sorted(glob.glob("/kaggle/input/**/train_tasks.jsonl", recursive=True))[0])
 
     # 3. bf16 vs QAT: architecture and chat template.
