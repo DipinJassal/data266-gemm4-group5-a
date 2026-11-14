@@ -199,7 +199,8 @@ def main() -> int:
         DRY_RUN = HARNESS / "runs" / "_dryrun"
         DRY_RUN.mkdir(parents=True, exist_ok=True)
 
-    variant = args.variant.strip("/")
+    # Kaggle is Linux: always pass posix paths in RUN_CONFIG (Windows \ breaks agent.yaml lookup).
+    variant = args.variant.replace("\\", "/").strip("/")
     variant_dir = REPO / variant
     user = kaggle_user()
     kernel_slug = f"g5a-eval-{slugify(variant)}-{args.split}"[:50].strip("-")
