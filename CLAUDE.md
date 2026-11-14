@@ -83,7 +83,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [ ] Ask the team: should V1 variants be built on top of the budget-fixed V2 instead of the 1-minute baseline? (See findings.)
 
 **Next for others**
-- [ ] **Sarvesh:** `baseline/` is already filled (unmodified sample). Still yours: run guide, baseline submission on Nov 10, baseline profile.
+- [ ] **Sarvesh:** `baseline/` is already filled (unmodified sample). Run guide + baseline profile written (`docs/run_guide.md`, `docs/baseline_profile.md`). Still open: official team Kaggle baseline submission (or confirm Dipin's Nov 10 harness 2/30 is the recorded team baseline).
 - [ ] **Everyone:** install the Kaggle CLI, accept the competition rules, save your API token (see `harness/README.md`), so you can run the harness on your own GPU quota.
 
 - **Khushi (Nov 13):** V1 structured-loop prompt ran on Kaggle (4× L4) on her own quota: **1/2 smoke tasks** (quick check, not a score). Full smoke run next, now that `task_details/` is fixed.
@@ -183,12 +183,16 @@ Each variant `README.md` has exactly three lines:
 ### Sarvesh Reshimwale — starts the project, Sampling & multiple attempts
 
 **Setup (starting today):**
-- [ ] **Nov 9–10:** Get the sample agent running end to end in a Kaggle notebook. Write `docs/run_guide.md` (how to run a few tasks, how to zip and submit).
+- [x] **Nov 9–10:** Get the sample agent running end to end in a Kaggle notebook. Write `docs/run_guide.md` (how to run a few tasks, how to zip and submit).
+  *(Nov 13: `docs/run_guide.md` filled — harness path + official notebook + validate/zip + submit steps. End-to-end GPU run was done via Dipin's harness.)*
 - [ ] **Nov 10:** Submit the baseline. Share its run logs with Khushi.
-- [ ] **Nov 11–12:** Write `docs/baseline_profile.md`: average time and turns per task, slowest tasks, longest tool outputs.
+  *(Harness baseline scored 2/30 on Nov 10; ZIP shared with Khushi by Dipin Nov 12. Official team-account Kaggle submission still to confirm with Dipin.)*
+- [x] **Nov 11–12:** Write `docs/baseline_profile.md`: average time and turns per task, slowest tasks, longest tool outputs.
+  *(Nov 13: filled from the Nov 10 `baseline-dev` run numbers verified in Khushi's error analysis. Notes the 1 min / 10 tool-call cap.)*
 
 **Variants:**
 - **V1, Nov 14 — Sampling settings:** small sweep of temperature / top-p and thinking mode on vs off on the smoke set; submit the best.
+  *Progress (Nov 13–14):* `variants/sarvesh-sampling-v1/` (thinking off on V2 budget). Full smoke **2/10** (ties `dipin-step-budget-v1`); logs in `docs/runs/sarvesh-sampling-v1-smoke-full-20261114T031152Z/`. Harness path fix: `\` → `/` in `run_kaggle.py` / `kaggle_runner.py`. **Next:** Nov 14 team Kaggle submit after Dipin review; optional temp trials / dev later.
 - **V2, Nov 19 — Best-of-N attempts:** several attempts, keep the patch that passes the agent's own reproduction test, stop early on a pass. If `agent.yaml` can't express this, use "if your test fails, retry once with a different approach."
 - **V3 (optional):** max output tokens or step-limit tuning.
 
