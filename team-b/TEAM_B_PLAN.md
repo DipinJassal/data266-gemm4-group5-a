@@ -1,7 +1,7 @@
 # Team B Plan — DATA 266 Group 5, Gemma 4 Developer Agent
 
 Team: **GROUP_PROGRAMMING_05_b** (Kaggle team of 4) · Members: Ashmitha, Parth, Ishan, Naveen
-Period: Nov 13 – Nov 25, 2026 (Kaggle entry deadline), then optional tuning to Dec 2 (final Kaggle deadline).
+Period: Nov 13 – Nov 25, 2026 (Kaggle entry deadline), then free tuning to Nov 30 (report cutoff); Dec 2 is the final Kaggle deadline.
 Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali, Bhoomika).
 
 ---
@@ -14,7 +14,7 @@ Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali
   (prompt, sub-agents, skills, tool usage, settings). We test each variant, submit it to Kaggle, and write up
   what helped and what failed.
 - At the end, Ashmitha merges the best changes into one **combined agent** (Team B's "first full model").
-- After that (Nov 24 – Dec 2), everyone is free to tune the combined agent for a better score. This matches
+- After that (Nov 24 – Nov 30), everyone is free to tune the combined agent for a better score. This matches
   Team A's approach: "finish the first model with the plan, run it on Kaggle, then everyone tunes."
 
 ## 2. Two phases
@@ -22,9 +22,13 @@ Report and presentation are shared with Team A (Dipin, Sarvesh, Khushi, Poushali
 | Phase | Dates | Goal | Output |
 |---|---|---|---|
 | **Phase 1 — Build the first model** | Nov 13 – Nov 23 | Baseline + 7 single-change variants + combined agent | 10 Kaggle submissions, experiment log, report sections |
-| **Phase 2 — Tune** | Nov 24 – Dec 2 | Improve the combined agent (budget, prompt wording, which variants to include) | Best score, 2 final picks |
+| **Phase 2 — Tune** | Nov 24 – Nov 30 | Improve the combined agent (budget, prompt wording, which variants to include) | Best score, 2 final picks |
 
-Phase 2 is free tuning, but every tuning run still goes into the experiment log (the course grades tracking).
+Phase 2 is free tuning, with the rules in `TEAM_B_GUIDE.md` (Phase 2 section): one change per run, log every run,
+book the Kaggle slot a day ahead, tune on smoke/train, use dev only to select (one run per finished candidate),
+report the Kaggle score as the held-out result, results after Nov 30 do not go into the report.
+
+What Team B reuses and what it does itself is listed in `TEAM_B_GUIDE.md` under "Decisions".
 
 ## 3. How the course rubric (35 marks) maps to Team B work
 
@@ -67,12 +71,13 @@ so all scored runs happen on Kaggle.
 
 | Member | Runs planned | Approx. quota-hours |
 |---|---|---|
-| Ashmitha | V1 smoke 2 + dev 1, combined smoke 1 + dev 1 (baseline and the base agent reuse Team A's runs) | ~20 over 2 weeks |
+| Ashmitha | V1 smoke 2 + dev 1, combined smoke 2–3 (one per merged variant) + dev 1 (baseline and the base agent reuse Team A's runs) | ~20 over 2 weeks |
 | Parth | V1 smoke 2 + dev 1, V2 smoke 2 + dev 1 | ~18 |
 | Ishan | V1 smoke 2 + dev 1, V2 smoke 2 + dev 1 | ~18 |
 | Naveen | V1 smoke 2 + dev 1, V2 smoke 2 + dev 1 (error analysis reuses Team A's runs) | ~18 |
 
-If Ashmitha runs low, another member runs the combined agent's dev score on their quota. Check your weekly
+Phase 2 (anyone): each tuning-set run (`train --max-tasks 20`) is about 3–4 quota-hours; at most 2 dev runs per
+member. If Ashmitha runs low, another member runs the combined agent's dev score on their quota. Check your weekly
 quota at kaggle.com/settings before starting a dev run.
 
 ## 6. Submission calendar (one slot per day, Kaggle day resets 4:00 pm Pacific)
@@ -84,18 +89,19 @@ at least a day ahead (≈2.5 h run + up to 30 min queue).
 |---|---|---|
 | Fri Nov 13 | Ashmitha: Baseline | Kickoff call; Kaggle team; branch + skeleton; everyone sets up CLI |
 | Sat Nov 14 | Ashmitha: Base agent (budget fix) | Naveen reads Team A's error analysis; Ishan EDA |
-| Sun Nov 15 | Naveen: V1 Reproduce-first | Parth/Ishan smoke runs on V1 |
+| Sun Nov 15 | Naveen: V1 Reproduce-first | Parth/Ishan smoke runs on V1; Ashmitha dev run (V1) |
 | Mon Nov 16 | Ashmitha: V1 Patch hygiene | Parth dev run (V1) |
 | Tue Nov 17 | Parth: V1 Analyzer + coder | Ishan dev run (V1) |
 | Wed Nov 18 | Ishan: V1 Graph-first | Naveen dev run (V2) |
 | Thu Nov 19 | Naveen: V2 Regression check | Parth dev run (V2) |
 | Fri Nov 20 | Parth: V2 Coder + critic | Ishan dev run (V2); Ashmitha drafts combined |
 | Sat Nov 21 | Ishan: V2 Graph expansion | Ashmitha combined smoke + dev |
-| Sun Nov 22 | Spare | **Report sections, contribution rows, slides due** |
+| Sun Nov 22 | Spare | **First drafts of report sections, contribution rows, slides due** |
 | Mon Nov 23 | Ashmitha: Combined agent | Log, chart |
-| Tue Nov 24 | Buffer / freeze | Kaggle screenshots; Phase 2 starts |
+| Tue Nov 24 | Buffer / Phase 1 freeze | Kaggle screenshots; Phase 2 tuning starts |
 | Wed Nov 25 | Spare | Kaggle entry deadline |
-| Nov 26 – Dec 2 | Phase 2 tuning slots (one per day) | Dec 2: Ashmitha picks 2 finals by 3:59 pm Pacific |
+| Nov 26 – Nov 30 | Phase 2 tuning slots (booked a day ahead; Nov 24–25 too if not needed as buffer/spare) | Nov 30: report cutoff for tuning results |
+| Dec 1 – Dec 2 | Final picks only | Dec 2: Ashmitha picks 2 finals by 3:59 pm Pacific |
 
 Planned Phase 1 submissions: 10 (baseline, the base agent, 7 variants, combined). Spares: Nov 22, 24, 25.
 
@@ -108,8 +114,9 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 3. Make **one** change; fill in the 3-line README (What changed / Why / Source).
 4. `python harness/validate.py team-b/variants/<folder> --zip submission.zip` (no GPU).
 5. Quick test: `python harness/run_kaggle.py team-b/variants/<folder> smoke --max-tasks 2` (no crashes?).
-6. Smoke: `... smoke` (10 tasks). Check avg time per task < 6 min. Iterate on smoke only.
+6. Smoke: `... smoke` (10 tasks). Check avg time per task < 6 min. Iterate on smoke only (never on dev).
 7. Dev once final: `... dev --no-wait`, then `--fetch`. Log the row in `team-b/docs/experiment_log.csv`.
+   Do not change the variant after its dev run; a change means a new folder and a new dev run.
 8. Commit, push, open PR into `group5-team-b`, tag your reviewer. After approval, Ashmitha (or you) submits on your date.
 
 ---
@@ -120,17 +127,18 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Create Kaggle team `GROUP_PROGRAMMING_05_b`; invite Parth, Ishan, Naveen; confirm all 4 joined.
 - [ ] Message Dipin: Team B uses Team A's harness and splits; ask for write access to the repo for all 4; confirm
       the team naming (`_a` / `_b`) and the "build on budget-fixed base" decision.
-- [ ] Create branch `group5-team-b` from `main`; add the `team-b/` skeleton (this file, `TEAM_B_GUIDE.md`, `README.md`,
-      `variants/_template/`, empty `docs/experiment_log.csv` with the shared columns).
+- [x] Create branch `group5-team-b` from `main`; add the `team-b/` skeleton (this file, `TEAM_B_GUIDE.md`, `README.md`,
+      `variants/_template/`, `docs/experiment_log.csv` with the shared columns, seeded with Team A's reference runs).
 - [ ] Download competition data once: `kaggle competitions download gemma-4-developer-agent -f tasks.jsonl -p data`
       (+ `HARNESS_README.md`); share `tasks.jsonl` path with Ishan.
 - [ ] **Baseline:** zip `baseline/` unchanged with `validate.py`, submit on Nov 13. Record public score + screenshot.
       Do not re-run it on dev (Team A's dev number 2/30 is the group's dev baseline).
-- [ ] **Base v0:** copy `variants/dipin-step-budget-v1` to `team-b/variants/base/`, README credits
+- [x] **Base agent:** copy `variants/dipin-step-budget-v1` to `team-b/variants/base/`, README credits
       Dipin. Do **not** re-run it: reuse Dipin's smoke (2/10) and dev scores, after checking the folder is byte-identical
       (`diff -r variants/dipin-step-budget-v1 team-b/variants/base`, README aside). Only run it yourself
       if Dipin's dev score is still missing by Nov 15. Submit to Kaggle on Nov 14 (costs a daily slot, no GPU quota).
-- [ ] Write `team-b/docs/competition_summary.md` (G.1): task, inputs (repo snapshot, issue text, code graphs,
+- [ ] Collect Dipin's dev score for the base agent (needed to compare every variant on dev) and log it.
+- [x] Write `team-b/docs/competition_summary.md` (G.1): task, inputs (repo snapshot, issue text, code graphs,
       embeddings), output (patch), metric, 9 tools, limits (32K context, 6 min/task, 12 h, offline sandbox,
       4 GiB RAM), submission format, 1/day, private hidden repos.
 - [ ] Set up the review rotation and post the calendar in the team chat.
@@ -138,7 +146,8 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 **V1 — Patch hygiene (smoke by Nov 15, slot Nov 16)**
 - [ ] In the base system prompt, add a "before you call `submit_patch`" checklist:
       diff is non-empty; only source files changed (no tests, no `repro.py`, no scratch files); delete any files you
-      created for testing; run `python -m py_compile` on every changed file; re-read the edited lines once.
+      created for testing; remove debug prints; check `git status` / `git diff --stat`; run `python -m py_compile`
+      on every changed file.
 - [ ] Run the variant loop. In the README: What = pre-submit checklist; Why = empty / dirty diffs (Team A finding);
       Source = [12] SWE-bench.
 - [ ] Compare: count of empty patches and stray files vs the base agent, not just the score.
@@ -151,12 +160,14 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 
 **V2 — Combined agent (draft Nov 20, dev Nov 21–22, slot Nov 23)**
 - [ ] Pick every Team B variant that beat the base agent on dev (and did not raise avg time above ~5.5 min).
+      Dev is the selection set here; the combined agent's Kaggle score is its held-out result.
 - [ ] Merge them into `team-b/combined/agent.yaml` one at a time; smoke after each addition to catch conflicts
       (e.g. critic + regression check may exceed the time budget).
 - [ ] Optionally include Team A ideas that clearly worked (credit them in the README and report).
 - [ ] Dev run, log, submit Nov 23.
 
 **Phase 2 and report (Nov 24 – Dec 2)**
+- [ ] Keep the Phase 2 slot bookings in the team chat; make sure every tuning run is logged.
 - [ ] Nov 24: freeze; send Team B Kaggle evidence (team name, members, full history, baseline, best) to the report editor.
 - [ ] Coordinate Phase 2 tuning slots; pick 2 finals by Dec 2 3:59 pm Pacific; final screenshots.
 - [ ] Own report section: setup, baseline, patch hygiene, combined agent, score-over-time chart. Own slide.
@@ -188,7 +199,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Variant loop. README: What = one critic round; Why = right-file-wrong-fix failures; Source = [3].
 - [ ] Record how often the critic changed the patch and whether those tasks passed.
 
-**Report (by Nov 22)**
+**Report (first draft by Nov 22; add tuning results by Nov 30)**
 - [ ] Report section: both designs, smoke/dev/Kaggle scores, what worked and what didn't, cost in time per task.
 - [ ] One slide; contribution row. Review Ishan's PRs.
 
@@ -219,7 +230,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
       number of nodes so context stays small. Implement as a skill (`SKILL.md`) the agent loads.
 - [ ] Variant loop. README: What = bounded graph expansion; Why = fixes that need a caller/callee change; Source = [8], [9].
 
-**Report (by Nov 22)**
+**Report (first draft by Nov 22; add tuning results by Nov 30)**
 - [ ] Report section: EDA findings (G.2), retrieval hit rates, both variants, scores. One slide; contribution row.
 - [ ] Review Naveen's PRs.
 
@@ -248,7 +259,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Coordinate with Poushali (Team A, test-runner tool) so the two designs are different or clearly compared.
 - [ ] Variant loop. README: What = targeted regression check; Why = broke-other-tests failures; Source = [4].
 
-**Report (by Nov 22)**
+**Report (first draft by Nov 22; add tuning results by Nov 30)**
 - [ ] Report section: error analysis (G.2), both variants, scores, failure-type changes. One slide; contribution row.
 - [ ] Write the "failed or ineffective approach" paragraph for whichever Team B variant did worst (G.3 requires one).
 - [ ] Review Ashmitha's PRs.
@@ -260,7 +271,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] 7 variants + combined, each with smoke + dev + Kaggle score in the log (G.3, G.4)
 - [ ] ≥1 failed approach written up with what we learned (G.3)
 - [ ] Score-over-time chart + full submission history screenshots (G.4, G.6)
-- [ ] 4 report sections + 4 contribution rows + 4 slides to the group editors by Nov 22 (G.5)
+- [ ] 4 report sections + 4 contribution rows + 4 slides to the group editors (first draft Nov 22, final Nov 30) (G.5)
 - [ ] Peer review forms (all 4) after Dec 1
 
 ## 9. Risks
@@ -272,4 +283,5 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 | Sub-agents push time over 6 min/task | Cap turns in instructions; check smoke avg time | Parth, Naveen |
 | A variant misses its slot | Use spare (Nov 22/24/25); tell Ashmitha the day before | Everyone |
 | Overlap with Team A | Areas chosen to differ; Naveen coordinates with Poushali | Ashmitha, Naveen |
-| Overfitting to the 4 public repos | Never tune on dev; no repo-specific rules | Reviewers |
+| Overfitting to the 4 public repos | Tune on smoke/train only; no repo-specific rules | Reviewers |
+| Selection bias from reusing dev | Dev only for selection, one run per finished candidate; report dev as validation and the Kaggle score as held-out | Ashmitha |

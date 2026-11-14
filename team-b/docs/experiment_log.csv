@@ -1,0 +1,3 @@
+date,team,variant,owner,one_line_change,split,score,avg_min_per_task,empty_patches,kaggle_score,status,notes
+2026-11-10,A,baseline,Dipin,unmodified sample agent (1 min / 10 tool calls),dev,2/30,1.1,20,,reference,Team A run; reused by Team B (not re-run)
+2026-11-10,A,dipin-step-budget-v1,Dipin,budget 4.5 min / 50 tool calls,smoke,2/10,4.2,3,,reference,Team A run; same files as team-b base
