@@ -51,6 +51,14 @@ submits a patch. Kaggle applies the patch and runs hidden tests.
 | Submissions | 1 per team per day (day resets 4:00 pm Pacific); 2 final picks by Dec 2, 2026 |
 | External data | Only what is inside the submission zip; no network in the sandbox |
 
+## Local evaluation (how we score before submitting)
+| Split | Tasks | Role |
+|---|---|---|
+| `smoke` | 10 (part of train) | Debugging |
+| `train` | 99 | Tuning (Phase 2 uses the first 20) |
+| `dev` | 30 | Selection (validation); one run per finished candidate |
+| Kaggle hidden tasks | ~120 | Held-out test; the score we report |
+
 ## Compute we use
 - Scored runs: Kaggle notebooks with L4 ×4 GPUs on each member's own weekly quota (L4 time counts double).
 - No-GPU work (EDA, retrieval checks, charts, validation): Colab CPU runtime or laptops.

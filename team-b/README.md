@@ -20,4 +20,4 @@ python harness/run_kaggle.py team-b/variants/<short> smoke --max-tasks 2
 ```
 
 Then smoke (10 tasks), dev (30 tasks, once the variant is final; see "Evaluation splits" in `TEAM_B_GUIDE.md`), log the row in `docs/experiment_log.csv`, open a PR into
-`group5-team-b` and tag your reviewer (Ashmitha → Parth → Ishan → Naveen → Ashmitha).
+`group5-team-b` and tag your reviewer (Ashmitha reviews Parth, Parth reviews Ishan, Ishan reviews Naveen, Naveen reviews Ashmitha; setup and shared-doc PRs can be reviewed by any member).

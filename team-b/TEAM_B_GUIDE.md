@@ -25,7 +25,7 @@ The report, presentation and peer review are shared by all 9.
 | Paper references (numbered below) | Team B calendar, reviews and final 2 picks |
 
 Team B uses Team A's harness and task lists so both teams' scores are comparable. Never edit Team A's folders
-(`baseline/`, `variants/`, `combined/`, `harness/`). If the harness needs a fix, tell Dipin.
+(`baseline/`, `variants/`, `combined/`, `harness/`, `docs/`, `lora/`) or root files. If the harness needs a fix, tell Dipin.
 
 ## Competition rules
 
@@ -52,7 +52,8 @@ Source: Kaggle's official `HARNESS_README.md` (see Team A's root guide file, Rul
 - **Colab or your laptop** is for work that needs no GPU: EDA of `tasks.jsonl`, offline retrieval checks,
   log/trace analysis, charts, `validate.py`.
 - Budget per variant: 1–2 smoke runs (~2 quota-hours each) + 1 dev run (~5 quota-hours) ≈ **7–9 quota-hours**.
-  Iterate on smoke; run dev once the variant is final.
+  Iterate on smoke; run dev once the variant is final. A Phase 2 tuning-set run (`train --max-tasks 20`) costs
+  about 3–4 quota-hours.
 
 ## Team B
 
@@ -63,7 +64,9 @@ Source: Kaggle's official `HARNESS_README.md` (see Team A's root guide file, Rul
 | **Ishan** | Task data EDA (G.2) | Retrieval / code graph (graph-first localization; graph expansion) | Parth |
 | **Naveen** | Team B error analysis | Testing & verification (reproduce-first; regression check) | Ishan |
 
-Review rotation: Ashmitha → Parth → Ishan → Naveen → Ashmitha (each reviews the next; nobody approves their own variant).
+Review rotation (matches the "Reviewed by" column): Ashmitha reviews Parth, Parth reviews Ishan, Ishan reviews
+Naveen, Naveen reviews Ashmitha. Nobody approves their own variant. Setup and shared-doc PRs (for example
+`b/setup`, `b/baseline`) can be reviewed by any member.
 
 ## Variants and folders
 
@@ -139,10 +142,13 @@ the report:
 
 **Done**
 - Plan agreed (see `TEAM_B_PLAN.md`).
+- Write access to the repo; branch `group5-team-b` with the `team-b/` skeleton.
+- Setup docs in PR `b/setup` (experiment log, template, competition summary, decisions, split roles).
+- Base agent copied to `team-b/variants/base/` on `b/baseline`; patch-hygiene variant drafted on `b/patch-hygiene`.
 
 **Next**
 - [ ] Ashmitha: create Kaggle team `GROUP_PROGRAMMING_05_b`, invite Parth, Ishan, Naveen.
-- [ ] Ashmitha: ask Dipin for write access, create branch `group5-team-b`, add `team-b/` skeleton.
+- [ ] Ashmitha: merge `b/setup`, then open the `b/baseline` and `b/patch-hygiene` PRs.
 - [ ] Everyone: join the competition, phone-verify Kaggle, install Kaggle CLI, save API token, accept invites.
 - [ ] Ashmitha: submit Team B baseline (unchanged sample agent) and log it.
 
@@ -167,6 +173,8 @@ the report:
 team-b/
   TEAM_B_GUIDE.md               This file (Ashmitha)
   README.md                     Short overview + how to run (Ashmitha)
+  TEAM_B_PLAN.md                Detailed plan and per-member to-dos (Ashmitha)
+  REPO_LAYOUT.md                Branches, folders, commit plan, PR checklist (Ashmitha)
   docs/
     competition_summary.md      G.1: task, inputs/outputs, metric, rules, constraints (Ashmitha)
     task_eda.md                 G.2: tasks.jsonl and repo analysis, charts (Ishan)
@@ -193,6 +201,7 @@ team-b/
   report/
     sections/<area>.md          One section per area: lead-evaluation (Ashmitha), multi-agent (Parth),
                                 retrieval (Ishan), verification (Naveen)
+    contribution_table.md       One row per member; Ashmitha compiles
     kaggle_evidence/            Submission history screenshots (Ashmitha)
   slides/<area>.md              One slide per area, same owners as the report sections
 ```
@@ -213,8 +222,8 @@ tracked in the "Variants and folders" table. Add `-2`, `-3` only when the same i
    once per finished variant (see "Evaluation splits").
 4. **Keep changes general.** No hard-coded paths, file names or logic for FastAPI, Rich, Requests or HTTPX.
 5. **Stay inside the runtime budget.** Average time per task on smoke must stay under about 6 minutes.
-6. **Before review:** smoke runs with no crashes → dev score logged next to the base → `validate.py` passes → zip has
-   `agent.yaml` at the root → only allowed tools used.
+6. **Before review:** `validate.py` passes (zip has `agent.yaml` at the root, only allowed tools) → smoke runs with
+   no crashes → dev score logged next to the base.
 7. **Log every run** in `team-b/docs/experiment_log.csv`, including failures. A variant below the base can still be
    submitted; documented failures are required by the course (G.3).
 8. **Submit only through the Team B Kaggle team**, on your calendar date, after reviewer approval the day before.
@@ -237,8 +246,9 @@ Full task lists are in `TEAM_B_PLAN.md`. Summary:
 
 ### Ashmitha — Lead & evaluation
 - Setup: Kaggle team, branch + skeleton, baseline submission, the base agent (reuse Team A's scores), experiment log, `competition_summary.md`.
-- **V1, Nov 16 — Patch hygiene:** prompt checklist before `submit_patch`: no empty diff, delete scratch files
-  (`repro.py`, debug prints), re-read edited lines, `python -m py_compile` on changed files, never edit tests.
+- **V1, Nov 16 — Patch hygiene:** prompt checklist before `submit_patch`: check `git status` / `git diff --stat`,
+  delete scratch files (`repro.py`, logs) and debug prints, `python -m py_compile` on changed files, no test files
+  changed, diff not empty.
 - **V2, Nov 23 — Combined agent:** merge the best Team B variants into one `agent.yaml`.
 - Other: calendar and slot swaps, Kaggle evidence and score-over-time chart, pick 2 finals by Dec 2, report liaison.
 - Read: [12] SWE-bench, [4] SWE-Master, [6] Category-aware experts.
@@ -278,22 +288,23 @@ Full task lists are in `TEAM_B_PLAN.md`. Summary:
 | Thu Nov 19 | Naveen | V2 Regression check |
 | Fri Nov 20 | Parth | V2 Coder + critic |
 | Sat Nov 21 | Ishan | V2 Graph expansion |
-| Sun Nov 22 | Spare | Resubmit / late variant. **Report sections, contribution rows, slides due** |
+| Sun Nov 22 | Spare | Resubmit / late variant. **First drafts of report sections, contribution rows, slides due** |
 | Mon Nov 23 | Ashmitha | Combined agent |
-| Tue Nov 24 | Ashmitha | Buffer / **freeze**. Kaggle screenshots |
+| Tue Nov 24 | Ashmitha | Buffer / **Phase 1 freeze**. Kaggle screenshots |
 | Wed Nov 25 | Spare | Kaggle entry deadline |
-| Nov 24 – Nov 30 | Anyone (booked a day ahead) | Phase 2 tuning on the combined agent (Nov 24 is first used as a buffer if the combined agent needs a resubmit) |
+| Nov 24 – Nov 30 | Anyone (booked a day ahead) | Phase 2 tuning on the combined agent; Nov 24 and 25 go to Phase 2 only if not needed as buffer or spare |
 | Dec 1 – Dec 2 | Ashmitha | Pick the 2 final submissions only |
 
 Not ready on your date? Take the next spare and tell Ashmitha.
 
 ## Key dates
 
-- **Nov 22:** report section, contribution row and one slide to the group's report editor and slide owner.
-- **Nov 24:** freeze; Kaggle screenshots.
+- **Nov 22:** first draft of report section, contribution row and one slide to the group's report editor and slide owner.
+- **Nov 24:** Phase 1 freeze (the first model is fixed); Kaggle screenshots; Phase 2 tuning starts.
 - **Nov 25:** Kaggle entry and team-merge deadline.
-- **Nov 30:** last day for tuning results that go into the report and slides.
-- **Nov 29:** full rehearsal (all 9). **Dec 1:** presentation and report. Everyone submits the peer review form.
+- **Nov 29:** full rehearsal (all 9).
+- **Nov 30:** last day for tuning results; report sections and slides updated with them.
+- **Dec 1:** presentation and report. Everyone submits the peer review form.
 - **Dec 2:** final Kaggle deadline; Ashmitha picks Team B's 2 final submissions (by 3:59 pm Pacific).
 
 ## References (numbered as in the proposal)

@@ -71,12 +71,13 @@ so all scored runs happen on Kaggle.
 
 | Member | Runs planned | Approx. quota-hours |
 |---|---|---|
-| Ashmitha | V1 smoke 2 + dev 1, combined smoke 1 + dev 1 (baseline and the base agent reuse Team A's runs) | ~20 over 2 weeks |
+| Ashmitha | V1 smoke 2 + dev 1, combined smoke 2–3 (one per merged variant) + dev 1 (baseline and the base agent reuse Team A's runs) | ~20 over 2 weeks |
 | Parth | V1 smoke 2 + dev 1, V2 smoke 2 + dev 1 | ~18 |
 | Ishan | V1 smoke 2 + dev 1, V2 smoke 2 + dev 1 | ~18 |
 | Naveen | V1 smoke 2 + dev 1, V2 smoke 2 + dev 1 (error analysis reuses Team A's runs) | ~18 |
 
-If Ashmitha runs low, another member runs the combined agent's dev score on their quota. Check your weekly
+Phase 2 (anyone): each tuning-set run (`train --max-tasks 20`) is about 3–4 quota-hours; at most 2 dev runs per
+member. If Ashmitha runs low, another member runs the combined agent's dev score on their quota. Check your weekly
 quota at kaggle.com/settings before starting a dev run.
 
 ## 6. Submission calendar (one slot per day, Kaggle day resets 4:00 pm Pacific)
@@ -88,18 +89,18 @@ at least a day ahead (≈2.5 h run + up to 30 min queue).
 |---|---|---|
 | Fri Nov 13 | Ashmitha: Baseline | Kickoff call; Kaggle team; branch + skeleton; everyone sets up CLI |
 | Sat Nov 14 | Ashmitha: Base agent (budget fix) | Naveen reads Team A's error analysis; Ishan EDA |
-| Sun Nov 15 | Naveen: V1 Reproduce-first | Parth/Ishan smoke runs on V1 |
+| Sun Nov 15 | Naveen: V1 Reproduce-first | Parth/Ishan smoke runs on V1; Ashmitha dev run (V1) |
 | Mon Nov 16 | Ashmitha: V1 Patch hygiene | Parth dev run (V1) |
 | Tue Nov 17 | Parth: V1 Analyzer + coder | Ishan dev run (V1) |
 | Wed Nov 18 | Ishan: V1 Graph-first | Naveen dev run (V2) |
 | Thu Nov 19 | Naveen: V2 Regression check | Parth dev run (V2) |
 | Fri Nov 20 | Parth: V2 Coder + critic | Ishan dev run (V2); Ashmitha drafts combined |
 | Sat Nov 21 | Ishan: V2 Graph expansion | Ashmitha combined smoke + dev |
-| Sun Nov 22 | Spare | **Report sections, contribution rows, slides due** |
+| Sun Nov 22 | Spare | **First drafts of report sections, contribution rows, slides due** |
 | Mon Nov 23 | Ashmitha: Combined agent | Log, chart |
-| Tue Nov 24 | Buffer / freeze | Kaggle screenshots; Phase 2 starts |
+| Tue Nov 24 | Buffer / Phase 1 freeze | Kaggle screenshots; Phase 2 tuning starts |
 | Wed Nov 25 | Spare | Kaggle entry deadline |
-| Nov 26 – Nov 30 | Phase 2 tuning slots (booked a day ahead) | Nov 30: report cutoff for tuning results |
+| Nov 26 – Nov 30 | Phase 2 tuning slots (booked a day ahead; Nov 24–25 too if not needed as buffer/spare) | Nov 30: report cutoff for tuning results |
 | Dec 1 – Dec 2 | Final picks only | Dec 2: Ashmitha picks 2 finals by 3:59 pm Pacific |
 
 Planned Phase 1 submissions: 10 (baseline, the base agent, 7 variants, combined). Spares: Nov 22, 24, 25.
@@ -126,17 +127,18 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Create Kaggle team `GROUP_PROGRAMMING_05_b`; invite Parth, Ishan, Naveen; confirm all 4 joined.
 - [ ] Message Dipin: Team B uses Team A's harness and splits; ask for write access to the repo for all 4; confirm
       the team naming (`_a` / `_b`) and the "build on budget-fixed base" decision.
-- [ ] Create branch `group5-team-b` from `main`; add the `team-b/` skeleton (this file, `TEAM_B_GUIDE.md`, `README.md`,
-      `variants/_template/`, empty `docs/experiment_log.csv` with the shared columns).
+- [x] Create branch `group5-team-b` from `main`; add the `team-b/` skeleton (this file, `TEAM_B_GUIDE.md`, `README.md`,
+      `variants/_template/`, `docs/experiment_log.csv` with the shared columns, seeded with Team A's reference runs).
 - [ ] Download competition data once: `kaggle competitions download gemma-4-developer-agent -f tasks.jsonl -p data`
       (+ `HARNESS_README.md`); share `tasks.jsonl` path with Ishan.
 - [ ] **Baseline:** zip `baseline/` unchanged with `validate.py`, submit on Nov 13. Record public score + screenshot.
       Do not re-run it on dev (Team A's dev number 2/30 is the group's dev baseline).
-- [ ] **Base v0:** copy `variants/dipin-step-budget-v1` to `team-b/variants/base/`, README credits
+- [x] **Base agent:** copy `variants/dipin-step-budget-v1` to `team-b/variants/base/`, README credits
       Dipin. Do **not** re-run it: reuse Dipin's smoke (2/10) and dev scores, after checking the folder is byte-identical
       (`diff -r variants/dipin-step-budget-v1 team-b/variants/base`, README aside). Only run it yourself
       if Dipin's dev score is still missing by Nov 15. Submit to Kaggle on Nov 14 (costs a daily slot, no GPU quota).
-- [ ] Write `team-b/docs/competition_summary.md` (G.1): task, inputs (repo snapshot, issue text, code graphs,
+- [ ] Collect Dipin's dev score for the base agent (needed to compare every variant on dev) and log it.
+- [x] Write `team-b/docs/competition_summary.md` (G.1): task, inputs (repo snapshot, issue text, code graphs,
       embeddings), output (patch), metric, 9 tools, limits (32K context, 6 min/task, 12 h, offline sandbox,
       4 GiB RAM), submission format, 1/day, private hidden repos.
 - [ ] Set up the review rotation and post the calendar in the team chat.
@@ -144,7 +146,8 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 **V1 — Patch hygiene (smoke by Nov 15, slot Nov 16)**
 - [ ] In the base system prompt, add a "before you call `submit_patch`" checklist:
       diff is non-empty; only source files changed (no tests, no `repro.py`, no scratch files); delete any files you
-      created for testing; run `python -m py_compile` on every changed file; re-read the edited lines once.
+      created for testing; remove debug prints; check `git status` / `git diff --stat`; run `python -m py_compile`
+      on every changed file.
 - [ ] Run the variant loop. In the README: What = pre-submit checklist; Why = empty / dirty diffs (Team A finding);
       Source = [12] SWE-bench.
 - [ ] Compare: count of empty patches and stray files vs the base agent, not just the score.
@@ -196,7 +199,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Variant loop. README: What = one critic round; Why = right-file-wrong-fix failures; Source = [3].
 - [ ] Record how often the critic changed the patch and whether those tasks passed.
 
-**Report (by Nov 22)**
+**Report (first draft by Nov 22; add tuning results by Nov 30)**
 - [ ] Report section: both designs, smoke/dev/Kaggle scores, what worked and what didn't, cost in time per task.
 - [ ] One slide; contribution row. Review Ishan's PRs.
 
@@ -227,7 +230,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
       number of nodes so context stays small. Implement as a skill (`SKILL.md`) the agent loads.
 - [ ] Variant loop. README: What = bounded graph expansion; Why = fixes that need a caller/callee change; Source = [8], [9].
 
-**Report (by Nov 22)**
+**Report (first draft by Nov 22; add tuning results by Nov 30)**
 - [ ] Report section: EDA findings (G.2), retrieval hit rates, both variants, scores. One slide; contribution row.
 - [ ] Review Naveen's PRs.
 
@@ -256,7 +259,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] Coordinate with Poushali (Team A, test-runner tool) so the two designs are different or clearly compared.
 - [ ] Variant loop. README: What = targeted regression check; Why = broke-other-tests failures; Source = [4].
 
-**Report (by Nov 22)**
+**Report (first draft by Nov 22; add tuning results by Nov 30)**
 - [ ] Report section: error analysis (G.2), both variants, scores, failure-type changes. One slide; contribution row.
 - [ ] Write the "failed or ineffective approach" paragraph for whichever Team B variant did worst (G.3 requires one).
 - [ ] Review Ashmitha's PRs.
@@ -268,7 +271,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 - [ ] 7 variants + combined, each with smoke + dev + Kaggle score in the log (G.3, G.4)
 - [ ] ≥1 failed approach written up with what we learned (G.3)
 - [ ] Score-over-time chart + full submission history screenshots (G.4, G.6)
-- [ ] 4 report sections + 4 contribution rows + 4 slides to the group editors by Nov 22 (G.5)
+- [ ] 4 report sections + 4 contribution rows + 4 slides to the group editors (first draft Nov 22, final Nov 30) (G.5)
 - [ ] Peer review forms (all 4) after Dec 1
 
 ## 9. Risks
