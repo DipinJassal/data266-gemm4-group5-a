@@ -137,15 +137,36 @@ def result_record(task, result, wall_seconds: float) -> dict:
     return json.loads(json.dumps(rec, default=str))
 
 
-def save_full_result(folder: Path, instance_id: str, result) -> None:
-    """Dump every field of swegemma's result (incl. Phase 2 test output) for error analysis."""
+def _jsonable(value):
+    """One field of the result as JSON; never raises (a field that can't be serialized becomes a short note)."""
     try:
-        if hasattr(result, "model_dump"):
-            data = result.model_dump(mode="json")
+        if hasattr(value, "model_dump"):
+            value = value.model_dump(mode="json")
+        return json.loads(json.dumps(value, default=str))
+    except Exception as e:
+        return f"<not serializable: {type(value).__name__}: {type(e).__name__}: {str(e)[:200]}>"
+
+
+def save_full_result(folder: Path, instance_id: str, result) -> None:
+    """Dump every field of swegemma's result (incl. Phase 2 test output) for error analysis.
+
+    Serialized field by field, so one field that pydantic can't dump (e.g. the SessionTrace) no longer loses the
+    whole file. Trace fields are skipped: swegemma already writes them to swegemma/traces/.
+    """
+    try:
+        fields = getattr(type(result), "model_fields", None)
+        if fields:
+            raw = {name: getattr(result, name, None) for name in fields}
         elif hasattr(result, "__dict__"):
-            data = dict(vars(result))
+            raw = dict(vars(result))
         else:
-            data = {"repr": repr(result)}
+            raw = {"repr": repr(result)}
+        data = {}
+        for name, value in raw.items():
+            if "trace" in name.lower():
+                data[name] = "<skipped: saved separately in swegemma/traces/>"
+            else:
+                data[name] = _jsonable(value)
         folder.mkdir(parents=True, exist_ok=True)
         (folder / f"{instance_id}.json").write_text(json.dumps(data, indent=2, default=str))
     except Exception as e:  # never let bookkeeping kill a run

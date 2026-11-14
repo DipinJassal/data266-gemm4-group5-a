@@ -44,7 +44,7 @@ Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
-## Status (last updated Nov 12, 2026)
+## Status (last updated Nov 13, 2026)
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -62,6 +62,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - Draft **V2** `variants/dipin-step-budget-v1/`: only `eval_config.yaml` changed (4.5 min / 50 tool calls instead of 1 min / 10).
   Validated offline; not yet scored. The numbers get tuned after the first smoke timings.
 
+- **LoRA go/no-go: GO** (Bhoomika, PR #3, merged Nov 13). Tiny QLoRA adapter trained on bf16 31B (L4×4) loads on the served QAT model in the harness, no errors (2-task load test: 1/2, not a score). V1 training ≈ 2–3 h of quota per run. Setup notes in `lora/README.md`.
+
 **Next for Dipin**
 - [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
@@ -76,6 +78,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
+- [x] Nov 13: fixed `task_details/` (reported by Khushi): `model_dump(mode="json")` failed on the `SessionTrace` field, so nothing was saved. Now saved field by field; trace fields are skipped (already in `swegemma/traces/`). Tested on a mock result; first real run will confirm the Phase 2 output is in there.
 - [ ] Decide how run results reach the team: ZIPs by hand (now), or commit small run summaries to the repo.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
@@ -84,6 +87,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 **Next for others**
 - [ ] **Sarvesh:** `baseline/` is already filled (unmodified sample). Still yours: run guide, baseline submission on Nov 10, baseline profile.
 - [ ] **Everyone:** install the Kaggle CLI, accept the competition rules, save your API token (see `harness/README.md`), so you can run the harness on your own GPU quota.
+
+- **Khushi (Nov 13):** V1 structured-loop prompt ran on Kaggle (4× L4) on her own quota: **1/2 smoke tasks** (quick check, not a score). Full smoke run next, now that `task_details/` is fixed.
 
 **Findings the team needs to know**
 - **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
@@ -221,7 +226,7 @@ Each variant `README.md` has exactly three lines:
   *Progress (Nov 12):*
   - Implemented as `variants/khushi-structured-prompt-v1/` on local branch `khushi/structured-prompt-v1`, commit `1452729` (not pushed yet).
   - Offline validation passed (`validate.py` OK; zip has `agent.yaml` at root), after downloading the genuine Kaggle sample adapter weights locally (see "adapter weights" above).
-  - GPU smoke and dev runs: **pending**. The Nov 13 Kaggle slot is being rescheduled with Dipin.
+  - GPU runs: 2-task smoke check done Nov 13 (4× L4, 1/2, quick check, not a score). Full 10-task smoke and dev runs: **pending**. The Nov 13 Kaggle slot is being rescheduled with Dipin.
   - *Proposed controlled comparison (pending Dipin's formal confirmation of the rule-1 exception):*
     - **Control:** `dipin-step-budget-v1` (V2 budget: 4.5 min / 50 tool calls, baseline prompt).
     - **Treatment:** the same folder copied, with only `prompts/system.md` (and the README) changed.
@@ -253,7 +258,8 @@ Each variant `README.md` has exactly three lines:
 ### Bhoomika Lnu — LoRA fine-tuning (highest risk: start today)
 
 **Setup:**
-- [ ] **Go / no-go by Nov 12:** confirm the adapter format the harness accepts for the 31B model; train a tiny adapter for a few steps and confirm it loads and runs; estimate GPU hours. If it isn't feasible, tell Dipin and switch to putting curated successful runs into the prompt as examples.
+- [x] **Go / no-go by Nov 12:** confirm the adapter format the harness accepts for the 31B model; train a tiny adapter for a few steps and confirm it loads and runs; estimate GPU hours. If it isn't feasible, tell Dipin and switch to putting curated successful runs into the prompt as examples.
+  *(Nov 14: **GO**. A tiny QLoRA adapter trained on bf16 31B (Kaggle L4x4) loaded on the QAT model in the harness, all requests routed to `main_lora`, no errors (2-task load test, not a score). V1 training ≈ 2–3 h of quota. Details and Kaggle setup notes: `lora/README.md`.)*
 
 **Variants:**
 - **V1, Nov 17 — LoRA on reference patches:** train on `train.txt` tasks only (never `dev.txt`); attach the adapter to the patch-writing agent.
