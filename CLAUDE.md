@@ -62,6 +62,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - Draft **V2** `variants/dipin-step-budget-v1/`: only `eval_config.yaml` changed (4.5 min / 50 tool calls instead of 1 min / 10).
   Validated offline; not yet scored. The numbers get tuned after the first smoke timings.
 
+- **LoRA go/no-go: GO** (Bhoomika, PR #3, merged Nov 13). Tiny QLoRA adapter trained on bf16 31B (L4×4) loads on the served QAT model in the harness, no errors (2-task load test: 1/2, not a score). V1 training ≈ 2–3 h of quota per run. Setup notes in `lora/README.md`.
+
 **Next for Dipin**
 - [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
