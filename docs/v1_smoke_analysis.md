@@ -35,13 +35,17 @@ baseline dev analysis in `docs/error_analysis.md`. One run per arm at n = 10, so
 | `fastapi_11194` | failed | empty | scratch only / empty | reproduce_issue.py, reproduce_issue_v2.py / — | none / none | 279 / 276 | 30 / 22 | 2 / 6 | 2 / 2 | 0 / 0 | 2 failed, 2 passed / not run | No source change (scratch-only patch) / Timeout, no source edit |
 | `fastapi_13537` | **resolved** | **resolved** | source / source | utils.py / utils.py | #10 / #9 | 237 / 203 | 16 / 11 | 1 / 1 | 0 / 0 | 3 / 1 | 2 passed / 2 passed | Resolved / Resolved |
 | `fastapi_14609` | failed | failed | source / source | main.py, shared.py / main.py, may_v1.py, shared.py, v1.py, temp_pydantic_v1_params.py | #9 / #10 | 279 / 280 | 16 / 35 | 0 / 0 | 0 / 0 | 0 / 0 | 5 errors / 5 errors | Patch broke import / Patch broke import |
-| `fastapi_14962` | failed | empty | source / empty | v2.py / — | #27 / none | 281 / 270 | 27 / 19 | 0 / 1 | 0 / 0 | 0 / 0 | 2 errors / not run | Patch broke import / Context-window crash, no patch |
+| `fastapi_14962` | failed | empty | source / empty | v2.py / — | #27 / none | 281 / 270 | 27 / 19 | 0 / 1 | 0 / 0 | 0 / 0 | 2 errors (missing `inline_snapshot`) / not run | Unscoreable in env (missing test dependency)† / Context-window crash, no patch |
 | `fastapi_15763` | failed | failed | source / source | routing.py, reproduce_issue.py / routing.py | #5 / #7 | 281 / 262 | 43 / 30 | 1 / 1 | 0 / 0 | 6 / 3 | 4 failed, 30 passed / 4 failed, 30 passed | Wrong or incomplete fix / Wrong or incomplete fix |
 | `requests_7505` | failed | failed | source / source | _types.py, models.py / _types.py | #12 / #9 | 347 / 346 | 24 / 23 | 0 / 0 | 0 / 15 | 0 / 0 | 142 passed, 197 errors (httpbin) / same | Unscoreable in env / Unscoreable in env |
 | `rich_3180` | empty | empty | empty / empty | — / — | none / none | 274 / 274 | 4 / 4 | 1 / 1 | 0 / 0 | 0 / 0 | not run / not run | Timeout, no source edit / same |
 | `rich_3506` | empty | empty | empty / empty | — / — | none / none | 272 / 274 | 9 / 7 | 0 / 4 | 0 / 0 | 0 / 0 | not run / not run | Timeout, no source edit / same |
 | `rich_3782` | failed | empty | scratch only / empty | repro.py / — | none / none | 276 / 274 | 22 / 22 | 1 / 4 | 1 / 1 | 0 / 0 | 1 failed, 24 passed / not run | No source change (scratch-only patch) / Timeout, no source edit |
 | `rich_4075` | failed | empty | scratch only / empty | repro.py / — | none / none | 277 / 274 | 37 / 27 | 3 / 6 | 2 / 0 | 0 / 0 | 1 failed, 99 passed / not run | No source change (scratch-only patch) / Timeout, no source edit |
+
+† **Correction (Nov 15, found while analysing the dev run):** the control's `fastapi_14962` was first labelled "patch broke import". Its 2 Phase 2
+errors are actually `ModuleNotFoundError: No module named 'inline_snapshot'` while collecting the hidden test files, a test dependency missing from
+our evaluator (see `docs/v1_dev_analysis.md`). The task can't pass in this environment whatever the patch. Resolution counts are unchanged.
 
 **Definitions** (applied identically to both arms; script `compare_runs.py`, not committed):
 - **First OK source edit:** the first `edit_file`/`write_file` call with status `ok` on a non-scratch, non-test file.
@@ -58,7 +62,7 @@ baseline dev analysis in `docs/error_analysis.md`. One run per arm at n = 10, so
 | No source change (empty + scratch-only) | 5 | 6 | 5 | 6 |
 | Made a successful source edit | 5 | 4 | 4 | 3 |
 | Patch covers every reference source file | 3 | 2 | 2 | 2 |
-| Wrong or incomplete source fix, scoreable (source patch, not resolved, excl. httpbin) | 3 | 2 | 3 | 2 |
+| Wrong or incomplete source fix, scoreable (source patch, not resolved, excl. environment-blocked)† | 2 | 2 | 2 | 2 |
 | Scratch file in final patch | 4 | 0 | 4 | 0 |
 | Avg / max time (min) | 4.67 / 5.78 | 4.55 / 5.78 | 4.55 / 4.68 | 4.42 / 4.66 |
 | Avg tool calls | 22.8 | 20.0 | 22.7 | 19.7 |

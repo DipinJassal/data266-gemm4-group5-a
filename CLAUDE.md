@@ -92,6 +92,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - **Khushi (Nov 13):** V1 structured-loop prompt ran on Kaggle (4× L4) on her own quota: **1/2 smoke tasks** (quick check, not a score). Full smoke run next, now that `task_details/` is fixed.
 - **Khushi (Nov 14):** V1 10-task smoke **1/10**; the matched control (`dipin-step-budget-v1`, unchanged, same tree `82853e5e`, same settings) also scored **1/10**,
   on the same task. Exploratory (n=10, one run each). Details: `docs/v1_smoke_analysis.md`.
+- **Khushi (Nov 14):** V1 on dev (RUN-007, one full run, 4.5 min / 50 calls): **5/30 = 16.7%** (fastapi 3/15, rich 2/11, requests 0/3, httpx 0/1).
+  Not a controlled gain over the baseline's 2/30, which ran at 1 min / 10 calls; the control has no dev score yet. Details: `docs/v1_dev_analysis.md`.
 
 **Findings the team needs to know**
 - **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
@@ -117,6 +119,14 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   the official reference patch gets the same 197 errors, so the task can't be resolved there. 8 of 13 public `requests` tasks target that file
   (inferred; only `requests_7505` tested), including smoke `requests_7505` and **dev `requests_7433`**. Report results with and without them.
   Not verified against Kaggle's official Stage 2 scorer.
+  *Update (Nov 15): seen directly on dev `requests_7433` in the V1 dev run (195 `httpbin` errors).*
+- **Everyone (missing fastapi test dependencies, Nov 15; detail in `docs/v1_dev_analysis.md`):** in our evaluator, 6 of 15 dev fastapi tasks
+  (`fastapi_12942`, `13207`, `13713`, `14246`, `14303`, `14356`) fail test collection with `No module named 'dirty_equals'` or `'inline_snapshot'`.
+  Neither package is among the competition wheels, and test files are reset before scoring, so these tasks can't pass for any variant (the baseline included).
+  Together with `requests_7433`, **7/30 dev tasks** are blocked this way (smoke: control's `fastapi_14962`). Cause: our runner, like Kaggle's official
+  Getting Started notebook, uses swegemma's subprocess sandbox, where test-dependency installation is skipped entirely. The official Stage 2 scorer uses
+  a Docker path with what looks like a private ~1.7 GB wheels cache, so it very likely has these packages (not verified).
+  Report each full local 30-task dev result, with a 23-task sensitivity analysis alongside (never as a replacement). These are not Kaggle's official scores. Details: `docs/scoring_environment_comparison.md`.
 - **Everyone (adapter weights):** `.gitignore` excludes `*.safetensors`, but `harness/validate.py` requires `adapters/*/adapter_model.safetensors`,
   so validation (and therefore `run_kaggle.py`) fails on every fresh clone, `baseline/` included. Workaround: download Kaggle's
   `sample_submission/adapters/*/adapter_model.safetensors` into your local folder. Fixed locally for `khushi-structured-prompt-v1` only;
@@ -235,7 +245,8 @@ Each variant `README.md` has exactly three lines:
   - Implemented as `variants/khushi-structured-prompt-v1/` on local branch `khushi/structured-prompt-v1`, commit `1452729` (not pushed yet).
   - Offline validation passed (`validate.py` OK; zip has `agent.yaml` at root), after downloading the genuine Kaggle sample adapter weights locally (see "adapter weights" above).
   - GPU runs: 2-task smoke check Nov 13 (4× L4, 1/2, not a score). 10-task smoke Nov 14: **1/10** (6 empty, 3 failed). Matched control run Nov 14
-    (same tree and settings, Khushi's quota): **1/10**, same task. Dev run: **pending** (not started). Branch now at local merge `6e5a534`, not pushed.
+    (same tree and settings, Khushi's quota): **1/10**, same task. Dev run Nov 14 (RUN-007): **5/30**, logged next to the baseline.
+    Branch `khushi/structured-prompt-v1` at `6e5a534`, pushed; draft PR #8.
   - *Proposed controlled comparison (pending Dipin's formal confirmation of the rule-1 exception):*
     - **Control:** `dipin-step-budget-v1` (V2 budget: 4.5 min / 50 tool calls, baseline prompt).
     - **Treatment:** the same folder copied, with only `prompts/system.md` (and the README) changed.

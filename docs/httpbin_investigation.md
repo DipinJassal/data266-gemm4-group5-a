@@ -10,8 +10,11 @@ test environment doesn't have it. In a local reproduction of the sandbox, the **
 environment, as reproduced locally and as seen in our Kaggle swegemma runs, the task can't be resolved whatever patch an agent writes.
 
 **Scope:** 8 of the 13 public `requests` tasks run their hidden tests in `tests/test_requests.py`, which uses the fixture
-throughout. That includes smoke `requests_7505` and **dev `requests_7433`**. The same failure is likely for all 8;
-only `requests_7505` was checked directly.
+throughout. That includes smoke `requests_7505` and **dev `requests_7433`**. The same failure is likely for all 8.
+`requests_7505` was reproduced locally. **Update (Nov 15):** in the V1 dev run (RUN-007), `requests_7433` scored 142 passed and
+195 errors, all of them `httpbin`/`httpbin_secure` recursive-fixture errors, so this is now observed on a dev task too (from its Phase 2 output only;
+its reference patch was not opened). The other 6 remain inferred. The dev run also found a related problem: fastapi test files that need
+`dirty_equals` or `inline_snapshot`, which are also missing (`docs/v1_dev_analysis.md`).
 
 ## Evidence
 
@@ -48,7 +51,8 @@ The resolution rule requires `errors == 0`, so any `httpbin` error fails the tas
 ## Limitations (not verified)
 
 - **Kaggle's official Stage 2 scorer was not run.** Our Kaggle runs used swegemma's subprocess sandbox (paths `/tmp/swegemma_sandbox_…`). The official scorer uses the Docker backend plus "cached test site-packages" that aren't published. If that cache includes `pytest-httpbin`, official scoring could differ. Nothing published suggests it does.
-- Only the `requests_7505` snapshot was tested. The other 7 tasks are inferred from which test file their hidden tests target. `requests_7433` (dev) was deliberately not run, to keep dev held out.
+- Only the `requests_7505` snapshot was reproduced locally. `requests_7433` (dev) was not reproduced locally, to keep dev held out. Its
+  `httpbin` errors were observed only in the scored V1 dev run. The other 6 tasks are inferred from which test file their hidden tests target.
 - The local reproduction is an approximation of Container B: macOS with a venv, not the Linux image, and not network-isolated. It matched the Kaggle result exactly (#5).
 
 ## What this means for us
