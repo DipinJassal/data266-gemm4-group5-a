@@ -6,7 +6,7 @@ patch categories come only from each final patch and its Phase 2 test output. No
 
 ## Headline
 
-**V1 dev score: 5/30 = 16.7%.** Resolved:
+**Full local dev result: 5/30 (16.7%).** This is measured with our participant-side harness, not Kaggle's official competition score. Resolved:
 - fastapi 3/15: `fastapi_14077`, `fastapi_14301`, `fastapi_14492`
 - rich 2/11: `rich_3718`, `rich_3905`
 - requests 0/3
@@ -53,19 +53,19 @@ The same problem also hit one smoke task: the control's `fastapi_14962` in RUN-0
   27.8 MB wheels. Kaggle's official scoring very likely has these packages, but that's **not verified**.
 - The baseline's RUN-002 used the same runner, so these 7 tasks were equally unpassable for it. Comparisons between our runs stay fair.
 
-**Official result vs sensitivity:**
+**Full local result vs sensitivity analysis:**
 
 | | Tasks | V1 resolved |
 |---|---:|---:|
-| **Official result (all dev tasks)** | 30 | **5 (16.7%)** |
-| Sensitivity: excluding the 7 environment-blocked tasks | 23 | 5 (21.7%) |
+| **Full local dev result (all 30 dev tasks)** | 30 | **5 (16.7%)** |
+| Sensitivity analysis: excluding seven tasks blocked by missing dependencies in our participant-side scoring environment | 23 | 5 (21.7%) |
 
-The sensitivity figure is **not** a score and must not replace 5/30. Its limitations:
+Neither figure is Kaggle's official competition score. The sensitivity figure is **not** a replacement score and must not replace 5/30. Its limitations:
 - it assumes the blocked tasks are unscoreable for everyone
 - it can't say whether V1's patches on the 5 blocked tasks with a source change were correct
 - the baseline's equivalent can't be computed the same way, because RUN-002 saved no Phase 2 output, though both baseline resolves are in the scoreable 23
 
-Under official scoring, any of those 5 patches could add to the total.
+If Kaggle's official scorer does have the missing packages (unverified), any of those 5 patches could count there.
 
 ## Summary metrics (all 30 tasks)
 
@@ -180,7 +180,7 @@ control (`dipin-step-budget-v1`, same tree and settings) is needed for that. It'
 
 - One run, n = 30, temperature 0.2. Run-to-run variation is unmeasured.
 - There's no matched control on dev, so no causal claim about the prompt.
-- 7 environment-blocked tasks: the official 30-task total includes them. The 5/23 figure is a sensitivity check only. Whether Kaggle's official
+- 7 environment-blocked tasks: the full local 30-task result includes them. The 5/23 figure is a sensitivity analysis only. Whether Kaggle's official
   scorer has `dirty_equals`, `inline_snapshot` and `pytest-httpbin` is not verified.
 - The categories are heuristics from traces, the final patches and Phase 2 output (definitions as in `docs/v1_smoke_analysis.md`). Without
   reference patches, "wrong file" vs "right file, wrong fix" isn't distinguished on dev.

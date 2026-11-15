@@ -126,7 +126,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   Together with `requests_7433`, **7/30 dev tasks** are blocked this way (smoke: control's `fastapi_14962`). Cause: our runner, like Kaggle's official
   Getting Started notebook, uses swegemma's subprocess sandbox, where test-dependency installation is skipped entirely. The official Stage 2 scorer uses
   a Docker path with what looks like a private ~1.7 GB wheels cache, so it very likely has these packages (not verified).
-  Report dev scores as the official 30-task number plus a 23-task sensitivity figure. Details: `docs/scoring_environment_comparison.md`.
+  Report each full local 30-task dev result, with a 23-task sensitivity analysis alongside (never as a replacement). These are not Kaggle's official scores. Details: `docs/scoring_environment_comparison.md`.
 - **Everyone (adapter weights):** `.gitignore` excludes `*.safetensors`, but `harness/validate.py` requires `adapters/*/adapter_model.safetensors`,
   so validation (and therefore `run_kaggle.py`) fails on every fresh clone, `baseline/` included. Workaround: download Kaggle's
   `sample_submission/adapters/*/adapter_model.safetensors` into your local folder. Fixed locally for `khushi-structured-prompt-v1` only;

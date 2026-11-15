@@ -42,9 +42,9 @@ artifact of the **participant-side** setup, not necessarily of official scoring.
 
 ## Implications
 
-- The **official 30-task results stand** as measured. Every run of ours (baseline RUN-002, V1, control) is affected identically, so within-harness comparisons stay fair.
+- The **full local 30-task results stand** as measured. They come from our participant-side harness and aren't Kaggle's official competition scores. Every run of ours (baseline RUN-002, V1, control) is affected identically, so within-harness comparisons stay fair.
 - The **absolute** dev scores probably understate official scoring by up to the 7 blocked tasks, but only where the agent's fix was also correct. We can't tell which those are without the packages.
 - **Options for the team (Dipin's harness, his decision):**
-  1. Report a scoreable-subset figure (23 dev tasks) next to every official 30-task number.
+  1. Report a 23-task sensitivity analysis next to every full local 30-task result, never instead of it.
   2. Post on the competition forum asking whether participants' local evaluation is expected to lack these test dependencies.
   3. Re-score existing patches offline with the missing test packages added in a separate diagnostic environment, the same method as the `httpbin` counterfactual. This takes no GPU, but it does mean opening the dev tasks' test files, so it needs a team decision on held-out discipline.
