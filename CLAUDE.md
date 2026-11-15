@@ -94,6 +94,9 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   on the same task. Exploratory (n=10, one run each). Details: `docs/v1_smoke_analysis.md`.
 - **Khushi (Nov 14):** V1 on dev (RUN-007, one full run, 4.5 min / 50 calls): **5/30 = 16.7%** (fastapi 3/15, rich 2/11, requests 0/3, httpx 0/1).
   Not a controlled gain over the baseline's 2/30, which ran at 1 min / 10 calls; the control has no dev score yet. Details: `docs/v1_dev_analysis.md`.
+- **Khushi (Nov 15):** V2 time-budget prompt (`khushi-anti-looping-v2`), two smoke iterations against the control's RUN-006 (1/10): RUN-008 **2/10**, RUN-009 **1/10**.
+  In neither did the agent call `get_status()` more than once (0/10 tasks), so the time rules never fired. V2 is closed as a documented negative result:
+  no dev run, not proposed for submission. Details: `docs/v2_time_awareness_analysis.md`; log rows pending PR #5: `docs/v2_experiment_log_entries.md`.
 
 **Findings the team needs to know**
 - **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
@@ -253,6 +256,8 @@ Each variant `README.md` has exactly three lines:
     - Model, adapters, sampling, tools, sub-agent and `eval_config.yaml` are byte-identical to the control.
     - The original 1-minute baseline (2/30) stays as a historical reference only, not V1's comparator.
 - **V2, Nov 18 — Anti-looping prompt:** notice repeated actions and change strategy; always submit a best-effort diff before running out of steps.
+  *Built instead as a single-mechanism time-awareness prompt (`variants/khushi-anti-looping-v2/`, local branch `khushi/anti-looping-v2`: iteration 1 `cfec23d`,
+  iteration 2 `af977ad`). Smoke 2/10 and 1/10 vs control 1/10. Recurring status checks never happened, so it's closed as a negative result (rule 7). See `docs/v2_time_awareness_analysis.md`.*
 - **V3 (optional):** a prompt targeting the most common failure type in the error analysis.
 
 **Other:** keeps the log complete; per-failure-type results for the report; reviews Poushali.
