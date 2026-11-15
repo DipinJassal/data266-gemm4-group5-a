@@ -79,6 +79,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
 - [x] Nov 13: fixed `task_details/` (reported by Khushi): `model_dump(mode="json")` failed on the `SessionTrace` field, so nothing was saved. Now saved field by field; trace fields are skipped (already in `swegemma/traces/`). Tested on a mock result; first real run will confirm the Phase 2 output is in there.
+  *(Confirmed by Khushi, Nov 14: in two real 10-task smoke runs every task saved `task_details/`, and every non-empty patch (4/4 and 8/8) has its Phase 2 `test_output`. Empty patches skip Phase 2 by design.)*
 - [ ] Decide how run results reach the team: ZIPs by hand (now), or commit small run summaries to the repo.
 
 - [ ] Pick the paper reference for V2's README (`Source:` line), then smoke → dev → log it.
@@ -89,6 +90,8 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [ ] **Everyone:** install the Kaggle CLI, accept the competition rules, save your API token (see `harness/README.md`), so you can run the harness on your own GPU quota.
 
 - **Khushi (Nov 13):** V1 structured-loop prompt ran on Kaggle (4× L4) on her own quota: **1/2 smoke tasks** (quick check, not a score). Full smoke run next, now that `task_details/` is fixed.
+- **Khushi (Nov 14):** V1 10-task smoke **1/10**; the matched control (`dipin-step-budget-v1`, unchanged, same tree `82853e5e`, same settings) also scored **1/10**,
+  on the same task. Exploratory (n=10, one run each). Details: `docs/v1_smoke_analysis.md`.
 
 **Findings the team needs to know**
 - **Everyone:** the official local evaluator is `swegemma` (not on PyPI; installed from the Kaggle dataset
@@ -109,6 +112,11 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   Malformed tool-call arguments appear in 8/30 tasks, and in one (`fastapi_14258`) they made every edit fail. No task ran the repo's own tests.
   6 of the 8 failing patches include scratch files. "Wrong fix" and "broke other tests" can't be separated, because Phase 2 output wasn't saved.
   These are dev-set patterns: confirm them on smoke/train runs before designing variants around them (rule 3).
+- **Everyone (`requests` tasks, Nov 14; detail in `docs/httpbin_investigation.md`):** the test environment lacks `pytest-httpbin`, so every
+  `httpbin` test in the requests repo's `tests/test_requests.py` errors (`requests_7505`: 197 errors in our Kaggle run). In a local reproduction of the sandbox,
+  the official reference patch gets the same 197 errors, so the task can't be resolved there. 8 of 13 public `requests` tasks target that file
+  (inferred; only `requests_7505` tested), including smoke `requests_7505` and **dev `requests_7433`**. Report results with and without them.
+  Not verified against Kaggle's official Stage 2 scorer.
 - **Everyone (adapter weights):** `.gitignore` excludes `*.safetensors`, but `harness/validate.py` requires `adapters/*/adapter_model.safetensors`,
   so validation (and therefore `run_kaggle.py`) fails on every fresh clone, `baseline/` included. Workaround: download Kaggle's
   `sample_submission/adapters/*/adapter_model.safetensors` into your local folder. Fixed locally for `khushi-structured-prompt-v1` only;
@@ -215,7 +223,7 @@ Each variant `README.md` has exactly three lines:
 
 **Setup:**
 - [ ] **Nov 10:** Team experiment log (shared sheet) with columns: variant, owner, one-line change, smoke time, dev score, Kaggle score, status, notes.
-  *(Nov 12: built as `docs/experiment_log.xlsx` with those columns first; PR #1 open, pending Sarvesh's review. The baseline dev run is verified
+  *(Nov 12: built as `docs/experiment_log.xlsx` with those columns first; PR #1 approved by Sarvesh and merged Nov 14. The baseline dev run is verified
   against the raw run ZIP; all other runs are marked repo-reported. Still to agree: whether the repo file or a shared sheet is the canonical copy.)*
 - [x] **Nov 11–12:** `docs/error_analysis.md`: label every baseline failure as wrong file found, right file but wrong fix, broke other tests, timeout or looping, or empty/invalid diff. Share the counts.
   *(Nov 12: done from the baseline dev ZIP. Primary labels: resolved 2, empty/invalid diff 23, wrong fix or broke other tests 5 (not separable), wrong file 0;
@@ -226,7 +234,8 @@ Each variant `README.md` has exactly three lines:
   *Progress (Nov 12):*
   - Implemented as `variants/khushi-structured-prompt-v1/` on local branch `khushi/structured-prompt-v1`, commit `1452729` (not pushed yet).
   - Offline validation passed (`validate.py` OK; zip has `agent.yaml` at root), after downloading the genuine Kaggle sample adapter weights locally (see "adapter weights" above).
-  - GPU runs: 2-task smoke check done Nov 13 (4× L4, 1/2, quick check, not a score). Full 10-task smoke and dev runs: **pending**. The Nov 13 Kaggle slot is being rescheduled with Dipin.
+  - GPU runs: 2-task smoke check Nov 13 (4× L4, 1/2, not a score). 10-task smoke Nov 14: **1/10** (6 empty, 3 failed). Matched control run Nov 14
+    (same tree and settings, Khushi's quota): **1/10**, same task. Dev run: **pending** (not started). Branch now at local merge `6e5a534`, not pushed.
   - *Proposed controlled comparison (pending Dipin's formal confirmation of the rule-1 exception):*
     - **Control:** `dipin-step-budget-v1` (V2 budget: 4.5 min / 50 tool calls, baseline prompt).
     - **Treatment:** the same folder copied, with only `prompts/system.md` (and the README) changed.
