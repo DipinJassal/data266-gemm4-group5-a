@@ -1,0 +1,24 @@
+{
+  "variant": "variants/sarvesh-sampling-v1",
+  "split": "smoke",
+  "n_tasks": 2,
+  "model": "gemma-4-31b-it-qat-w4a16-ct",
+  "git_rev": "ab0e931",
+  "dirty": true,
+  "adapters": [
+    "main_lora",
+    "tool_lora"
+  ],
+  "gpu_count": 4,
+  "budgets": {
+    "timeout_seconds": 60,
+    "verification_timeout_seconds": 300,
+    "max_tool_calls": 50,
+    "max_time_minutes": 4.5,
+    "max_turns": 50
+  },
+  "vllm_start_seconds": 419.5,
+  "started_utc": "2026-11-14T02:00:49.031740+00:00",
+  "finished_utc": "2026-11-14T02:14:51.062693+00:00",
+  "resolved": 1
+}

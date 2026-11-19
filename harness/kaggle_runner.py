@@ -175,7 +175,7 @@ def save_full_result(folder: Path, instance_id: str, result) -> None:
 
 def main() -> None:
     cfg = RUN_CONFIG
-    variant, split = cfg["variant"], cfg["split"]
+    variant, split = cfg["variant"].replace("\\", "/").strip("/"), cfg["split"]
     started = datetime.now(timezone.utc)
     quiet_loggers()
 

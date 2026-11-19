@@ -1,0 +1,9 @@
+# sarvesh-sampling-v1: only change vs dipin-step-budget-v1 (control).
+# Thinking off — baseline profile showed ~96% of wall time waiting on the model;
+# thinking_budget 4096 at ~29 tok/s can alone exceed a tight per-task budget.
+temperature: 0.2
+top_p: 0.95
+max_output_tokens: 16384
+thinking_config:
+  thinking_budget: 0
+  include_thoughts: false
