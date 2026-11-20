@@ -1,0 +1,3 @@
+**What changed:** `adapters/main_lora` (root coder agent) is a LoRA (r16, all linear layers, served at alpha 8 = 1/4 of the trained strength) trained on 75 train-split reference patches turned into tool-call trajectories (grep, read_file, edit_file per hunk, py_compile, submit_patch); everything else is `dipin-step-budget-v1`.
+**Why:** targets empty/invalid diffs, malformed tool-call arguments and scratch files in patches (docs/error_analysis.md): the agent learns to edit with well-formed `edit_file` calls and submit a clean patch.
+**Source:** [13] LoRA, [5] Open-SWE-Traces, [10] Trajectory curation
