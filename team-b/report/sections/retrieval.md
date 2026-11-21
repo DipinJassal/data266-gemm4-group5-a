@@ -1,6 +1,6 @@
-# Retrieval and code-graph localization (Ishan, Team B) — DRAFT
+# Retrieval and code-graph localization (Ishan, Team B) — first draft (Nov 21)
 
-> Fill the `TBD` cells from `team-b/docs/experiment_log.csv` once the smoke, dev and Kaggle runs are in.
+> Only the Kaggle column is still open: V1 was submitted Nov 21 and is scoring; graph-expand-2 is submitted Nov 21, 4 pm Pacific.
 
 ## Task analysis (G.2)
 
@@ -31,14 +31,14 @@ budget before the first edit (23/30 dev patches changed no source file).
 | base (Team A run) | smoke | 2/10 | 4.2 | 3 | — |
 | graph-localize | smoke, 2-task diagnostic | 2/2 | 4.1 | 0 | — |
 | graph-localize | smoke (10) | 1/10 | 4.7 | 2 | pending (submitted Nov 21) |
-| graph-localize | dev | TBD | TBD | TBD | — |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
-| graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | TBD |
+| graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | see smoke (10) row |
 | graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | scheduled Nov 21 |
 
 The 2-task diagnostics run on the first two smoke tasks, which the base agent also solves, so they show that a variant
 runs and follows its routine, **not** that it beats base. Comparative claims wait for the full smoke/dev runs and
-the Kaggle scores. Dev scores are validation (used for selection); the Kaggle score is the held-out result.
+the Kaggle scores. We did not run dev: both variants scored 1/10 on smoke, and about 10 GPU-quota hours for two dev
+runs would not change which variant goes into the combined agent. The Kaggle score is the held-out result.
 
 ## What worked, what didn't
 
@@ -64,7 +64,12 @@ the Kaggle scores. Dev scores are validation (used for selection); the Kaggle sc
   (vs 1/10 for graph-localize), but `get_code_subgraph` never. 9/10 tasks hit the time limit again; 4 patches contain
   only a scratch script and 3 are empty. More graph context did not turn into more fixes: the extra graph calls cost
   turns, and the agent still spent the rest of its budget on reproduction scripts.
-- Tool calls before the first edit, against base: TBD (needs the full smoke traces).
+- **Few tasks ever reach a source edit, and late.** From the 10-task smoke traces: only **3/10** tasks in each variant
+  edited a non-test, non-scratch source file at all. When they did, the first source edit came after a median of
+  **11 tool calls / 2.4 min** (graph-localize) and **14 calls / 2.8 min** (graph-expand-2), leaving under 2 minutes to
+  test and submit. The other edits went to scratch scripts (`repro.py`, `reproduce_issue.py`) or nothing. The extra graph
+  calls in graph-expand-2 pushed the first source edit later (about 3 more calls) without more tasks reaching one. Base
+  traces from Team A's smoke run are not in our run folder, so this has no base comparison.
 
 ## Offline retrieval check (train, no GPU)
 
