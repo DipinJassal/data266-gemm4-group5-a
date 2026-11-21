@@ -233,6 +233,7 @@ Each variant `README.md` has exactly three lines:
 - **V1, Nov 14 — Sampling settings:** small sweep of temperature / top-p and thinking mode on vs off on the smoke set; submit the best.
   *Progress (Nov 13–14):* `variants/sarvesh-sampling-v1/` (thinking off on V2 budget). Full smoke **2/10** (ties `dipin-step-budget-v1`); logs in `docs/runs/sarvesh-sampling-v1-smoke-full-20261114T031152Z/`. Harness path fix: `\` → `/` in `run_kaggle.py` / `kaggle_runner.py`. **Next:** Nov 14 team Kaggle submit after Dipin review; optional temp trials / dev later.
 - **V2, Nov 19 — Best-of-N attempts:** several attempts, keep the patch that passes the agent's own reproduction test, stop early on a pass. If `agent.yaml` can't express this, use "if your test fails, retry once with a different approach."
+  *Progress (Nov 21):* `variants/sarvesh-best-of-n-v2/` (prompt-only single retry on `dipin-step-budget-v1`). Smoke **2/10** (RUN-S02; 4 empty, 4 failed; avg 4.32 min). Logged in experiment workbook. **Next:** Dipin review + rescheduled Kaggle submit slot (Nov 19 missed). Optional later V3: lower `max_output_tokens` (context crash on `fastapi_14609`).
 - **V3 (optional):** max output tokens or step-limit tuning.
 
 **Other:** reviews Khushi.
