@@ -305,7 +305,9 @@ def push_kernel(
         if DRY_RUN:
             keep_dry_run(kdir, "kernel")
             return kernel_id
-        args = ["kernels", "push", "-p", str(kdir), "--accelerator", machine]
+        # GPU/machine comes from kernel-metadata.json (enable_gpu + machine_shape).
+        # Do NOT pass `--accelerator`: Kaggle CLI 1.7.x rejects it as an unrecognized argument.
+        args = ["kernels", "push", "-p", str(kdir)]
         if timeout:
             args += ["-t", str(timeout)]
         try:
@@ -380,7 +382,11 @@ def main() -> int:
     ap.add_argument("split", choices=["smoke", "dev", "train"], help="task split")
     ap.add_argument("--task-ids", nargs="+", default=[], help="run only these instance_ids")
     ap.add_argument("--max-tasks", type=int, default=0, help="first N tasks of the split")
-    ap.add_argument("--machine", default=DEFAULT_MACHINE, help=f"Kaggle accelerator (default {DEFAULT_MACHINE})")
+    ap.add_argument(
+        "--machine",
+        default=DEFAULT_MACHINE,
+        help=f"Kaggle machine_shape written into kernel-metadata.json (default {DEFAULT_MACHINE})",
+    )
     ap.add_argument("--timeout", type=int, help="kernel run-time limit in seconds")
     ap.add_argument("--no-wait", action="store_true", help="push and return; fetch later with --fetch")
     ap.add_argument("--fetch", action="store_true", help="download + summarize the latest run of this kernel")
