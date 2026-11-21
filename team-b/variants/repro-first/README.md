@@ -1,3 +1,3 @@
-**What changed:** Added one reproduce-first verification policy through a registered skill and root-prompt invocation: observe an issue-related failure, fix source, rerun the same check, and remove the temporary script.
-**Why:** Targets wrong-fix failures and weak local verification while bounding reproduction retries and preventing scratch files from entering the submitted patch.
+**What changed:** Added a registered reproduce-first skill and root invocation: one inline Python check before the source fix, then the identical check once afterward when reproduction was confirmed; uncaught assertions, no scratch scripts or reproduction retries.
+**Why:** Targets wrong-fix failures while reserving time for source edits; revision 2 addresses the initial pilot's scratch-only timeout and failure output that incorrectly returned exit code 0. Runtime benefit remains unverified.
 **Source:** Team B plan references [3] SWE-Protégé and [12] SWE-bench; implemented as the planned reproduce-first skill.

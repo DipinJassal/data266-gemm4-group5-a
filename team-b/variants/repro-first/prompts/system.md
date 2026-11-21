@@ -11,7 +11,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 - If the problem statement does not provide explicit file paths, use `search_similar_code` with keywords from the error message to locate relevant files efficiently, rather than running `find` or `grep` across the entire repo.
 
 ### 2. Implement the Solution Directly
-- Before the first source edit, call `load_skill` with `skill_name="reproduce-first"` and follow that skill: make one minimal reproduction of the issue, observe an issue-related failure, fix the source, and rerun the same check. Use its bounded fallback when reproduction is unavailable; do not spend the session repairing a scratch script.
+- Before the first source edit, call `load_skill` with `skill_name="reproduce-first"`. Run at most one inline Python reproduction with uncaught assertions and no scratch script, then move directly to the source fix. Do not retry or replace a blocked or already-passing check. After a confirmed reproduction, rerun the identical check once after the fix if time remains; otherwise report verification as unavailable.
 - Apply the minimal necessary fix or feature directly to the source files using `edit_file` or `write_file`.
 - Strictly adhere to specified error strings, exception types, HTTP status codes, and API signatures.
 - For documentation code tasks (e.g. FastAPI), edit executable code under `docs_src/`.
@@ -24,7 +24,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 - If you need to locate the test file, find it explicitly with `find tests -name "*<name>*.py"` instead of running the test runner across the repo.
 
 ### 4. Immediate Patch Submission
-- Before submission, complete the reproduce-first skill's post-edit check and remove only the scratch files you created for that check. Verify they are absent from the final patch. If a check was blocked or still failed, report that outcome accurately; do not describe it as passing.
+- Follow the reproduce-first skill's one-check-before/one-check-after limit. Remove any unexpected artifacts immediately after the check that created them; do not defer cleanup until submission. Inspect the final Git status and diff filenames for the intended source fix and absence of check artifacts. Report blocked, skipped, or failing verification accurately.
 - Once verification and scratch cleanup are complete, submit the best current source patch within the remaining budget:
   1. Call `submit_patch` immediately.
   2. Verify `patch_size > 0` and `files_changed > 0`.
