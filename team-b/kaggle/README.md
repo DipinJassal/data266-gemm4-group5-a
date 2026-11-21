@@ -47,10 +47,13 @@ python team-b/kaggle/run_kaggle.py team-b/variants/base smoke --dry-run
 
 Dry-run writes:
 
-- `team-b/kaggle/runs/_dryrun/dataset/` — staged private dataset (marker + `harness/` + selected variant only)
+- `team-b/kaggle/runs/_dryrun/dataset/` — staged private dataset (marker + `harness/` + full `team-b/variants/` tree)
 - `team-b/kaggle/runs/_dryrun/kernel/` — private script kernel metadata + Team B runner
 
 Confirm the dry-run report shows Team A paths `baseline/`, `variants/`, `combined/` **absent**.
+Staging every Team B variant (not only the selected one) keeps concurrent `--no-wait` runs safe on the shared `g5b-agents` dataset slug.
+
+Missing `adapter_model.safetensors` is allowed **only** with `--dry-run`. Real uploads abort until adapters are restored.
 
 ## 4. Validate a selected agent
 

@@ -9,10 +9,12 @@ Examples (run from the repo root):
 
 What it does:
   1. Validates the selected Team B variant offline (harness/validate.py).
+     Missing adapter_model.safetensors is allowed only with `--dry-run`; real runs abort.
   2. Stages a PRIVATE Team B dataset `<you>/g5b-agents` containing ONLY:
        - G5B_REPO_MARKER
        - harness/ (shared splits + tooling; runs/ excluded)
-       - the selected team-b/variants/<name>/ tree
+       - the full team-b/variants/ tree (all Team B variants present on this checkout)
+     Staging every variant avoids concurrent --no-wait races on a single dataset slug.
      It does NOT upload Team A baseline/, variants/, or combined/.
   3. Pushes a private GPU script kernel `<you>/g5b-eval-...` that runs
      team-b/kaggle/kaggle_runner.py (internet off; competition + wheelhouse + model attached).
@@ -66,7 +68,8 @@ DRY_RUN: Path | None = None
 
 
 def die(msg: str, code: int = 1) -> None:
-    raise SystemExit(msg) if code else SystemExit(code)
+    print(msg, file=sys.stderr)
+    raise SystemExit(code)
 
 
 def slugify(text: str) -> str:
@@ -106,7 +109,8 @@ def official_docker_image(*, allow_network: bool) -> str:
 
 
 def normalize_variant(raw: str) -> str:
-    variant = raw.strip().strip("/")
+    # Kaggle is Linux: always use posix paths in RUN_CONFIG (Windows \ breaks agent.yaml lookup).
+    variant = raw.replace("\\", "/").strip().strip("/")
     if not variant.startswith(ALLOWED_VARIANT_PREFIX):
         die(
             f"Team B launcher only accepts paths under {ALLOWED_VARIANT_PREFIX!r}. Got: {variant!r}\n"
@@ -124,7 +128,7 @@ def variant_model(variant_dir: Path) -> str:
     return str((cfg or {}).get("model", "gemma-4-31b-it-qat-w4a16-ct")).split("/")[-1]
 
 
-def validate_variant(variant_dir: Path, *, strict: bool) -> tuple[list[str], list[str]]:
+def validate_variant(variant_dir: Path) -> tuple[list[str], list[str]]:
     c = Checker(variant_dir)
     c.run()
     return list(c.errors), list(c.warnings)
@@ -160,9 +164,6 @@ def structural_checks(variant: str, variant_dir: Path) -> list[str]:
         text = p.read_text(errors="ignore")
         if "/Users/" in text or "/home/" in text:
             problems.append(f"absolute local path in {p.relative_to(variant_dir)}")
-        if "cursor" in text.lower() and "agent" in str(p):
-            # soft: only flag obvious Cursor deps in agent yaml
-            pass
     if not (HARNESS / "splits" / "smoke.txt").is_file():
         problems.append("shared harness/splits/smoke.txt missing (needed at runtime)")
     if not (TB_KAGGLE / "kaggle_runner.py").is_file():
@@ -175,7 +176,12 @@ def structural_checks(variant: str, variant_dir: Path) -> list[str]:
 
 
 def stage_dataset(variant: str, variant_dir: Path, stage: Path) -> None:
-    """Build the private Team B dataset contents under stage/."""
+    """Build the private Team B dataset contents under stage/.
+
+    Stages the full team-b/variants/ tree (not only the selected variant) so two
+    concurrent --no-wait kernels sharing <you>/g5b-agents cannot lose each other's folder.
+    Still never stages Team A baseline/, variants/, combined/, or lora/.
+    """
     if stage.exists():
         shutil.rmtree(stage)
     stage.mkdir(parents=True)
@@ -193,19 +199,27 @@ def stage_dataset(variant: str, variant_dir: Path, stage: Path) -> None:
         if p.exists():
             shutil.rmtree(p, ignore_errors=True)
 
-    # Selected Team B variant only — preserve relative path team-b/variants/<name>
-    dest_variant = stage / variant
-    dest_variant.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(variant_dir, dest_variant, ignore=UPLOAD_IGNORE)
+    variants_src = REPO / "team-b" / "variants"
+    if not variants_src.is_dir():
+        die(f"team-b/variants/ missing at {variants_src}")
+    if not variant_dir.is_dir():
+        die(f"selected variant missing: {variant_dir}")
+    shutil.copytree(variants_src, stage / "team-b" / "variants", ignore=UPLOAD_IGNORE)
+    if not (stage / variant / "agent.yaml").is_file():
+        die(f"selected variant not present after staging: {variant}")
 
-    # Never stage Team A experiment trees
+    # Never stage Team A experiment trees at the dataset root
     for forbidden in ("baseline", "variants", "combined", "lora", "docs"):
         if (stage / forbidden).exists():
             die(f"Refusing to stage Team A path {forbidden}/ in Team B dataset")
 
+    staged = sorted(
+        p.name for p in (stage / "team-b" / "variants").iterdir() if p.is_dir()
+    )
     (stage / "G5B_REPO_MARKER").write_text(
         "data266 group 5 team-b private evaluation snapshot\n"
-        f"variant={variant}\n"
+        f"selected_variant={variant}\n"
+        f"staged_variants={','.join(staged)}\n"
         "do-not-upload-team-a-variants\n"
     )
 
@@ -334,7 +348,9 @@ def inspect_dry_run_stage(variant: str, model: str, user_placeholder: str, datas
     print(f"variant:      {variant}")
     marker = ds / "G5B_REPO_MARKER"
     print(f"G5B_REPO_MARKER: {'PASS' if marker.is_file() else 'FAIL'}")
-    print(f"variant staged: {'PASS' if (ds / variant / 'agent.yaml').is_file() else 'FAIL'}")
+    print(f"selected variant staged: {'PASS' if (ds / variant / 'agent.yaml').is_file() else 'FAIL'}")
+    staged_names = sorted(p.name for p in (ds / "team-b" / "variants").iterdir() if p.is_dir()) if (ds / "team-b" / "variants").is_dir() else []
+    print(f"team-b/variants/ staged ({len(staged_names)}): {', '.join(staged_names) or '(none)'}")
     print(f"harness/splits: {'PASS' if (ds / 'harness' / 'splits' / 'smoke.txt').is_file() else 'FAIL'}")
     for bad in ("baseline", "variants", "combined", "lora"):
         present = (ds / bad).exists()
@@ -371,12 +387,8 @@ def main() -> int:
     ap.add_argument(
         "--dry-run",
         action="store_true",
-        help="stage dataset+kernel under team-b/kaggle/runs/_dryrun; no Kaggle API, no credentials",
-    )
-    ap.add_argument(
-        "--require-adapters",
-        action="store_true",
-        help="fail if validate.py reports missing adapter_model.safetensors (default: warn and continue for dry-run)",
+        help="stage dataset+kernel under team-b/kaggle/runs/_dryrun; no Kaggle API, no credentials; "
+             "missing adapter_model.safetensors is allowed only in this mode",
     )
     args = ap.parse_args()
 
@@ -408,18 +420,25 @@ def main() -> int:
             return 1
         print("STRUCT CHECKS: PASS")
 
-        errors, warnings = validate_variant(variant_dir, strict=args.require_adapters)
+        errors, warnings = validate_variant(variant_dir)
         for w in warnings:
             print(f"WARN  {w}")
         if errors:
             for e in errors:
                 print(f"ERROR {e}")
-            if only_adapter_weight_errors(errors) and not args.require_adapters:
+            # Missing weights: dry-run may continue for packaging checks; real runs must abort
+            # so teammates cannot upload a GPU kernel that will fail and burn quota.
+            if only_adapter_weight_errors(errors) and args.dry_run:
                 print(
                     "VALIDATE: BLOCKED (missing adapter_model.safetensors). "
-                    "Structural packaging can still be dry-run staged; restore weights before real Kaggle runs."
+                    "Dry-run continues for structural staging; restore weights before real Kaggle runs."
                 )
             else:
+                if only_adapter_weight_errors(errors) and not args.dry_run:
+                    print(
+                        "Missing adapter_model.safetensors blocks real Kaggle runs. "
+                        "Restore sample adapters (see team-b/kaggle/README.md) or use --dry-run for packaging only."
+                    )
                 print("Fix validation errors (python harness/validate.py <variant>) before continuing.")
                 return 1
         else:
