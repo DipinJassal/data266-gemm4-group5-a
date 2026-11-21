@@ -1,6 +1,6 @@
 # Multi-agent notes (Parth) — how `agent_tool` sub-agents work in this competition
 
-Sources: sample / Team B base `agent.yaml`, `harness/validate.py`, `harness/README.md`, `team-b/docs/competition_summary.md`.  
+Sources: sample / Team B base `agent.yaml`, `harness/validate.py`, `harness/README.md`, `team-b/docs/competition_summary.md`.
 These notes describe the **declarative** submission model (YAML only). They do not invent ADK APIs beyond what the harness and sample agent already use.
 
 ## 1. How sub-agents are declared

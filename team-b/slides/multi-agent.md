@@ -14,7 +14,7 @@ We test two **independent**, one-change interventions on `team-b/variants/base`:
 - **V2 `diff-critic`:** new `diff_critic_agent` reviews real `git diff` once → ≤1 revision → submit
 
 ## What we measure (not yet run)
-Smoke → (optional train tune) → one `dev` → Team B Kaggle  
+Smoke → (optional train tune) → one `dev` → Team B Kaggle
 Track: call order, OK vs problems, revisions, empty patches, time, resolved %
 
 ## Status

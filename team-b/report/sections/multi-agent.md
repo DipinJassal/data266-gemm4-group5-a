@@ -1,6 +1,6 @@
 # Report section — Multi-agent (Parth Patel)
 
-Team B · Group 5 · DATA 266 · Gemma 4 Developer Agent  
+Team B · Group 5 · DATA 266 · Gemma 4 Developer Agent
 Status: **first draft (Nov 20, 2026)** — architectures implemented; smoke/dev/Kaggle numbers **pending**.
 
 ## 1. Role in Team B
@@ -90,6 +90,6 @@ Launcher: Team B independent workflow (`team-b/kaggle/`, dataset `g5b-agents`, k
 
 ## 9. References
 
-3. Kon et al., SWE-Protégé, arXiv:2602.22124.  
-6. Zhao et al., Category-aware iterative expert training, arXiv:2609.23377.  
+3. Kon et al., SWE-Protégé, arXiv:2602.22124.
+6. Zhao et al., Category-aware iterative expert training, arXiv:2609.23377.
 11. Jiang, Lo and Liu, Agentic software issue resolution survey, arXiv:2512.22256.
