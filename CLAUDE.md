@@ -44,7 +44,7 @@ Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
-## Status (last updated Nov 13, 2026)
+## Status (last updated Nov 20, 2026)
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -63,6 +63,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   Validated offline; not yet scored. The numbers get tuned after the first smoke timings.
 
 - **LoRA go/no-go: GO** (Bhoomika, PR #3, merged Nov 13). Tiny QLoRA adapter trained on bf16 31B (L4×4) loads on the served QAT model in the harness, no errors (2-task load test: 1/2, not a score). V1 training ≈ 2–3 h of quota per run. Setup notes in `lora/README.md`.
+- **Bhoomika V1 `bhoomika-lora-patches-v1`** (PR #12, merged Nov 20): V2 + LoRA trained on 75 train-split reference-patch trajectories, served at alpha 8. Smoke 2/10 (same as control), **dev 5/30 = 16.7%**, avg 3.4 min. Alpha 32 got 1/10 on smoke twice (overfit, repeats failing edits). Weights are in the private Kaggle dataset `bhoomikalnu/g5a-lora-v1-adapter` (not in git).
 
 **Next for Dipin**
 - [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
@@ -74,7 +75,9 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   *Verified by Khushi (Nov 12) from the run ZIP: every figure matches; 28/30 tasks ended on the 1-minute timeout. Details: `docs/error_analysis.md`.*
 - [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
-- [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30, then pick its `Source:` reference and submit on a spare slot.
+- [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30 **(now urgent: Bhoomika's and Khushi's V1 both got 5/30 on top of V2, and neither gain can be credited until V2 has a dev score)**, then pick its `Source:` reference and submit on a spare slot.
+- [ ] Fix the `run_kaggle.py` race Bhoomika found: the kernel can start before the new `g5a-agents` dataset version is ready and silently run the previous upload.
+- [ ] Get access to `bhoomikalnu/g5a-lora-v1-adapter` (asked on PR #12; currently 403), needed to submit her V1 and for the combined agent.
 - [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
