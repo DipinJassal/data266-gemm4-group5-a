@@ -30,7 +30,8 @@ budget before the first edit (23/30 dev patches changed no source file).
 |---|---|---|---|---|---|
 | base (Team A run) | smoke | 2/10 | 4.2 | 3 | — |
 | graph-localize | smoke, 2-task diagnostic | 2/2 | 4.1 | 0 | — |
-| graph-localize | smoke (10) / dev | TBD | TBD | TBD | pending (submitted Nov 21) |
+| graph-localize | smoke (10) | 1/10 | 4.7 | 2 | pending (submitted Nov 21) |
+| graph-localize | dev | TBD | TBD | TBD | — |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
 | graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | TBD |
 | graph-expand-2 | smoke (10) / dev | TBD | TBD | TBD | TBD |
@@ -41,8 +42,17 @@ the Kaggle scores. Dev scores are validation (used for selection); the Kaggle sc
 
 ## What worked, what didn't
 
-- **graph-localize followed the routine partly.** Its first action was `search_similar_code` in 2/2 tasks, but it
-  skipped `get_code_neighbors` and went straight to reading files.
+- **graph-localize followed the routine partly.** On the 10-task smoke its first action was `search_similar_code` in
+  9/10 tasks, but it called `get_code_neighbors` in only 1/10 and went straight to reading files.
+- **Smoke: 1/10, no better than base** (base 2/10 in Team A's run, 1/10 in Khushi's matched control; n = 10, so
+  these are within run-to-run noise). Two smoke tasks (fastapi_14962, requests_7505) cannot pass in this environment
+  (missing test dependencies, Team A finding).
+- **The bottleneck is time, not finding the file.** 9/10 tasks hit the 4.5 min limit. In 5 of them the patch contains
+  only a scratch reproduction script (`repro.py`, `reproduce_issue.py`) and no source edit: the agent spent its budget
+  writing and running repro scripts after localizing. Faster localization alone does not help when the remaining
+  budget goes to reproduction; the base prompt's "verify with a targeted test" step and the 4.5 min cap interact.
+  This supports Ashmitha's patch-hygiene variant (scratch files) and points to "edit first, reproduce only if cheap"
+  as future work.
 - **Failed approach (G.3): a skill alone is not used.** In `graph-expand`, Kaggle's log confirms the skill toolset was
   enabled and the skill was shipped, but the model called `load_skill` in 0/2 tasks and used no graph tool. It behaved
   like base (2/2, same tasks base solves), so this run says nothing about graph expansion. Lesson: a skill's
