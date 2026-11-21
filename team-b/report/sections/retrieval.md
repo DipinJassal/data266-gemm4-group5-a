@@ -34,7 +34,7 @@ budget before the first edit (23/30 dev patches changed no source file).
 | graph-localize | dev | TBD | TBD | TBD | — |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
 | graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | TBD |
-| graph-expand-2 | smoke (10) / dev | TBD | TBD | TBD | TBD |
+| graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | scheduled Nov 21 |
 
 The 2-task diagnostics run on the first two smoke tasks, which the base agent also solves, so they show that a variant
 runs and follows its routine, **not** that it beats base. Comparative claims wait for the full smoke/dev runs and
@@ -60,6 +60,10 @@ the Kaggle scores. Dev scores are validation (used for selection); the Kaggle sc
 - **The trigger fixes activation, at a time cost.** `graph-expand-2` called `load_skill` then `search_similar_code` in
   2/2 tasks (and `get_code_neighbors` in 1/2). One task (fastapi_13537) then spent turns on scratch scripts and hit the
   4.5 min limit; base and graph-localize solve it. n = 2, so this is a warning sign, not a result.
+- **Smoke: graph-expand-2 also 1/10.** The skill was loaded in 9/10 tasks and `get_code_neighbors` used in 4/10
+  (vs 1/10 for graph-localize), but `get_code_subgraph` never. 9/10 tasks hit the time limit again; 4 patches contain
+  only a scratch script and 3 are empty. More graph context did not turn into more fixes: the extra graph calls cost
+  turns, and the agent still spent the rest of its budget on reproduction scripts.
 - Tool calls before the first edit, against base: TBD (needs the full smoke traces).
 
 ## Limits and future work
