@@ -47,7 +47,7 @@ the Kaggle scores. Dev scores are validation (used for selection); the Kaggle sc
 - **Smoke: 1/10, no better than base** (base 2/10 in Team A's run, 1/10 in Khushi's matched control; n = 10, so
   these are within run-to-run noise). Two smoke tasks (fastapi_14962, requests_7505) cannot pass in this environment
   (missing test dependencies, Team A finding).
-- **The bottleneck is time, not finding the file.** 9/10 tasks hit the 4.5 min limit. In 5 of them the patch contains
+- **The bottleneck is time, not only finding the file.** 9/10 tasks hit the 4.5 min limit. In 5 of them the patch contains
   only a scratch reproduction script (`repro.py`, `reproduce_issue.py`) and no source edit: the agent spent its budget
   writing and running repro scripts after localizing. Faster localization alone does not help when the remaining
   budget goes to reproduction; the base prompt's "verify with a targeted test" step and the 4.5 min cap interact.
@@ -66,11 +66,28 @@ the Kaggle scores. Dev scores are validation (used for selection); the Kaggle sc
   turns, and the agent still spent the rest of its budget on reproduction scripts.
 - Tool calls before the first edit, against base: TBD (needs the full smoke traces).
 
+## Offline retrieval check (train, no GPU)
+
+We re-implemented `search_similar_code` from the harness documentation (12/15 top-1 agreement with the real tool on
+the agent's own calls) and ran one automatic query per train task (`team-b/docs/retrieval_eval.md`).
+
+| | n | top-1 | top-5 (what the agent sees) | + neighbors of top hit |
+|---|---|---|---|---|
+| all train | 99 | 31% | **40%** | 42% |
+| symbol query | 53 | 45% | 47% | 47% |
+| keyword query (no symbol in issue) | 46 | 15% | 33% | 37% |
+| fastapi / rich / requests | 52 / 37 / 10 | 17 / 38 / 80% | 21 / 57 / 80% | 23 / 59 / 80% |
+
+The agent's own first search in the smoke traces reached a changed file in 9/17 tasks. So the graph localizes
+about half the time (worse on fastapi, whose issue titles describe behaviour rather than the function to change),
+and even when it did, the fix still did not land within the budget. Neighbor expansion adds little (2 points), which
+matches graph-expand-2 not beating graph-localize. Test nodes fill 39% of the top-5 slots, but dropping them adds only
+2 points: the query, not the ranking, is the main limit.
+
 ## Limits and future work
 
-- The localization statistics are lexical approximations. **Outstanding:** the train-only offline retrieval check
-  (`team-b/docs/retrieval_eval.md`, file-hit@1/@5 of the graph tools against the reference patches) is planned but
-  not done yet.
+- The task EDA statistics are lexical approximations, and the retrieval check uses one regex-chosen query per task and
+  a re-implemented search tool (file-level hits only).
 - The graph's symbol lookup expects symbol names. Short PR-title statements often contain none, which limits both variants.
 - Future work: an analyzer sub-agent that runs the graph routine in its own context window and returns only the
   file list (combines with Parth's multi-agent design).
