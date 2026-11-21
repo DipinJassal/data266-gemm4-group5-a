@@ -3,3 +3,4 @@ date,team,variant,owner,one_line_change,split,score,avg_min_per_task,empty_patch
 2026-11-10,A,dipin-step-budget-v1,Dipin,budget 4.5 min / 50 tool calls,smoke,2/10,4.2,3,,reference,Team A run; same files as team-b base
 2026-11-21,B,graph-localize,Ishan,graph-first localization (search_similar_code -> get_code_neighbors -> read <=3 files),smoke (2 tasks),2/2,4.1,0,,quick check,first action search_similar_code in 2/2 tasks; get_code_neighbors skipped; both tasks also solved by base in Team A run so not evidence of gain
 2026-11-21,B,graph-localize,Ishan,graph-first localization (Kaggle submission ref 58645162),kaggle,,,,pending,submitted,Team B's first Kaggle submission
+2026-11-21,B,graph-expand,Ishan,bounded graph-expansion skill (skills/graph-expand),smoke (2 tasks),2/2,4.2,0,,quick check,SKILL_TOOLSET enabled but load_skill never called and no graph tools used in 2/2 tasks: behaves like base; fastapi_11194 patch includes stray reproduce_issue.py
