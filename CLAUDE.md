@@ -44,7 +44,28 @@ Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
-## Status (last updated Nov 20, 2026)
+## Status (last updated Nov 21, 2026)
+
+**Scoreboard (local harness; smoke = 10 train tasks, dev = 30 held-out tasks)**
+
+| Variant | Owner | Change (vs control) | Smoke | Dev | Kaggle |
+|---|---|---|---|---|---|
+| `baseline` | — | unmodified sample (1 min / 10 calls) | — | **2/30** | not submitted |
+| `dipin-step-budget-v1` (control) | Dipin | 4.5 min / 50 calls | 2/10, 1/10 | **not run** | not submitted |
+| `khushi-structured-prompt-v1` | Khushi | structured-loop prompt | 1/10 | **5/30** | not submitted |
+| `khushi-anti-looping-v2` | Khushi | time-budget prompt | 2/10, 1/10 | — (negative, closed) | — |
+| `sarvesh-sampling-v1` | Sarvesh | thinking off | 2/10 | — | not submitted |
+| `bhoomika-lora-patches-v1` | Bhoomika | LoRA on reference patches (alpha 8) | 2/10 | **5/30** | not submitted; zip built locally Nov 21 |
+| PR #19 LoRA V2 | Bhoomika | LoRA on curated agent runs | 2/10 | — | open PR |
+| PR #21 best-of-N V2 | Sarvesh | prompt-only single retry | 2/10 | — | open PR (Dipin reviews) |
+| PR #22 skills pack V1 | Poushali | fix-and-verify skill | 1/10 (negative) | — | open PR (Khushi reviews) |
+| PR #23 test-runner V2 | Poushali | test-runner `agent_tool` | negative | — | open PR (Khushi reviews) |
+| Dipin V1 output trimming | Dipin | — | not started | — | — |
+| Combined agent | Dipin | — | not started (due Nov 23) | — | — |
+
+Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
+7/30 dev tasks can't pass in our harness (missing test packages, `docs/scoring_environment_comparison.md`), so 23/30 is the local ceiling.
+**No Kaggle submission has been made yet** (checked Nov 21 on Dipin's account).
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -77,7 +98,13 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30 **(now urgent: Bhoomika's and Khushi's V1 both got 5/30 on top of V2, and neither gain can be credited until V2 has a dev score)**, then pick its `Source:` reference and submit on a spare slot.
 - [ ] Fix the `run_kaggle.py` race Bhoomika found: the kernel can start before the new `g5a-agents` dataset version is ready and silently run the previous upload.
-- [ ] Get access to `bhoomikalnu/g5a-lora-v1-adapter` (asked on PR #12; currently 403), needed to submit her V1 and for the combined agent.
+- [x] Get access to `bhoomikalnu/g5a-lora-v1-adapter`. *(Shared Nov 21. Downloaded and checked: config identical to the repo's, 820 bf16 tensors, rank 16, all 60 layers, language model only.
+  Copied into `variants/bhoomika-lora-patches-v1/adapters/` (git-ignored) and built `harness/runs/bhoomika-lora-patches-v1-submission.zip` (183 MiB, validates).)*
+- [ ] **Start submitting to Kaggle (none made yet).** Create the Kaggle team first (team-merge deadline Nov 25); about 11 daily slots left before Dec 2.
+  Suggested order: baseline → `khushi-structured-prompt-v1` → `bhoomika-lora-patches-v1` → V2 control → combined agent.
+- [ ] Review PR #21 (Sarvesh, best-of-N); nudge reviewers for #19 (Poushali), #22 and #23 (Khushi).
+- [ ] Combined agent (Nov 23). Candidates: the two 5/30 variants (structured prompt + LoRA V1) on the V2 budget, plus a patch-hygiene checklist.
+- [ ] Decide on V1 output trimming (Nov 16, not started): build it or drop it and log it as not done.
 - [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
