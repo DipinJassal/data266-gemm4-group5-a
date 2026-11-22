@@ -1,0 +1,678 @@
+{
+ "train_kept": 18,
+ "heldout_kept": 2,
+ "train_skips": {
+  "not resolved": 69,
+  "kept": 18,
+  "parallel calls": 1,
+  "same failing call x4": 1
+ },
+ "heldout_skips": {
+  "kept": 2,
+  "not resolved": 8
+ },
+ "filter": {
+  "max_err_rate": 0.25,
+  "max_repeat": 3
+ },
+ "rows": [
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_11355",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_13786",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_13920",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14099",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14266",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14297",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14349",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14360",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14361",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14371",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14372",
+   "resolved": true,
+   "tool_calls": 22,
+   "failed_calls": 2,
+   "err_rate": 0.091,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14419",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14430",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14448",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14455",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14458",
+   "resolved": true,
+   "tool_calls": 14,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14459",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14463",
+   "resolved": true,
+   "tool_calls": 12,
+   "failed_calls": 3,
+   "err_rate": 0.25,
+   "worst_repeat": 2
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14479",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14482",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14485",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14487",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14512",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14583",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14605",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14786",
+   "resolved": true,
+   "tool_calls": 7,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14791",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14794",
+   "resolved": true,
+   "tool_calls": 14,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14851",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14873",
+   "resolved": true,
+   "tool_calls": 21,
+   "failed_calls": 1,
+   "err_rate": 0.048,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14953",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14964",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14978",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_14986",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15023",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15030",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15280",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15589",
+   "resolved": true,
+   "tool_calls": 6,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15661",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15745",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15785",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_15800",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_5077",
+   "resolved": true,
+   "tool_calls": 10,
+   "failed_calls": 2,
+   "err_rate": 0.2,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_5624",
+   "resolved": true,
+   "tool_calls": 17,
+   "failed_calls": 1,
+   "err_rate": 0.059,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_9425",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_9555",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "fastapi_9753",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_6589",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_6592",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_6629",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_6644",
+   "resolved": true,
+   "tool_calls": 11,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_6757",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_7205",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_7309",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_7328",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "requests_7502",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "rich_2725",
+   "resolved": true,
+   "tool_calls": 9,
+   "failed_calls": 1,
+   "err_rate": 0.111,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "rich_2943",
+   "resolved": true,
+   "tool_calls": 13,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "rich_3006",
+   "resolved": true,
+   "tool_calls": 26,
+   "failed_calls": 1,
+   "err_rate": 0.038,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T032755Z",
+   "id": "rich_3043",
+   "resolved": true,
+   "skip": "parallel calls"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3061",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3064",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3067",
+   "resolved": true,
+   "skip": "same failing call x4",
+   "tool_calls": 18,
+   "failed_calls": 4,
+   "err_rate": 0.222,
+   "worst_repeat": 4
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3105",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3130",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3296",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3454",
+   "resolved": true,
+   "tool_calls": 11,
+   "failed_calls": 1,
+   "err_rate": 0.091,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3468",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3469",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3470",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3471",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3472",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3480",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3486",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3518",
+   "resolved": true,
+   "tool_calls": 13,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3535",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3676",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3772",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3777",
+   "resolved": true,
+   "tool_calls": 33,
+   "failed_calls": 3,
+   "err_rate": 0.091,
+   "worst_repeat": 1
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3882",
+   "resolved": true,
+   "tool_calls": 11,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3894",
+   "resolved": true,
+   "tool_calls": 15,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3934",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3938",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3942",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3944",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_3953",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_4006",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_4077",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/train/20261121T095801Z",
+   "id": "rich_4079",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "fastapi_11194",
+   "resolved": true,
+   "tool_calls": 17,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "fastapi_13537",
+   "resolved": true,
+   "tool_calls": 14,
+   "failed_calls": 0,
+   "err_rate": 0.0,
+   "worst_repeat": 0
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "fastapi_14609",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "fastapi_14962",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "fastapi_15763",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "requests_7505",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "rich_3180",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "rich_3506",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "rich_3782",
+   "resolved": false,
+   "skip": "not resolved"
+  },
+  {
+   "run": "harness/runs/variants-bhoomika-lora-patches-v1/smoke/20261114T044148Z",
+   "id": "rich_4075",
+   "resolved": false,
+   "skip": "not resolved"
+  }
+ ]
+}

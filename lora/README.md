@@ -59,3 +59,40 @@ Held-out loss **1.158 → 0.400**. Report: `v1/v1_train_report.json`.
 - Harness race: `run_kaggle.py` can push the kernel before the new `g5a-agents` dataset version is ready, so a run silently uses the previous
   upload. Always check the run's `agent/adapters/main_lora/adapter_config.json` in the outputs.
 - 5/30 equals Khushi's V1 (also built on the control). Until the control has a dev score, neither gain can be credited to the change alone.
+
+## V2: LoRA on curated agent runs (Nov 21, 2026)
+
+Variant: `variants/bhoomika-lora-runs-v2` = `dipin-step-budget-v1` + a `main_lora` trained on the agent's own successful runs.
+
+**Data** (`v2/curate.py`): the V1 agent (alpha 8) was run on the 60 non-smoke train tasks and resolved 14. Each resolved trace becomes one
+chat with the model's own thinking (`reasoning`), tool calls and tool responses. Filter from Han [10]: drop a run if more than 25% of its
+tool calls failed or the same failing call was repeated 3 times (none dropped); runs with parallel calls are skipped (1). **13 runs kept.**
+Runs are 50-65K characters, so each is split into windows of about 34K characters: every piece keeps the prompt and all earlier calls
+(older thoughts dropped, older tool output cut to 300 characters) and trains only on its own window → **30 pieces** (1 still too long).
+Held-out: the two resolved smoke runs (8 pieces), loss only. Report: `v2/v2_curation_report.json`.
+
+**Training** (`v2/train_v2.py`, `python lora/v2/push_v2.py train`): same setup as V1, 2 epochs, loss on thoughts + tool calls + final answer
+inside each window. 99 min on L4 x4. Held-out loss **0.309 → 0.202**. Report: `v2/v2_train_report.json`.
+Weights: private Kaggle dataset `bhoomikalnu/g5a-lora-v2-adapter` (`*.safetensors` is git-ignored).
+
+**Results** (adapter and alpha verified in each run's outputs):
+
+| Variant | Smoke (10) | Empty patches | Avg tool calls |
+|---|---|---|---|
+| Control `dipin-step-budget-v1` | 2/10 | 3 | |
+| V1 alpha 8 | 2/10 | 1 | 22 |
+| V2 alpha 32 | 2/10 | 5 | 14 |
+| **V2 alpha 8 (shipped)** | **2/10** | 4 | 20 |
+| V2b: 18 runs (+5 rich), alpha 8 | 1/10 | 3 | 19 |
+
+V2b (`v2/v2b_*_report.json`): the V1 agent was also run on the 29 remaining train tasks (all rich) and resolved 6; 5 passed
+the filter, giving 18 runs / 47 pieces (43 trained, 150 min). Held-out loss 0.309 → 0.195, but smoke fell to 1/10
+(lost `fastapi_11194`), so the shipped adapter stays the 13-run one at alpha 8 (smoke 4.2 min avg).
+
+**Lessons**
+- V2 keeps thinking (no V1-style collapse), but it makes fewer tool calls and more runs end on the time limit without an edit.
+- The two resolved tasks are the same as V1's and are the held-out runs, so the lower held-out loss did not translate into new solves.
+- Alpha is not the bottleneck: alpha 32 and alpha 8 both score 2/10. More data (V2b) lowered held-out loss but not the score;
+  the held-out runs are 2 tasks the agent already solves, so the loss shows fit on familiar runs, not generalization.
+- 13 runs is a small dataset: the starting loss is already low (0.31) because the data is the model's own output. More resolved runs
+  (or runs from a stronger variant) would be needed for a real gain. No dev run was spent on V2.
