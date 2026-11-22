@@ -19,3 +19,5 @@ Left out: Bhoomika's LoRA (same 5/30 as the prompt-only variants; candidate for 
 5 empty patches (timeout before any edit), and scratch files (`repro.py`, `reproduce_issue.py`) in 11 patches.
 
 **Sources:** [3] SWE-Protégé, [4] SWE-Master, [7] RepoAtlas, [9] Codebase-Memory, [11] Survey.
+
+**Dev result: 4/30 (negative, not submitted).** 13 empty patches vs 5 for output trimming. Details: `docs/combined_v1_analysis.md`.
