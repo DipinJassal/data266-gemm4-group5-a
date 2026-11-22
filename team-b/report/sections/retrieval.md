@@ -1,6 +1,6 @@
 # Retrieval and code-graph localization (Ishan, Team B) — first draft (Nov 21)
 
-> Only the Kaggle column is still open: V1 was submitted Nov 21 and is scoring; graph-expand-2 is submitted Nov 21, 4 pm Pacific.
+> Only one cell is still open: graph-expand-2 was submitted to Kaggle on Nov 21 (9:29 pm Pacific) and is scoring.
 
 ## Task analysis (G.2)
 
@@ -30,10 +30,10 @@ budget before the first edit (23/30 dev patches changed no source file).
 |---|---|---|---|---|---|
 | base (Team A run) | smoke | 2/10 | 4.2 | 3 | — |
 | graph-localize | smoke, 2-task diagnostic | 2/2 | 4.1 | 0 | — |
-| graph-localize | smoke (10) | 1/10 | 4.7 | 2 | pending (submitted Nov 21) |
+| graph-localize | smoke (10) | 1/10 | 4.7 | 2 | **0.12** (public) |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
 | graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | see smoke (10) row |
-| graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | scheduled Nov 21 |
+| graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | pending (submitted Nov 21) |
 
 The 2-task diagnostics run on the first two smoke tasks, which the base agent also solves, so they show that a variant
 runs and follows its routine, **not** that it beats base. Comparative claims wait for the full smoke/dev runs and
