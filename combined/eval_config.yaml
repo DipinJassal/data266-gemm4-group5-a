@@ -1,0 +1,11 @@
+# Optional participant evaluation configuration for Stage 1 inference.
+# Controls per-task execution budgets and sandbox command timeouts.
+#
+# combined-v1: based on dipin-step-budget-v1 (4.5 min / 50 calls), with the time cut to 4.0 min.
+# Kaggle's Stage 1 limit is 12 h for ~120 tasks. Our dev runs average ~4 min per task in total,
+# so 4.5 min risks ~10 h when many tasks time out; 4.0 min caps the worst case near 9 h.
+evaluation:
+  timeout_seconds: 60
+  max_tool_calls: 50
+  max_time_minutes: 4.0
+  max_turns: 50
