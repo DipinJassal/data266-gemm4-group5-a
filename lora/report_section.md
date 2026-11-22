@@ -25,7 +25,8 @@ reference patch. 75 runs were used (13 were too long). Training took 82 minutes 
 | Control: budget fix (4.5 min / 50 calls) | 2/10 | not run |
 | V1, adapter at full strength | 1/10 (twice) | |
 | **V1, adapter at 1/4 strength** | **2/10** | **5/30 (16.7%)** |
-| V2, curated runs | 2/10 | not run |
+| V2, curated runs (full / 1/4 strength) | 2/10, 2/10 | not run |
+| V2 with more data (18 runs) | 1/10 | not run |
 
 At full strength the adapter hurt. The templated runs contain no thinking and no mistakes, so the model learned to skip
 thinking, read tiny file windows and guess edits, and when an edit failed it repeated it up to 14 times. Scaling the
@@ -42,7 +43,9 @@ training tasks; 13 runs passed the filter and became 30 training pieces. Trainin
 (two smoke-task runs) fell from 0.31 to 0.20. The starting loss is already low because the data is the model's own
 output, so V2 sharpens what the model does when it succeeds instead of teaching a new style. On smoke V2 also scored 2/10, solving the same two tasks as V1. It kept thinking (no
 V1-style collapse) but made fewer tool calls (14 on average versus 22) and left more patches empty (5 versus 1), so we
-did not spend a dev run on it. With only 13 successful runs, V2 is a documented negative result: more and stronger
+did not spend a dev run on it. Serving it at a quarter of its strength also gave 2/10 (4 empty patches), so strength is not
+the bottleneck. Adding 5 more runs (18 in total) lowered held-out loss to 0.195 but scored 1/10. The held-out check uses
+two tasks the agent already solves, so a lower loss shows fit on familiar runs, not generalization. With only 13 successful runs, V2 is a documented negative result: more and stronger
 runs would be needed before this approach can help.
 
 **Takeaways.**
@@ -65,5 +68,5 @@ runs would be needed before this approach can help.
   - full strength: 1/10 smoke (stops thinking, repeats failed edits)
   - 1/4 strength: 2/10 smoke, **5/30 dev** (baseline 2/30), empty patches 20 to 4
 - V2: real successful runs with thinking, filtered by error-retry rate [10]
-  - 13 runs, 30 pieces, held-out loss 0.31 to 0.20; smoke 2/10 (no gain over V1)
+  - 13 runs, 30 pieces, held-out loss 0.31 to 0.20; smoke 2/10 at full and 1/4 strength; 18 runs: 1/10
 - Lesson: adapter strength and realistic data matter more than more data
