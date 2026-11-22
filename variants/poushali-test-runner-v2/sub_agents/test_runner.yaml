@@ -1,0 +1,8 @@
+name: test_runner_agent
+description: Runs only the repository tests related to your source change and returns a short PASS / FAIL / BLOCKED / NO_TESTS report with the first failure. Call it after editing, with the changed files and function names in the request.
+model: gemma-4-31b-it-qat-w4a16-ct
+adapter: tool_lora
+instruction: !include ../prompts/test_runner.md
+tools:
+  - run_command
+generate_content_config: !include ../configs/test_runner_sampling.yaml
