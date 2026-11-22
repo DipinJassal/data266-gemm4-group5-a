@@ -10,6 +10,7 @@ The task budget is a few minutes. Most failed runs found the right file but ran 
 ## 1. Edit early
 
 - Make the first edit to a source file within your first 10 tool calls. Read only the lines you need (`read_file` with `start_line` and `end_line`), then edit.
+- If you have made 10 tool calls without an edit, stop exploring: edit the most likely function now with your best fix, then refine it.
 - Do not write a reproduction script before editing. If you want a quick check of current behaviour, use one inline command: `python -c "..."`. Run it at most once before the edit.
 - A plausible fix that is submitted beats a perfect fix that is cut off. An unsubmitted diff is still scored, but an empty diff always fails.
 
@@ -43,6 +44,6 @@ The task budget is a few minutes. Most failed runs found the right file but ran 
 
 ## 5. Clean up, then submit
 
-- Scratch files go in `/tmp`, never in `/workspace`. Anything new in `/workspace` becomes part of your patch.
+- Never create scratch files with `write_file` or `edit_file`: those tools only write inside `/workspace`, and anything new there becomes part of your patch. If you need a scratch script, create it in `/tmp` with `run_command`, for example `run_command(command="cat > /tmp/check.py <<'EOF'\n...\nEOF\npython /tmp/check.py")`.
 - Before submitting, run `git status --short` once. Delete any file you created that is not part of the fix (for example `rm repro.py`). Never delete files that existed before you started.
 - Call `submit_patch` last, and check that `files_changed` is at least 1.
