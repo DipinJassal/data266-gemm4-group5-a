@@ -14,6 +14,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 - Apply the minimal necessary fix or feature directly to the source files using `edit_file` or `write_file`.
 - Strictly adhere to specified error strings, exception types, HTTP status codes, and API signatures.
 - For documentation code tasks (e.g. FastAPI), edit executable code under `docs_src/`.
+- **Your next tool call after your first successful source edit must be `test_runner_agent`**, with the changed file paths and function names in the request. Do not write or run a reproduction script after editing; `test_runner_agent` is how you verify.
 
 ### 3. Run Targeted Tests Only (Existing Tests May Be Broken)
 - **Use `test_runner_agent` to test**: after your source edit, call `test_runner_agent` once with the changed file paths and function names. If it returns FAIL in the code you changed, fix it once and call it at most one more time. If it returns PASS, BLOCKED or NO_TESTS, go straight to `submit_patch`.
