@@ -1,0 +1,100 @@
+instance_id,repo,status,n_src_files,in_graph,query_type,query,seed,seed_hit,hit@1,hit@5,hit@10,seed_or_hit@1,seed_or_hit@5,seed_or_hit@10,hit@5+nbrs,notest_hit@5,test_share@5,top1
+fastapi_11194,fastapi,ok,1,True,symbol,File,fastapi.params.File,False,False,False,False,False,False,False,False,False,0.2,fastapi.params.Form
+fastapi_11355,fastapi,ok,1,True,keywords,evaluating stringified annotations,,False,False,False,False,False,False,False,False,False,0.6,tests.test_return_none_stringified_annotations.test_no_content
+fastapi_13537,fastapi,ok,1,True,symbol,None,tests.test_security_oauth2_optional_description.test_strict_login_None,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_custom_docs_ui.test_tutorial002.test_api
+fastapi_13786,fastapi,ok,11,True,symbol,HTTPDigest,fastapi.security.http.HTTPDigest,True,True,True,True,True,True,True,True,True,0.6,fastapi.security.http.HTTPDigest.__init__
+fastapi_13920,fastapi,ok,1,True,keywords,alias continuation comment,,False,False,False,False,False,False,False,False,False,0.6,tests.test_response_by_alias.Model
+fastapi_14099,fastapi,ok,5,True,symbol,yield,tests.test_exception_handlers.with_yield,False,False,False,False,False,False,False,False,False,0.6,security.tutorial007_an.read_current_user
+fastapi_14266,fastapi,ok,1,True,symbol,OpenAPI,fastapi.openapi.models.OpenAPI,False,False,False,False,False,False,False,False,False,0.2,fastapi._compat.v2.is_scalar_sequence_field
+fastapi_14297,fastapi,ok,1,True,symbol,FastAPI,fastapi.applications.FastAPI,False,False,False,False,False,False,False,False,False,0.0,fastapi.routing.APIRouter
+fastapi_14349,fastapi,ok,1,True,keywords,handling schema attributes,,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_handling_errors.test_tutorial001.test_openapi_schema
+fastapi_14360,fastapi,ok,1,True,symbol,alias,fastapi._compat.v2.ModelField.alias,False,False,False,False,False,False,False,False,False,0.2,fastapi._compat.v2.ModelField.__hash__
+fastapi_14361,fastapi,ok,1,True,keywords,avoid accessing existing,,False,False,False,False,False,False,False,False,False,0.8,scripts.docs.complete_existing_lang
+fastapi_14371,fastapi,ok,4,True,keywords,parameter aliases rest,,False,False,False,False,False,False,False,False,False,0.4,tests.test_repeated_parameter_alias.get_parameters_with_repeated_aliases
+fastapi_14372,fastapi,ok,2,True,symbol,Depends,fastapi.params.Depends,True,True,True,True,True,True,True,True,True,0.0,fastapi.params.Security
+fastapi_14419,fastapi,ok,2,True,symbol,SecurityScopes,fastapi.security.oauth2.SecurityScopes,False,False,False,False,False,False,False,False,False,0.2,fastapi.security.oauth2.SecurityScopes.__init__
+fastapi_14430,fastapi,ok,1,True,keywords,optional sequence handling,,False,False,False,True,False,False,True,True,True,0.6,tests.test_compat.test_serialize_sequence_value_with_optional_list
+fastapi_14448,fastapi,ok,2,True,keywords,functools wraps partial,,False,False,False,False,False,False,False,False,False,0.8,tests.test_callable_endpoint.test_partial
+fastapi_14455,fastapi,ok,1,True,symbol,OpenAPI,fastapi.openapi.models.OpenAPI,False,False,False,False,False,False,False,False,False,0.2,fastapi._compat.v1.is_scalar_sequence_field
+fastapi_14458,fastapi,ok,1,True,symbol,__call__,tests.test_stringified_annotations_simple.Dep.__call__,False,False,False,False,False,False,False,False,False,0.6,tests.test_stringified_annotations_simple.call
+fastapi_14459,fastapi,ok,3,True,symbol,OpenAPI,fastapi.openapi.models.OpenAPI,False,False,False,False,False,False,False,False,False,0.2,fastapi._compat.v2.is_scalar_sequence_field
+fastapi_14463,fastapi,ok,1,True,symbol,app.get,tests.test_validate_response_recursive.app.get_recursive,False,False,False,False,False,False,False,False,False,0.8,tests.test_schema_extra_examples.header_example
+fastapi_14479,fastapi,ok,1,True,symbol,app.get,tests.test_validate_response_recursive.app.get_recursive,False,False,False,False,False,False,False,False,False,0.8,tests.test_schema_extra_examples.header_example
+fastapi_14482,fastapi,ok,1,True,keywords,handling arbitrary allowed,,False,False,False,False,False,False,False,False,False,0.2,handling_errors.tutorial005.Item
+fastapi_14485,fastapi,ok,1,True,keywords,evaluated stringified annotations,,False,False,False,False,False,False,False,False,False,1.0,tests.test_stringified_annotations_simple.Dep
+fastapi_14487,fastapi,ok,1,False,keywords,about raising validation,,False,False,False,False,False,False,False,False,False,0.4,fastapi.exceptions.ValidationException
+fastapi_14512,fastapi,ok,1,True,symbol,Body,fastapi.params.Body,False,False,False,True,False,False,True,False,False,0.0,fastapi.temp_pydantic_v1_params.Body
+fastapi_14583,fastapi,ok,2,True,keywords,deprecation warnings pydantic,,False,False,False,False,False,False,False,False,False,0.4,tests.test_pydantic_v1_v2_01.Item
+fastapi_14605,fastapi,ok,7,True,keywords,custom fast deprecation,,False,False,True,True,False,True,True,True,True,0.2,tests.test_inherited_custom_class.return_fast_uuid
+fastapi_14609,fastapi,ok,20,True,symbol,FastAPI,fastapi.applications.FastAPI,False,True,True,True,True,True,True,True,True,0.0,fastapi.routing.APIRoute
+fastapi_14786,fastapi,ok,1,True,symbol,fastapi.security,fastapi.security.http.HTTPBase,False,False,False,False,False,False,False,False,False,0.2,fastapi.openapi.models.SecurityBase
+fastapi_14791,fastapi,ok,1,True,symbol,ValidationError,fastapi.exceptions.RequestValidationError,False,False,True,True,False,True,True,True,True,0.0,fastapi.routing.APIRouter
+fastapi_14794,fastapi,ok,1,True,symbol,Response,fastapi.openapi.models.Response,False,False,False,False,False,False,False,False,False,0.0,security.tutorial005_py310.UserInDB
+fastapi_14851,fastapi,ok,1,True,symbol,on_event,fastapi.routing.APIRouter.on_event,True,True,True,True,True,True,True,True,True,0.0,fastapi.routing.APIRouter.route
+fastapi_14873,fastapi,ok,1,True,symbol,APIRouter.__init__,fastapi.routing.APIRouter.__init__,True,False,False,False,True,True,True,True,True,0.0,fastapi.applications.FastAPI.setup
+fastapi_14953,fastapi,ok,4,True,symbol,OpenAPI,fastapi.openapi.models.OpenAPI,False,False,False,False,False,False,False,False,False,0.2,fastapi.security.http.HTTPBase.make_not_authenticated_error
+fastapi_14962,fastapi,ok,3,True,keywords,serialize response pydantic,,False,False,False,False,False,False,False,False,False,1.0,tests.test_serialize_response.Item
+fastapi_14964,fastapi,ok,1,True,symbol,ORJSONResponse,fastapi.responses.ORJSONResponse,True,True,True,True,True,True,True,True,True,0.4,fastapi.responses.ORJSONResponse.render
+fastapi_14978,fastapi,ok,3,True,keywords,strict content checking,,False,False,False,False,False,False,False,False,False,0.0,scripts.people.update_content
+fastapi_14986,fastapi,ok,2,True,symbol,OpenAPI,fastapi.openapi.models.OpenAPI,False,False,False,False,False,False,False,False,False,0.2,fastapi.security.http.HTTPBase.make_not_authenticated_error
+fastapi_15023,fastapi,ok,1,False,symbol,yield,tests.test_exception_handlers.with_yield,False,False,False,False,False,False,False,False,False,0.8,tests.test_request_params.test_body.test_optional_str.BodyModelOptionalStr
+fastapi_15030,fastapi,ok,9,True,symbol,FastAPI,fastapi.applications.FastAPI,False,True,True,True,True,True,True,True,True,0.0,fastapi.routing.APIRouter
+fastapi_15280,fastapi,ok,2,True,keywords,vibe,,False,False,False,False,False,False,False,False,False,0.0,
+fastapi_15589,fastapi,ok,1,True,symbol,GitHub,scripts.notify_translations.PartialGitHubEvent,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_path_params_numeric_validations.test_tutorial005.get_client
+fastapi_15661,fastapi,ok,1,False,symbol,GitHub,scripts.notify_translations.PartialGitHubEvent,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_path_params_numeric_validations.test_tutorial006.get_client
+fastapi_15745,fastapi,ok,4,True,symbol,APIRouter,fastapi.routing.APIRouter,True,True,True,True,True,True,True,True,True,0.0,fastapi.applications.FastAPI
+fastapi_15763,fastapi,ok,1,True,symbol,GitHub,scripts.notify_translations.PartialGitHubEvent,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_path_params_numeric_validations.test_tutorial006.get_client
+fastapi_15785,fastapi,ok,2,True,symbol,GitHub,scripts.notify_translations.PartialGitHubEvent,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_path_params_numeric_validations.test_tutorial004.get_client
+fastapi_15800,fastapi,ok,8,True,symbol,GitHub,scripts.notify_translations.PartialGitHubEvent,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_path_params_numeric_validations.test_tutorial002_tutorial003.get_client
+fastapi_5077,fastapi,ok,1,True,symbol,get_typed_signature,fastapi.dependencies.utils.get_typed_signature,True,False,False,True,True,True,True,True,True,0.2,fastapi.utils.get_path_param_names
+fastapi_5624,fastapi,ok,1,True,keywords,hierarchical security scope,,False,False,False,False,False,False,False,False,False,0.2,tests.test_tutorial.test_security.test_tutorial005.test_token_no_scope
+fastapi_9425,fastapi,ok,1,True,symbol,None,tests.test_security_oauth2_optional_description.test_strict_login_None,False,False,False,False,False,False,False,False,False,1.0,tests.test_tutorial.test_custom_docs_ui.test_tutorial002.test_api
+fastapi_9555,fastapi,ok,1,True,symbol,app.get,tests.test_validate_response_recursive.app.get_recursive,False,False,False,False,False,False,False,False,False,0.8,tests.test_schema_extra_examples.header_example
+fastapi_9753,fastapi,ok,1,True,symbol,partial,tests.test_callable_endpoint.test_partial,False,False,False,False,False,False,False,False,False,1.0,tests.test_pydantic_v1_v2_01.handle_simple_model
+requests_6589,requests,ok,1,True,symbol,super_len,requests.utils.super_len,True,False,False,False,True,True,True,True,True,0.4,tests.test_requests.TestRequests.test_transfer_enc_removal_on_redirect
+requests_6592,requests,ok,1,True,keywords,definition status code,,False,True,True,True,True,True,True,True,True,0.2,requests.status_codes.doc
+requests_6629,requests,ok,1,True,symbol,requests.exceptions.JSONDecodeError,requests.exceptions.JSONDecodeError,True,False,False,False,True,True,True,True,True,1.0,tests.test_requests.TestRequests.test_POSTBIN_SEEKED_OBJECT_WITH_NO_ITER
+requests_6644,requests,ok,1,True,keywords,trim excess leading,,False,False,False,False,False,False,False,False,False,0.2,tests.test_requests.test_header_no_leading_space
+requests_6757,requests,ok,2,True,keywords,test urllib first,,False,False,False,False,False,False,False,False,False,0.6,setup.PyTest
+requests_7205,requests,ok,1,True,keywords,empty netrc entry,,False,True,True,True,True,True,True,True,True,0.8,requests.utils.get_netrc_auth
+requests_7309,requests,ok,1,True,symbol,_parse_content_type_header,requests.utils._parse_content_type_header,True,False,False,False,True,True,True,True,True,0.2,tests.test_utils.test__parse_content_type_header
+requests_7328,requests,ok,1,True,symbol,Session.send,requests.sessions.Session.send,True,False,False,True,True,True,True,True,True,0.4,tests.test_requests.test_prepared_from_session
+requests_7502,requests,ok,1,True,symbol,_encode_files,requests.models.RequestEncodingMixin._encode_files,True,True,True,True,True,True,True,True,True,0.4,requests.models.RequestEncodingMixin._encode_params
+requests_7505,requests,ok,2,True,symbol,SupportsRead,requests._types.SupportsRead,True,True,True,True,True,True,True,True,True,0.4,requests._types.SupportsRead.read
+rich_2725,rich,ok,1,True,keywords,table rendering order,,False,True,True,True,True,True,True,True,True,0.0,rich.table.Row
+rich_2943,rich,ok,1,True,keywords,clear hashed cache,,False,False,True,True,False,True,True,True,True,0.2,rich.console.Console.clear
+rich_3006,rich,ok,1,True,symbol,repr,rich.repr.Foo,True,True,True,True,True,True,True,True,True,0.4,rich.repr.Foo.__rich_repr__
+rich_3043,rich,ok,1,False,keywords,export template addressing,,False,False,False,False,False,False,False,False,False,0.2,examples.export.print_table
+rich_3061,rich,ok,1,True,symbol,style,rich.style._Bit,False,False,False,False,False,False,False,False,False,0.4,rich.style._Bit.__init__
+rich_3064,rich,ok,1,True,keywords,markdown table,,False,True,True,True,True,True,True,True,True,0.0,rich.markdown.TableElement
+rich_3067,rich,ok,1,True,keywords,tilde changes documentation,,False,False,False,False,False,False,False,False,False,0.0,
+rich_3105,rich,ok,1,False,keywords,changes documentation docstrings,,False,False,False,False,False,False,False,False,False,0.2,tests.test_inspect.test_can_handle_special_characters_in_docstrings
+rich_3130,rich,ok,1,True,symbol,TextElement,rich.markdown.TextElement,True,True,True,True,True,True,True,True,True,0.0,rich.markdown.MarkdownElement
+rich_3180,rich,ok,2,True,keywords,double width characters,,False,False,False,False,False,False,False,False,False,0.6,rich.console.Console.width
+rich_3296,rich,ok,1,True,keywords,syntax include padding,,False,False,True,True,False,True,True,True,True,0.2,tests.test_syntax.test_syntax_padding
+rich_3454,rich,ok,1,True,symbol,rich.highlighter,rich.highlighter.Highlighter,True,True,True,True,True,True,True,True,True,0.0,rich.highlighter.RegexHighlighter
+rich_3468,rich,ok,1,True,keywords,handle broken pipe,,False,False,False,False,False,False,False,False,False,0.8,rich.pretty.BrokenRepr
+rich_3469,rich,ok,1,True,keywords,superfluous space,,False,False,False,False,False,False,False,False,False,0.6,tests.test_rule.test_rule_not_enough_space_for_title_text
+rich_3470,rich,ok,1,True,keywords,record capture,,False,False,True,True,False,True,True,True,True,0.2,tests.test_console.test_capture_and_record
+rich_3471,rich,ok,1,True,symbol,append_tokens,rich.text.Text.append_tokens,True,True,True,True,True,True,True,True,True,0.4,rich.text.Text.highlight_words
+rich_3472,rich,ok,1,True,keywords,missing field dataclass,,False,False,True,True,False,True,True,True,True,0.6,rich.errors.MissingStyle
+rich_3480,rich,ok,1,True,keywords,infinite loop append,,False,False,True,True,False,True,True,True,True,0.0,rich._loop.loop_last
+rich_3486,rich,ok,3,True,symbol,rich.traceback,rich.traceback.bar,True,True,True,True,True,True,True,True,True,0.4,rich.traceback.error
+rich_3506,rich,ok,1,True,symbol,Segment._split_cells,rich.segment.Segment._split_cells,True,True,True,True,True,True,True,True,True,0.6,rich.segment.Segment.cell_length
+rich_3518,rich,ok,1,True,symbol,add_row,rich.table.Table.add_row,True,False,False,False,True,True,True,True,True,0.2,rich.progress.TextColumn
+rich_3535,rich,ok,2,True,keywords,regex used select,,False,False,False,False,False,False,False,False,False,0.2,rich.text.Text.highlight_regex
+rich_3676,rich,ok,2,True,keywords,notes exception,,False,False,False,True,False,False,True,False,True,0.4,examples.exception.divide_by
+rich_3772,rich,ok,1,True,keywords,traceback recursion,,False,True,True,True,True,True,True,True,True,0.0,rich.traceback.bar
+rich_3777,rich,ok,2,True,keywords,disable things like,,False,False,False,False,False,False,False,False,False,0.6,tests.test_getfileno.FileLike
+rich_3782,rich,ok,1,True,keywords,syntax padding,,False,False,True,True,False,True,True,True,True,0.4,tests.test_syntax.test_syntax_padding
+rich_3882,rich,ok,1,True,symbol,PromptBase.on_validate_error,rich.prompt.PromptBase.on_validate_error,True,True,True,True,True,True,True,True,True,0.0,rich.prompt.PromptBase.make_prompt
+rich_3894,rich,ok,1,True,symbol,rich.traceback,rich.traceback.bar,False,False,False,False,False,False,False,False,False,0.0,rich.traceback.error
+rich_3934,rich,ok,2,True,keywords,empty live,,False,True,True,True,True,True,True,True,True,0.0,rich.live.Live
+rich_3938,rich,ok,2,True,keywords,background style soft,,False,False,False,False,False,False,False,False,False,0.2,rich.style.Style.background_style
+rich_3942,rich,ok,2,True,keywords,markdown styles styling,,False,False,True,True,False,True,True,True,True,0.4,tests.test_markdown.test_inline_styles_in_table
+rich_3944,rich,ok,1,True,keywords,fonts,,False,False,False,False,False,False,False,False,False,0.0,
+rich_3953,rich,ok,1,True,keywords,edge cases,,False,False,False,False,False,False,False,False,False,0.8,rich._ratio.Edge
+rich_4006,rich,ok,1,True,symbol,split_graphemes,rich.cells.split_graphemes,True,True,True,True,True,True,True,True,True,0.2,rich.cells.get_character_cell_size
+rich_4075,rich,ok,1,True,keywords,empty drop python,,False,False,False,False,False,False,False,False,False,1.0,tests.test_pretty.Empty
+rich_4077,rich,ok,1,True,keywords,proxy isatty,,False,True,True,True,True,True,True,True,True,0.0,rich.file_proxy.FileProxy
+rich_4079,rich,ok,1,True,keywords,inline table code,,False,False,False,False,False,False,False,True,False,0.4,tests.test_markdown.test_inline_code
