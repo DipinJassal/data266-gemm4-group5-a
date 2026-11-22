@@ -55,7 +55,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 | `khushi-structured-prompt-v1` | Khushi | structured-loop prompt | 1/10 | **5/30** | not submitted |
 | `khushi-anti-looping-v2` | Khushi | time-budget prompt | 2/10, 1/10 | — (negative, closed) | — |
 | `sarvesh-sampling-v1` | Sarvesh | thinking off | 2/10 | — | not submitted |
-| `bhoomika-lora-patches-v1` | Bhoomika | LoRA on reference patches (alpha 8) | 2/10 | **5/30** | not submitted; zip built locally Nov 21 |
+| `bhoomika-lora-patches-v1` | Bhoomika | LoRA on reference patches (alpha 8) | 2/10 | **5/30** | **submitted Nov 22** (ref 58709756, pending) |
 | `bhoomika-lora-runs-v2` | Bhoomika | LoRA on curated agent runs (alpha 8) | 2/10, 1/10 (18-run retrain) | — (neutral, no dev) | merged #19 |
 | `sarvesh-best-of-n-v2` | Sarvesh | prompt-only single retry | 2/10 | — | merged #21 |
 | PR #22 skills pack V1 | Poushali | fix-and-verify skill | 1/10 (negative) | — | open PR (Khushi reviews) |
@@ -65,7 +65,11 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 
 Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
 7/30 dev tasks can't pass in our harness (missing test packages, `docs/scoring_environment_comparison.md`), so 23/30 is the local ceiling.
-**No Kaggle submission has been made yet** (checked Nov 21 on Dipin's account).
+**First Kaggle submission: Nov 22, `bhoomika-lora-patches-v1`** (ref 58709756). Dipin makes all submissions (1 per team per day).
+**How to submit (code competition):** uploading a zip with `kaggle competitions submit -f` fails with 400. The submission must be a notebook's
+`/kaggle/working/submission.zip` output: push a CPU notebook (internet off, competition + `dipinjassal/g5a-agents` attached) that copies the variant
+folder and zips it (example: kernel `dipinjassal/g5a-submit-bhoomika-lora-patches-v1`), then
+`kaggle competitions submit gemma-4-developer-agent -k <user>/<kernel> -f submission.zip -v <version> -m "..."`.
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -100,8 +104,8 @@ Takeaways: every variant lands at 1–2/10 on smoke, and the control alone score
 - [x] Fix the `run_kaggle.py` race Bhoomika found. *(Branch `dipin/output-trimming-v1`, not yet on main: each upload gets an `upload_id`, and the kernel stops with "STALE UPLOAD" if the mounted dataset doesn't match.)*
 - [x] Get access to `bhoomikalnu/g5a-lora-v1-adapter`. *(Shared Nov 21. Downloaded and checked: config identical to the repo's, 820 bf16 tensors, rank 16, all 60 layers, language model only.
   Copied into `variants/bhoomika-lora-patches-v1/adapters/` (git-ignored) and built `harness/runs/bhoomika-lora-patches-v1-submission.zip` (183 MiB, validates).)*
-- [ ] **Start submitting to Kaggle (none made yet).** Create the Kaggle team first (team-merge deadline Nov 25); about 11 daily slots left before Dec 2.
-  Suggested order: baseline → `khushi-structured-prompt-v1` → `bhoomika-lora-patches-v1` → V2 control → combined agent.
+- [ ] **Daily Kaggle submissions** (Dipin only). Nov 22: `bhoomika-lora-patches-v1` ✅. Next: Nov 23 `dipin-output-trimming-v1` if it beats 5/30 on dev, else `khushi-structured-prompt-v1`;
+  Nov 24 `dipin-step-budget-v1` (budget-only reference); then baseline, the other 5/30 variant, combined agent. Pick the final 2 by Dec 2.
 - [x] Review PRs. *(Nov 21: #19 and #21 approved and merged; #22 and #23 commented, waiting on Khushi's questions; they'll need a rebase on `docs/experiment_log.md`.)*
 - [ ] Combined agent (Nov 23). Candidates: the two 5/30 variants (structured prompt + LoRA V1) on the V2 budget, plus a patch-hygiene checklist.
 - [ ] V1 output trimming: built as `dipin-output-trimming-v1` on branch `dipin/output-trimming-v1`; dev run started Nov 22 07:34 UTC. Then open a PR (reviewer: Bhoomika).
