@@ -56,11 +56,11 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 | `khushi-anti-looping-v2` | Khushi | time-budget prompt | 2/10, 1/10 | — (negative, closed) | — |
 | `sarvesh-sampling-v1` | Sarvesh | thinking off | 2/10 | — | not submitted |
 | `bhoomika-lora-patches-v1` | Bhoomika | LoRA on reference patches (alpha 8) | 2/10 | **5/30** | not submitted; zip built locally Nov 21 |
-| PR #19 LoRA V2 | Bhoomika | LoRA on curated agent runs | 2/10 | — | open PR |
-| PR #21 best-of-N V2 | Sarvesh | prompt-only single retry | 2/10 | — | open PR (Dipin reviews) |
+| `bhoomika-lora-runs-v2` | Bhoomika | LoRA on curated agent runs (alpha 8) | 2/10, 1/10 (18-run retrain) | — (neutral, no dev) | merged #19 |
+| `sarvesh-best-of-n-v2` | Sarvesh | prompt-only single retry | 2/10 | — | merged #21 |
 | PR #22 skills pack V1 | Poushali | fix-and-verify skill | 1/10 (negative) | — | open PR (Khushi reviews) |
 | PR #23 test-runner V2 | Poushali | test-runner `agent_tool` | negative | — | open PR (Khushi reviews) |
-| Dipin V1 output trimming | Dipin | — | not started | — | — |
+| `dipin-output-trimming-v1` | Dipin | "keep tool output small" prompt section | skipped (straight to dev) | **running** (Nov 22, branch `dipin/output-trimming-v1`) | — |
 | Combined agent | Dipin | — | not started (due Nov 23) | — | — |
 
 Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
@@ -87,7 +87,7 @@ Takeaways: every variant lands at 1–2/10 on smoke, and the control alone score
 - **Bhoomika V1 `bhoomika-lora-patches-v1`** (PR #12, merged Nov 20): V2 + LoRA trained on 75 train-split reference-patch trajectories, served at alpha 8. Smoke 2/10 (same as control), **dev 5/30 = 16.7%**, avg 3.4 min. Alpha 32 got 1/10 on smoke twice (overfit, repeats failing edits). Weights are in the private Kaggle dataset `bhoomikalnu/g5a-lora-v1-adapter` (not in git).
 
 **Next for Dipin**
-- [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
+- [x] Create the Kaggle team, invite all 4, agree the team name with the other team. *(Team in place, confirmed Nov 21.)*
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
 - [x] First real harness run (2 smoke tasks). Three launcher bugs were found and fixed along the way (Python literal, push hang, pinned Python 3.12 image).
 - [ ] Announce the harness to the team (`harness/README.md`).
@@ -97,14 +97,14 @@ Takeaways: every variant lands at 1–2/10 on smoke, and the control alone score
 - [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30 **(now urgent: Bhoomika's and Khushi's V1 both got 5/30 on top of V2, and neither gain can be credited until V2 has a dev score)**, then pick its `Source:` reference and submit on a spare slot.
-- [ ] Fix the `run_kaggle.py` race Bhoomika found: the kernel can start before the new `g5a-agents` dataset version is ready and silently run the previous upload.
+- [x] Fix the `run_kaggle.py` race Bhoomika found. *(Branch `dipin/output-trimming-v1`, not yet on main: each upload gets an `upload_id`, and the kernel stops with "STALE UPLOAD" if the mounted dataset doesn't match.)*
 - [x] Get access to `bhoomikalnu/g5a-lora-v1-adapter`. *(Shared Nov 21. Downloaded and checked: config identical to the repo's, 820 bf16 tensors, rank 16, all 60 layers, language model only.
   Copied into `variants/bhoomika-lora-patches-v1/adapters/` (git-ignored) and built `harness/runs/bhoomika-lora-patches-v1-submission.zip` (183 MiB, validates).)*
 - [ ] **Start submitting to Kaggle (none made yet).** Create the Kaggle team first (team-merge deadline Nov 25); about 11 daily slots left before Dec 2.
   Suggested order: baseline → `khushi-structured-prompt-v1` → `bhoomika-lora-patches-v1` → V2 control → combined agent.
-- [ ] Review PR #21 (Sarvesh, best-of-N); nudge reviewers for #19 (Poushali), #22 and #23 (Khushi).
+- [x] Review PRs. *(Nov 21: #19 and #21 approved and merged; #22 and #23 commented, waiting on Khushi's questions; they'll need a rebase on `docs/experiment_log.md`.)*
 - [ ] Combined agent (Nov 23). Candidates: the two 5/30 variants (structured prompt + LoRA V1) on the V2 budget, plus a patch-hygiene checklist.
-- [ ] Decide on V1 output trimming (Nov 16, not started): build it or drop it and log it as not done.
+- [ ] V1 output trimming: built as `dipin-output-trimming-v1` on branch `dipin/output-trimming-v1`; dev run started Nov 22 07:34 UTC. Then open a PR (reviewer: Bhoomika).
 - [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
