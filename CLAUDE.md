@@ -60,9 +60,10 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 | `sarvesh-best-of-n-v2` | Sarvesh | prompt-only single retry | 2/10 | — | merged #21 |
 | PR #22 skills pack V1 | Poushali | fix-and-verify skill | 1/10 (negative) | — | open PR (Khushi reviews) |
 | PR #23 test-runner V2 | Poushali | test-runner `agent_tool` | negative | — | open PR (Khushi reviews) |
-| `dipin-output-trimming-v1` | Dipin | "keep tool output small" prompt section | skipped (straight to dev) | **running** (Nov 22, branch `dipin/output-trimming-v1`) | — |
+| `dipin-output-trimming-v1` | Dipin | "keep tool output small" prompt section | skipped (straight to dev) | **5/30** (1 context crash vs 2 for Khushi's V1; avg 3.9 min) | — |
 | Combined agent | Dipin | — | not started (due Nov 23) | — | — |
 
+**All three 5/30 variants (structured prompt, output trimming, and per-repo counts for LoRA V1) solve the same tasks:** fastapi_14077, fastapi_14301, fastapi_14492, rich_3718, rich_3905. That points to the shared 4.5 min / 50-call budget doing the work, so the V2 control's own dev/Kaggle score is the most important missing number.
 Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
 7/30 dev tasks can't pass in our harness (missing test packages, `docs/scoring_environment_comparison.md`), so 23/30 is the local ceiling.
 **First Kaggle submission: Nov 22, `bhoomika-lora-patches-v1`** (ref 58709756). Dipin makes all submissions (1 per team per day).
@@ -108,7 +109,7 @@ folder and zips it (example: kernel `dipinjassal/g5a-submit-bhoomika-lora-patche
   Nov 24 `dipin-step-budget-v1` (budget-only reference); then baseline, the other 5/30 variant, combined agent. Pick the final 2 by Dec 2.
 - [x] Review PRs. *(Nov 21: #19 and #21 approved and merged; #22 and #23 commented, waiting on Khushi's questions; they'll need a rebase on `docs/experiment_log.md`.)*
 - [ ] Combined agent (Nov 23). Candidates: the two 5/30 variants (structured prompt + LoRA V1) on the V2 budget, plus a patch-hygiene checklist.
-- [ ] V1 output trimming: built as `dipin-output-trimming-v1` on branch `dipin/output-trimming-v1`; dev run started Nov 22 07:34 UTC. Then open a PR (reviewer: Bhoomika).
+- [ ] V1 output trimming: `dipin-output-trimming-v1` on branch `dipin/output-trimming-v1` scored **5/30 on dev** (Nov 22; same 5 tasks as Khushi's V1). Open a PR (reviewer: Bhoomika); the branch also carries the harness upload_id fix (confirmed working in this run).
 - [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
