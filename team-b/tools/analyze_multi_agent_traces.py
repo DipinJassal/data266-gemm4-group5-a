@@ -154,20 +154,16 @@ def classify_tool_name(name: str) -> str:
 
 
 def _maybe_name(obj: dict) -> str | None:
+    """Return a tool/agent name from *this* object only (no nested lookup).
+
+    Nested ``function_call`` / ``functionCall`` wrappers are discovered by the
+    recursive walker. Looking into them here would emit the same call twice
+    (once from the parent, once from the child).
+    """
     for key in ("name", "tool", "tool_name", "toolName", "agent_name", "agentName"):
         v = obj.get(key)
         if isinstance(v, str) and v.strip():
             return v.strip()
-    fc = obj.get("function_call") or obj.get("functionCall")
-    if isinstance(fc, dict):
-        n = fc.get("name")
-        if isinstance(n, str) and n.strip():
-            return n.strip()
-    # ADK-style transfer
-    if obj.get("type") in {"function_call", "tool_call", "TOOL_CALL"}:
-        n = obj.get("name")
-        if isinstance(n, str) and n.strip():
-            return n.strip()
     return None
 
 
@@ -244,26 +240,33 @@ def load_json_safe(path: Path) -> tuple[Any | None, str | None]:
 
 
 def gather_trace_payloads(run_dir: Path, results_parent: Path, instance_id: str) -> tuple[list[tuple[str, Any]], list[str]]:
-    """Locate per-task detail / trace files. Paths are inferred from Team B runner docs."""
+    """Locate per-task detail / trace files. Paths are inferred from Team B runner docs.
+
+    Matching is exact on the task id (filename stem or directory name). Substring
+    globs like ``*<instance_id>*.json`` are intentionally avoided so ``demo_1``
+    cannot pick up ``demo_10``.
+    """
     candidates: list[Path] = []
-    # Primary: task_details next to harness_results.jsonl
-    candidates.append(results_parent / "task_details" / f"{instance_id}.json")
+    # Primary: task_details next to harness_results.jsonl (and under run_dir for trace-only inputs)
+    for details_root in (
+        results_parent / "task_details",
+        run_dir / "task_details",
+    ):
+        candidates.append(details_root / f"{instance_id}.json")
     # swegemma traces (runner notes traces are written separately)
     for base in (
         results_parent / "swegemma" / "traces",
         results_parent / "traces",
         run_dir / "swegemma" / "traces",
+        run_dir / "traces",
     ):
         candidates.append(base / f"{instance_id}.json")
         candidates.append(base / instance_id / "trace.json")
         candidates.append(base / instance_id / "events.json")
-        if base.is_dir():
-            for p in sorted(base.glob(f"*{instance_id}*.json")):
+        sub = base / instance_id
+        if sub.is_dir():
+            for p in sorted(sub.rglob("*.json")):
                 candidates.append(p)
-            sub = base / instance_id
-            if sub.is_dir():
-                for p in sorted(sub.rglob("*.json")):
-                    candidates.append(p)
 
     payloads: list[tuple[str, Any]] = []
     notes: list[str] = []
@@ -289,6 +292,36 @@ def gather_trace_payloads(run_dir: Path, results_parent: Path, instance_id: str)
     return payloads, notes
 
 
+def discover_trace_only_instance_ids(run_dir: Path) -> list[str]:
+    """Exact task ids from task_details/ or traces/ when harness_results.jsonl is absent."""
+    ids: list[str] = []
+    seen: set[str] = set()
+    skip_stems = {"trace", "events", "harness_results", "run_info", "summary"}
+
+    def add(stem: str) -> None:
+        stem = stem.strip()
+        if not stem or stem in seen or stem in skip_stems:
+            return
+        seen.add(stem)
+        ids.append(stem)
+
+    for details in sorted(run_dir.rglob("task_details")):
+        if not details.is_dir():
+            continue
+        for p in sorted(details.glob("*.json")):
+            add(p.stem)
+
+    for traces in sorted(run_dir.rglob("traces")):
+        if not traces.is_dir():
+            continue
+        for p in sorted(traces.glob("*.json")):
+            add(p.stem)
+        for sub in sorted(p for p in traces.iterdir() if p.is_dir()):
+            if (sub / "trace.json").is_file() or (sub / "events.json").is_file():
+                add(sub.name)
+    return ids
+
+
 def analyze_events_v1(events: list[ToolEvent]) -> dict[str, Any]:
     analyzer_idxs = [e.index for e in events if e.kind == "analyzer"]
     edit_idxs = [e.index for e in events if e.kind == "edit"]
@@ -311,7 +344,8 @@ def analyze_events_v1(events: list[ToolEvent]) -> dict[str, Any]:
     if analyzer_idxs and edit_idxs:
         out["analyzer_before_first_edit"] = analyzer_idxs[0] < edit_idxs[0]
     elif analyzer_idxs and not edit_idxs:
-        out["analyzer_before_first_edit"] = True  # invoked; no edit observed
+        # Analyzer ran, but without an edit event the before/after relation is unknown.
+        out["analyzer_before_first_edit"] = NA
     elif not analyzer_idxs:
         out["analyzer_before_first_edit"] = False
     else:
@@ -360,7 +394,8 @@ def analyze_events_v2(events: list[ToolEvent]) -> dict[str, Any]:
     if critic_idxs and submit_idxs:
         out["critic_before_submit"] = critic_idxs[0] < submit_idxs[0]
     elif critic_idxs and not submit_idxs:
-        out["critic_before_submit"] = True
+        # Critic ran, but without a submit event the before/after relation is unknown.
+        out["critic_before_submit"] = NA
     elif not critic_idxs:
         out["critic_before_submit"] = False
     else:
@@ -699,14 +734,20 @@ def main(argv: list[str] | None = None) -> int:
         elif isinstance(data, dict):
             run_info = data
 
-    # If results empty but task_details exist, synthesize stub rows from filenames.
-    if not rows and results_parent and (results_parent / "task_details").is_dir():
-        for p in sorted((results_parent / "task_details").glob("*.json")):
-            rows.append({"instance_id": p.stem})
-        print(
-            f"WARN: built {len(rows)} stub task rows from task_details/ filenames only.",
-            file=sys.stderr,
-        )
+    # Trace-only inputs: no harness_results.jsonl (or empty), but task_details/traces exist.
+    # Discover exact instance ids and analyze without inventing resolution metrics.
+    if not rows:
+        orphan_ids = discover_trace_only_instance_ids(run_dir)
+        if orphan_ids:
+            if results_parent is None:
+                results_parent = run_dir
+            for iid in orphan_ids:
+                rows.append({"instance_id": iid})
+            print(
+                f"WARN: built {len(rows)} stub task rows from task_details/traces filenames only "
+                "(resolution metrics remain not_available).",
+                file=sys.stderr,
+            )
 
     tasks = [analyze_task(args.variant, row, run_dir, results_parent) for row in rows]
     results_rel: str | None = None

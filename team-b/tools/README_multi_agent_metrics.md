@@ -70,7 +70,7 @@ python team-b/tools/analyze_multi_agent_traces.py \
 |---|---|
 | Task count / resolution / patch empty / runtime / tool_calls | `harness_results.jsonl` |
 | Analyzer invoked / call count / retries | Trace events naming `code_analyzer_agent` (or `code_analyzer`) |
-| Analyzer-before-first-edit | Ordered events: first analyzer index &lt; first `edit_file`/`write_file` |
+| Analyzer-before-first-edit | Ordered events: first analyzer index &lt; first `edit_file`/`write_file`; `not_available` if analyzer ran but no edit event exists |
 | Structured plan observed | Analyzer event **text** matching plan/root-cause/file-list cues; else `not_available` |
 
 ### V2 `diff-critic`
@@ -78,11 +78,13 @@ python team-b/tools/analyze_multi_agent_traces.py \
 | Metric | Needs |
 |---|---|
 | Critic invoked / count / &gt;1 call | Trace events naming `diff_critic_agent` (or `diff_critic`) |
-| Critic-before-submit | First critic index &lt; first `submit_patch` |
+| Critic-before-submit | First critic index &lt; first `submit_patch`; `not_available` if critic ran but no submit event exists |
 | OK vs problems / issue count | Critic response text (`OK` vs `Problems:` numbered lines) |
 | Edits after critic | Any `edit_file`/`write_file` **after** first critic call |
 
 **Important:** `edits_after_critic` only means a source edit happened after the critic ran. It does **not** prove the feedback was correct or that the agent followed it.
+
+Trace files are matched by **exact** task id (filename stem or `traces/<id>/`). Substring globs are not used. If `harness_results.jsonl` is missing, the CLI still builds a report from `task_details/` / `traces/` stubs; resolution fields stay `not_available`.
 
 ## Smoke vs dev vs official Kaggle score
 

@@ -23,6 +23,7 @@ from analyze_multi_agent_traces import (  # noqa: E402
     analyze_task,
     classify_critic_text,
     extract_events_from_obj,
+    gather_trace_payloads,
     main,
     outcome_label,
 )
@@ -233,6 +234,96 @@ class TestEventExtractionShapes(unittest.TestCase):
         self.assertIn("code_analyzer_agent", names)
         self.assertIn("edit_file", names)
         self.assertIn("submit_patch", names)
+        # Nested wrappers must not double-count each call.
+        self.assertEqual(names.count("code_analyzer_agent"), 1)
+        self.assertEqual(names.count("edit_file"), 1)
+        self.assertEqual(names.count("submit_patch"), 1)
+
+
+class TestReviewerRegressions(unittest.TestCase):
+    """Regressions for the four bugs reproduced in Naveen's PR #18 review."""
+
+    def test_nested_function_call_not_double_counted(self):
+        payload = {"function_call": {"name": "edit_file", "args": {"path": "a.py"}}}
+        evs: list[ToolEvent] = []
+        extract_events_from_obj(payload, "synthetic", evs)
+        self.assertEqual([e.name for e in evs], ["edit_file"])
+        self.assertEqual(len(evs), 1)
+
+    def test_task_id_matching_is_exact_not_substring(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = Path(tmp)
+            results = run / "results"
+            traces = results / "swegemma" / "traces"
+            traces.mkdir(parents=True)
+            (traces / "demo_10.json").write_text(
+                json.dumps({"name": "edit_file"}), encoding="utf-8"
+            )
+            (traces / "demo_1.json").write_text(
+                json.dumps({"name": "read_file"}), encoding="utf-8"
+            )
+            payloads, _notes = gather_trace_payloads(run, results, "demo_1")
+            rels = [rel for rel, _ in payloads]
+            self.assertEqual(rels, ["results/swegemma/traces/demo_1.json"])
+            self.assertFalse(any("demo_10" in rel for rel in rels))
+
+            row = {"instance_id": "demo_1", "resolved": False, "patch_chars": 0}
+            t = analyze_task("analyzer-plan", row, run, results)
+            self.assertEqual(t.trace_status, "present")
+            self.assertEqual(t.trace_sources, ["results/swegemma/traces/demo_1.json"])
+
+    def test_ordering_unknown_without_edit_or_submit(self):
+        v1 = analyze_events_v1(
+            [ToolEvent(0, "code_analyzer_agent", "analyzer", None, "synthetic")]
+        )
+        self.assertTrue(v1["analyzer_invoked"])
+        self.assertEqual(v1["analyzer_before_first_edit"], NA)
+
+        v2 = analyze_events_v2(
+            [ToolEvent(0, "diff_critic_agent", "critic", "OK", "synthetic")]
+        )
+        self.assertTrue(v2["critic_invoked"])
+        self.assertEqual(v2["critic_before_submit"], NA)
+
+    def test_trace_only_input_builds_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = Path(tmp)
+            td = run / "task_details"
+            td.mkdir()
+            (td / "fastapi_11194.json").write_text(
+                json.dumps(
+                    {
+                        "events": [
+                            {"name": "code_analyzer_agent", "text": "Plan: files to change"},
+                            {"name": "edit_file"},
+                            {"name": "submit_patch"},
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out = run / "out"
+            rc = main(
+                [
+                    "--run-dir",
+                    str(run),
+                    "--variant",
+                    "analyzer-plan",
+                    "--output-dir",
+                    str(out),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual(summary["counts"]["tasks"], 1)
+            self.assertEqual(summary["counts"]["trace_status"].get("present"), 1)
+            # No harness_results → do not invent resolution metrics.
+            self.assertEqual(summary["counts"]["resolved_known"], 0)
+            self.assertEqual(summary["counts"]["resolved_true"], NA)
+            csv_text = (out / "per_task.csv").read_text(encoding="utf-8")
+            self.assertIn("fastapi_11194", csv_text)
+            report = (out / "report.md").read_text(encoding="utf-8")
+            self.assertIn("fastapi_11194", report)
 
 
 if __name__ == "__main__":
