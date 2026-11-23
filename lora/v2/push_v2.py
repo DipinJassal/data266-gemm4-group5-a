@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+DATA_OWNER = "bhoomikalnu"  # datasets live here; shared with the team, so anyone can push
 IMAGE = "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461"
 
 
@@ -32,7 +33,7 @@ def main():
         "id": f"{user}/g5a-lora-v2-{mode}", "title": f"g5a-lora-v2-{mode}", "code_file": "train_v2.py",
         "language": "python", "kernel_type": "script", "is_private": True,
         "enable_gpu": mode == "train", "enable_tpu": False, "enable_internet": False, "docker_image": IMAGE,
-        "dataset_sources": [f"{user}/g5a-lora-wheels", "metric/gemma-4-developer-agent-wheelhouse", f"{user}/g5a-lora-v2-data"],
+        "dataset_sources": [f"{DATA_OWNER}/g5a-lora-wheels", "metric/gemma-4-developer-agent-wheelhouse", f"{DATA_OWNER}/g5a-lora-v2-data"],
         # the competition must be attached: it is what makes Kaggle grant L4 x4 to this account
         "competition_sources": ["gemma-4-developer-agent"],
                 "model_sources": models,
