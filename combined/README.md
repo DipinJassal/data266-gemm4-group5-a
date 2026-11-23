@@ -25,7 +25,7 @@ already read; at ~27 tokens/s that is ~130 s of each task's ~230 s, while 17/30 
 
 ## Result
 
-**v3 dev:** not run yet.
+**v3 dev (Nov 23, git `f844aeb`): 5/30, no effect.** Same 5 tasks; 18 timeouts, 3 empty. The agent's messages did not get shorter (141 vs 147 tokens per step; code re-quoting 18% in both), so the model ignored the rule. The trace text is most likely the model's thinking (`include_thoughts: true`), which a prompt rule doesn't control. Sarvesh's thinking-off smoke run had 30.6 tool calls/task vs 18.1 for the control, with 2 vs 6 timeouts.
 
 **v2 dev (Nov 23, git `34c1089`, tag `combined-v2`, submission zip built): 5/30** (fastapi 3/15, rich 2/11), the same 5 tasks as the other 5/30 variants. Empty patches 2 (vs 5 for output trimming), context-window crashes 0 (vs 1), 17 timeouts, avg 3.8 min (max 4.6). More tasks end with a patch, but the extra patches are wrong fixes, not new passes.
 
