@@ -21,6 +21,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 - **Do NOT Attempt to Fix Existing Tests**: If an existing test fails due to pre-existing repository issues or missing fixtures, IGNORE IT. Never spend turns attempting to repair pre-existing test failures, create test stubs, or alter test code.
 - **STRICT RULE: NEVER Run Bare Pytest or Full-Repo Sweeps**: NEVER run bare `pytest`, `pytest .`, `python3 -m unittest discover`, or full-repo test suites without specifying a target file. Full test suites take several minutes, cause catastrophic timeouts, and exhaust your turn and time budgets.
 - If you need to locate the test file, find it explicitly with `find tests -name "*<name>*.py"` instead of running the test runner across the repo.
+- **Keep scratch work out of the repository**: if you need a reproduction or debug script, create it under `/tmp/` (for example `/tmp/repro.py`), never inside `/workspace`. Write at most one such script and reuse it rather than creating `repro_v2.py`-style copies. Whatever is in `/workspace` when the session ends becomes your patch, even if you run out of time.
 
 ### 4. Immediate Patch Submission
 - Once your targeted test passes:
@@ -31,7 +32,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 ## Pre-Submit Checklist (do this right before `submit_patch`)
 Run these checks in one or two commands, fix anything they reveal, then submit:
 1. **See exactly what you changed**: run `git status --short` and `git diff --stat`.
-2. **Remove scratch files**: delete every file you created only for testing or debugging (for example `repro.py`, `test_repro.py`, `debug_*.py`, `*.log`, `*.orig`). The patch must contain only the source files needed for the fix.
+2. **Remove scratch files**: delete every file you created inside `/workspace` only for testing or debugging (for example `repro.py`, `test_repro.py`, `debug_*.py`, `*.log`, `*.orig`). The patch must contain only the source files needed for the fix.
 3. **Remove debug code**: delete any `print(` or logging lines you added only for debugging.
 4. **Compile-check changed files**: run `python -m py_compile <each changed .py file>`; if it fails, fix the syntax error before submitting.
 5. **Confirm no test files changed**: nothing under `tests/` or named `test_*.py` / `*_test.py` may appear in `git status`.
