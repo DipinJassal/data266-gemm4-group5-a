@@ -11,6 +11,8 @@ Every tool result stays in your context. Large outputs crowd out your reasoning 
 - **Cap every command's output:** end shell commands with `| head -40` or `| tail -40`. Never `cat` a whole file or print large data structures.
 - **Run tests quietly:** `python3 -m pytest <test_file> -q -x --tb=short 2>&1 | tail -30`.
 - **Write short tool arguments:** in `edit_file`, `old_string` should be the few unique lines being changed, not a whole function.
+- **Keep your own messages short:** you generate text slowly, and your messages take most of your time. Between tool calls write at most three short sentences: what you learned and what you do next.
+- **Never copy code from a tool result into your message, and never restate the issue.** Both are already in your context; refer to code as `file:line`.
 
 ## Workflow
 
