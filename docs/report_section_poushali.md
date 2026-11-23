@@ -19,11 +19,12 @@ telling the agent to call `load_skill` first. Everything else is the budget-fixe
 
 **Results.**
 
-| Run | Smoke | Avg min/task | Empty | Source edit made | Pre-edit Python runs |
-|---|---|---|---|---|---|
-| Control (Prompts RUN-006) | 1/10 | 4.67 | 2 | 5 | 9 |
-| Skills pack, 2-task check | 2/2 | 4.4 | 0 | 2 | |
-| **Skills pack, full smoke** | **1/10** | 4.6 | 6 | 2 | 22 |
+| Run | Smoke | Dev | Avg min/task | Empty | Source edit made | Pre-edit Python runs |
+|---|---|---|---|---|---|---|
+| Control (Prompts RUN-006) | 1/10 | not run | 4.67 | 2 | 5 | 9 |
+| Skills pack, 2-task check | 2/2 | | 4.4 | 0 | 2 | |
+| **Skills pack, full smoke** | **1/10** | | 4.6 | 6 | 2 | 22 |
+| **Skills pack, dev** | | **6/30** (6/23 excl. blocked) | 4.0 | 5 | | |
 
 The 2-task check found a wrong rule: the first version said "scratch files go in `/tmp`", but `write_file` only writes
 inside `/workspace` and rejects `/tmp` as path traversal. The agent then wrote its script into the repository, where it
@@ -35,7 +36,11 @@ Following did not. The agent broke the main rules often: 22 Python runs before t
 scratch scripts written into the repository in 3 tasks, and a source edit in only 2 tasks against 5. The one resolved
 task is the one every variant resolves, and two `rich` tasks timed out in every variant because the model spent 35 to
 91 seconds thinking between tool calls. With one 10-task run the resolved count (1 vs 1) is within noise, but the process
-metrics point the wrong way, so no dev run was spent and V1 is a documented negative result.
+metrics point the wrong way. When the team later scored every variant on dev, the skills pack reached **6/30 (20.0%)**,
+the best local dev score so far (Prompts V1 and LoRA V1: 5/30; baseline 2/30). It solved the same five tasks as Prompts V1
+plus one more, loaded the skill in 30/30 tasks and ran pytest in 8/30 (baseline 0/30). This is one run and a one-task gain,
+and the control has no dev score, so it does not show that the skill helps; it does make the skills pack a submission
+candidate.
 
 **V2: test-runner sub-agent.** V2 targets the same "no task ran the repository's tests" pattern with an `agent_tool`
 instead of instructions. `test_runner_agent` may only use `run_command`, at most 3 times: it finds the tests related to
@@ -71,7 +76,7 @@ no dev run spent.
 
 | Member | Contribution |
 |---|---|
-| Poushali Deb Purkayastha | Skills and tools area: V1 skills pack (`fix-and-verify` skill and load trigger; 2-task check and full smoke, 1/10 vs control 1/10, a documented negative result with per-task analysis); found that `write_file` cannot write outside `/workspace`, so scratch scripts need `run_command`; confirmed the `load_skill` trigger works in 12/12 tasks; V2 test-runner `agent_tool` (two smoke iterations, 2/10 and 1/10 vs control 1/10 and 2/10; sub-agent correct in 15.5 s when called but called in only 1 of 9 tasks with a source edit, a documented negative result); reviewed Bhoomika's LoRA V2 (leakage check, alpha and weights-access findings). |
+| Poushali Deb Purkayastha | Skills and tools area: V1 skills pack (`fix-and-verify` skill and load trigger; smoke 1/10 vs control 1/10, dev **6/30**, the team's best local dev score; per-task analysis); found that `write_file` cannot write outside `/workspace`, so scratch scripts need `run_command`; confirmed the `load_skill` trigger works in 12/12 tasks; V2 test-runner `agent_tool` (two smoke iterations, 2/10 and 1/10 vs control 1/10 and 2/10; sub-agent correct in 15.5 s when called but called in only 1 of 9 tasks with a source edit, a documented negative result); reviewed Bhoomika's LoRA V2 (leakage check, alpha and weights-access findings). |
 
 ## Slide (one slide)
 
@@ -80,7 +85,7 @@ no dev run spent.
 - Submissions are declarative: 9 harness tools, sub-agents, and skills (`SKILL.md`, loaded with `load_skill`)
 - V1 `fix-and-verify`: edit by call 10, exact tool arguments, run only related tests, no scratch files in the patch
 - Loading works: one prompt line, `load_skill` first in **12/12** tasks
-- Following does not: smoke **1/10** (control 1/10); source edits 2 vs 5, pre-edit runs 22 vs 9, empty patches 6 vs 2
+- Smoke **1/10** (control 1/10), but dev **6/30**, team best (other V1s 5/30, baseline 2/30); one run, so not proof
 - Found: `write_file` can't write `/tmp`, so scratch scripts need `run_command`
 - V2 `test_runner_agent`: runs only related tests, returns a 4-line PASS/FAIL/BLOCKED verdict
 - Works when called (15.5 s, correct PASS, task done in 2.9 min), but called in only **1 of 9** tasks with an edit; smoke 2/10, 1/10

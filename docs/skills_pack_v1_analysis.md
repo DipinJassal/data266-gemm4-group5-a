@@ -55,4 +55,24 @@ edit the most likely function now". The full smoke ran on that version.
 Closed as a documented negative result (rule 7). A skill is a cheap, valid way to ship procedural know-how, and the load trigger is reliable,
 but this 31B quantized model does not reliably follow a multi-rule procedure it loaded at the start once the task gets long. Hard limits
 that the harness enforces (the budget in `eval_config.yaml`) or a smaller context per decision (an `agent_tool` sub-agent) are more likely to change behaviour than more instructions.
-No dev run was spent.
+A dev run was later requested by the team (RUN-P05 below).
+
+## Dev run (RUN-P05, Nov 23)
+
+Dipin asked every member to score their variants on dev (Nov 22). This run used exactly the files of the full smoke run (`SKILL.md` sha256 `bb7d2d4e…`, checked in the kernel output),
+on 4x L4 with the same budget. The skill was the first call in 30/30 tasks.
+
+| | Dev (30) | Dev excl. 7 environment-blocked (23) | Empty | Patches with a scratch file | Avg / max min |
+|---|---:|---:|---:|---:|---|
+| Baseline (1 min / 10 calls) | 2/30 | 2/23 | 20 | n/a | 1.1 |
+| Khushi V1 `khushi-structured-prompt-v1` (RUN-007) | 5/30 | 5/23 | n/a | 9 | n/a |
+| Bhoomika V1 `bhoomika-lora-patches-v1` (alpha 8) | 5/30 | 5/23 | 4 | n/a | 3.4 |
+| **Skills pack V1 (RUN-P05)** | **6/30 (20.0%)** | **6/23 (26.1%)** | 5 | 5 (3 scratch only) | 4.0 / 4.7 |
+
+Resolved: `fastapi_14077`, `fastapi_14301`, `fastapi_14492`, `fastapi_14616`, `rich_3718`, `rich_3905` (fastapi 4/15, rich 2/11, requests 0/3, httpx 0/1).
+The first five are exactly the tasks Khushi's V1 resolved; the extra one is `fastapi_14616`. None of the 7 blocked tasks passed, as expected.
+8/30 tasks ran pytest (the baseline ran it in 0/30).
+
+**Reading it carefully:** this is one run, and the gain over the other V1s is one task. The control `dipin-step-budget-v1` still has no dev score,
+so the gain can't be credited to the skill alone, and the smoke result (1/10) pointed the other way. It is the best local dev score in the team so
+far and worth a submission slot, but it isn't evidence that the skill works. All figures are from our local harness, not Kaggle's official scorer.
