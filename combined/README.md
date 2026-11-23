@@ -17,6 +17,10 @@ plus tool-call arguments, and leaves ~24K tokens for input.
 **Left out on purpose:** Khushi's structured loop and Sarvesh's single retry. Each tied or matched alone, but stacked with
 extra rules in v1 they made the agent investigate longer and edit later (see below). Bhoomika's LoRA: no gain over the prompts.
 
+## Result
+
+**Dev (Nov 23, git `34c1089`): 5/30** (fastapi 3/15, rich 2/11), the same 5 tasks as the other 5/30 variants. Empty patches 2 (vs 5 for output trimming), context-window crashes 0 (vs 1), 17 timeouts, avg 3.8 min (max 4.6). More tasks end with a patch, but the extra patches are wrong fixes, not new passes.
+
 ## History
 
 - **v1 (Nov 22, tag `combined-v1-negative`): dev 4/30, negative, not submitted.** Structured prompt + output trimming +
