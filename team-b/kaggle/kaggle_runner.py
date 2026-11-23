@@ -77,7 +77,147 @@ def find_one(pattern: str, what: str) -> Path:
     return hits[0]
 
 
-def install_wheelhouse() -> None:
+REQUIRED_CPYTHON = (3, 12)  # official wheelhouse ships cp312 tags
+CP312_TAG = f"cp{REQUIRED_CPYTHON[0]}{REQUIRED_CPYTHON[1]}"
+REQUIRED_GPU_COUNT = 4
+REQUIRED_GPU_NAME = "L4"
+
+
+def require_compatible_python() -> None:
+    """Fail fast before pip if the kernel image is not CPython 3.12.x."""
+    v = sys.version_info
+    if (v.major, v.minor) != REQUIRED_CPYTHON:
+        raise SystemExit(
+            f"Incompatible Python {v.major}.{v.minor}.{v.micro} "
+            f"({sys.executable}). The official dataset "
+            f"metric/gemma-4-developer-agent-wheelhouse requires "
+            f"CPython {REQUIRED_CPYTHON[0]}.{REQUIRED_CPYTHON[1]}.x "
+            f"({CP312_TAG} wheels). "
+            f"Pin a Python {REQUIRED_CPYTHON[0]}.{REQUIRED_CPYTHON[1]} "
+            f"Kaggle docker_image (see team-b/kaggle/README.md / verified probe digest)."
+        )
+    log(f"Python OK: {v.major}.{v.minor}.{v.micro} (requires {REQUIRED_CPYTHON[0]}.{REQUIRED_CPYTHON[1]}.x)")
+
+
+def count_l4_gpus(nvidia_smi_text: str | None) -> int:
+    """Count NVIDIA L4 lines in `nvidia-smi -L` output."""
+    if not nvidia_smi_text:
+        return 0
+    return sum(
+        1
+        for line in nvidia_smi_text.splitlines()
+        if re.search(r"\bNVIDIA\s+L4\b", line, flags=re.I) or re.search(r"\bL4\b", line)
+    )
+
+
+def _probe_gpu() -> dict:
+    """GPU visibility check before installing the wheelhouse (requires 4× L4)."""
+    info = {
+        "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+        "nvidia_smi": None,
+        "l4_count": 0,
+        "torch_cuda_available": None,
+        "torch_gpu_count": None,
+    }
+    try:
+        proc = subprocess.run(
+            ["nvidia-smi", "-L"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        text = (proc.stdout or proc.stderr or "").strip() or f"exit={proc.returncode}"
+        info["nvidia_smi"] = text
+        info["l4_count"] = count_l4_gpus(text)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        info["nvidia_smi"] = f"unavailable: {type(e).__name__}: {e}"
+        info["l4_count"] = 0
+    # torch may not be importable until after wheelhouse install; do not require it here.
+    return info
+
+
+def _probe_wheelhouse_tags(wheelhouse: Path) -> dict:
+    """Confirm the attached wheelhouse still looks like official cp312 offline wheels."""
+    wheels = sorted(wheelhouse.glob("*.whl"))
+    sample = [w.name for w in wheels[:5]]
+    cp312 = [w.name for w in wheels if CP312_TAG in w.name]
+    py313 = [w.name for w in wheels if "cp313" in w.name]
+    return {
+        "wheel_count": len(wheels),
+        "sample": sample,
+        "cp312_count": len(cp312),
+        "cp313_count": len(py313),
+        "has_cp312": bool(cp312),
+    }
+
+
+def runtime_preflight(cfg: dict) -> dict:
+    """Environment gates that must pass before installing the 41 competition wheels.
+
+    Checks: CPython 3.12, wheelhouse cp312 tags, GPU probe, and selected docker_image
+    recorded by the launcher (when present).
+    """
+    require_compatible_python()
+    wheelhouse = find_one("**/gemma-4-developer-agent-wheelhouse", "the wheelhouse dataset")
+    wheel_info = _probe_wheelhouse_tags(wheelhouse)
+    if wheel_info["wheel_count"] == 0:
+        raise SystemExit(f"Wheelhouse dataset at {wheelhouse} contains zero .whl files.")
+    if not wheel_info["has_cp312"]:
+        raise SystemExit(
+            f"Wheelhouse at {wheelhouse} has no {CP312_TAG} wheels "
+            f"(count={wheel_info['wheel_count']}, sample={wheel_info['sample']}). "
+            "Refusing to pip-install an incompatible offline wheel set."
+        )
+    if (sys.version_info.major, sys.version_info.minor) != REQUIRED_CPYTHON and wheel_info["has_cp312"]:
+        # require_compatible_python already exits; kept for clarity in logs.
+        pass
+
+    gpu_info = _probe_gpu()
+    required_gpus = int(cfg.get("required_gpu_count") or REQUIRED_GPU_COUNT)
+    required_gpu_name = str(cfg.get("required_gpu_name") or REQUIRED_GPU_NAME)
+    l4_count = int(gpu_info.get("l4_count") or 0)
+    if l4_count < required_gpus:
+        raise SystemExit(
+            f"Incompatible GPU topology: visible NVIDIA {required_gpu_name} count={l4_count}, "
+            f"required={required_gpus}. nvidia-smi -L reported:\n{gpu_info.get('nvidia_smi')!r}\n"
+            "Refuse to install the wheelhouse on a non-L4×4 runtime. "
+            "Re-push with machine_shape/accelerator=NvidiaL4 and the probe-verified docker_image."
+        )
+
+    expected_image = cfg.get("docker_image")
+    verification = cfg.get("image_verification")
+    preflight = {
+        "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        "executable": sys.executable,
+        "required_cpython": f"{REQUIRED_CPYTHON[0]}.{REQUIRED_CPYTHON[1]}",
+        "docker_image_expected": expected_image,
+        "image_verification": verification,
+        "machine_shape_expected": cfg.get("machine_shape"),
+        "required_gpu_count": required_gpus,
+        "required_gpu_name": required_gpu_name,
+        "wheelhouse": str(wheelhouse),
+        "wheels": wheel_info,
+        "gpu": gpu_info,
+    }
+    log(
+        "PREFLIGHT OK: "
+        f"python={preflight['python']} "
+        f"wheels={wheel_info['wheel_count']} ({CP312_TAG}={wheel_info['cp312_count']}) "
+        f"l4_count={l4_count}/{required_gpus} "
+        f"docker_image_expected={expected_image!r} "
+        f"image_verification={verification!r} "
+        f"nvidia_smi={gpu_info['nvidia_smi']!r}"
+    )
+    if expected_image is None:
+        log(
+            "WARN  RUN_CONFIG has no docker_image; launcher should inject the pinned digest. "
+            "Continuing after Python/wheel/GPU gates only."
+        )
+    return preflight
+
+
+def install_wheelhouse() -> Path:
+    """Install official competition wheels. Caller must run runtime_preflight() first."""
     wheelhouse = find_one("**/gemma-4-developer-agent-wheelhouse", "the wheelhouse dataset")
     for pattern in ("/usr/local/lib/python*/dist-packages/*cutlass*.pth", "/usr/local/lib/python*/site-packages/*cutlass*.pth"):
         for pth in glob.glob(pattern):
@@ -102,6 +242,7 @@ def install_wheelhouse() -> None:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-deps", "--force-reinstall", *wheels], check=True)
     importlib.invalidate_caches()
     quiet_loggers()
+    return wheelhouse
 
 
 def run_sync(fn, *args, **kwargs):
@@ -200,6 +341,8 @@ def main() -> None:
     if cfg.get("max_tasks"):
         wanted = wanted[: int(cfg["max_tasks"])]
 
+    # Fail before the ~41-wheel install if Python / wheel tags / GPU probe are wrong.
+    preflight = runtime_preflight(cfg)
     install_wheelhouse()
 
     import litellm
@@ -246,6 +389,8 @@ def main() -> None:
     adapter_map = getattr(adapters, "adapters", None) or {}
     ranks = [r for info in adapter_map.values() if (r := getattr(info, "rank", None)) is not None and r > 0]
     gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else 0
+    preflight["gpu"]["torch_cuda_available"] = bool(torch.cuda.is_available())
+    preflight["gpu"]["torch_gpu_count"] = gpu_count
     if gpu_count < 4:
         log(f"WARNING: {gpu_count} GPU(s) visible; Kaggle scoring uses 4x L4. Timings will not be representative.")
     tp = 4 if gpu_count >= 4 else (2 if gpu_count >= 2 else 1)
@@ -299,6 +444,9 @@ def main() -> None:
         "git_rev": cfg.get("git_rev"), "dirty": cfg.get("dirty"),
         "adapters": sorted(adapter_map), "gpu_count": gpu_count, "budgets": budgets,
         "vllm_start_seconds": vllm_start_seconds, "started_utc": started.isoformat(),
+        "docker_image": cfg.get("docker_image"),
+        "image_verification": cfg.get("image_verification"),
+        "preflight": preflight,
     }
     (out_dir / "run_info.json").write_text(json.dumps(run_info, indent=2))
 

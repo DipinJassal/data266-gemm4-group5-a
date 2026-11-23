@@ -6,6 +6,8 @@ Examples (run from the repo root):
     python team-b/kaggle/run_kaggle.py team-b/variants/analyzer-plan smoke --max-tasks 2
     python team-b/kaggle/run_kaggle.py team-b/variants/diff-critic smoke
     python team-b/kaggle/run_kaggle.py --fetch team-b/variants/base smoke
+    python team-b/kaggle/run_kaggle.py --print-verified-runtime
+    python team-b/kaggle/run_kaggle.py --check-cli
 
 What it does:
   1. Validates the selected Team B variant offline (harness/validate.py).
@@ -17,19 +19,23 @@ What it does:
      Staging every variant avoids concurrent --no-wait races on a single dataset slug.
      It does NOT upload Team A baseline/, variants/, or combined/.
   3. Pushes a private GPU script kernel `<you>/g5b-eval-...` that runs
-     team-b/kaggle/kaggle_runner.py (internet off; competition + wheelhouse + model attached).
+     team-b/kaggle/kaggle_runner.py (internet off; competition + wheelhouse + model attached;
+     NvidiaL4 accelerator; verified Python 3.12 docker_image pin).
   4. Downloads outputs into team-b/kaggle/runs/<variant>/<split>/<UTC>/ and summarizes.
 
 `--dry-run` never calls the Kaggle API, never needs credentials, and writes the staged
 dataset + kernel under team-b/kaggle/runs/_dryrun/.
 
 Requires ~/.kaggle credentials only for real uploads (not for --dry-run).
+Real pushes require a Kaggle CLI that transmits metadata `docker_image` (kaggle>=2.x;
+1.7.4.5 only sends `docker_image_pinning_type` and silently ignores the digest).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -52,10 +58,47 @@ KERNEL_PREFIX = "g5b-eval"
 MODEL_SOURCE = "google/gemma-4/Other/{model}/2"
 DEFAULT_MACHINE = "NvidiaL4"
 OFFICIAL_NOTEBOOK = "ryanholbrook/getting-started-gemma-4-developer-agent"
-FALLBACK_DOCKER_IMAGE = (
+# Competition wheelhouse ships CPython 3.12 (cp312) wheels; Python 3.13 kernels fail at pip install.
+REQUIRED_CPYTHON = (3, 12)
+REQUIRED_GPU_COUNT = 4
+REQUIRED_GPU_NAME = "L4"
+
+# Verified by a Team B lightweight GPU probe (competition attached, internet off, NvidiaL4).
+# Observed: Python 3.12.13, 4× NVIDIA L4. The digest itself is the shared default — teammates
+# do not need any personal probe kernel ID or username to run the launcher.
+VERIFIED_DOCKER_IMAGE = (
     "gcr.io/kaggle-private-byod/python@"
     "sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461"
 )
+VERIFIED_PYTHON = "3.12.13"
+VERIFIED_RUNTIME_SOURCE = (
+    "Team B L4×4 competition GPU probe (Nov 2026): "
+    f"python={VERIFIED_PYTHON}, gpu_count={REQUIRED_GPU_COUNT}, "
+    f"gpus=NVIDIA L4×{REQUIRED_GPU_COUNT}, machine={DEFAULT_MACHINE}, "
+    f"competition={COMPETITION}, internet=off, docker_image={VERIFIED_DOCKER_IMAGE}"
+)
+# Backward-compatible alias used by older dry-run messaging / tests.
+FALLBACK_DOCKER_IMAGE = VERIFIED_DOCKER_IMAGE
+
+# Official docker-python GPU release candidate (GitHub only). Not the Team B default.
+CANDIDATE_V173_DOCKER_IMAGE = (
+    "gcr.io/kaggle-private-byod/python@"
+    "sha256:83f7b285b2fc8e20265817fc233825a31a385718fc4aa75e65caa900d968a378"
+)
+CANDIDATE_V173_TAG = "gcr.io/kaggle-private-byod/python:v173"
+CANDIDATE_V173_PYTHON = "3.12.15"
+CANDIDATE_V173_SOURCE = (
+    "Kaggle/docker-python GitHub release 'v173 - GPU' (2026-10-30); "
+    f"tag {CANDIDATE_V173_TAG}; digest sha256:83f7b285…; "
+    f"PYTHON_VERSION={CANDIDATE_V173_PYTHON} from release notes. "
+    "Not used as the Team B default — prefer the probe-verified digest above."
+)
+DOCKER_IMAGE_ENV = "G5B_KAGGLE_DOCKER_IMAGE"
+IMAGE_VERIFICATION_ENV = "G5B_KAGGLE_IMAGE_VERIFICATION"
+# gpu-probe = the verified L4×4 / Py3.12.13 competition probe above.
+VERIFIED_IMAGE_SOURCES = ("gpu-probe", "notebook-pull", "session-python")
+ALL_IMAGE_SOURCES = VERIFIED_IMAGE_SOURCES + ("github-release-candidate",)
+DEFAULT_IMAGE_VERIFICATION = "gpu-probe"
 
 # Only Team B variant trees + shared harness splits/tooling. Never Team A experiment folders.
 # Ignore junk/outputs only. Do NOT ignore *.safetensors: restored adapter weights must
@@ -93,19 +136,213 @@ def kaggle_user() -> str:
     return m.group(1)
 
 
-def official_docker_image(*, allow_network: bool) -> str:
-    """Match the official Getting Started notebook image when possible."""
-    if not allow_network:
-        return FALLBACK_DOCKER_IMAGE
+def parse_kaggle_cli_version(version_text: str) -> tuple[int, ...] | None:
+    """Parse `kaggle --version` / package version strings into an int tuple."""
+    m = re.search(r"(\d+(?:\.\d+)+)", version_text)
+    if not m:
+        return None
+    return tuple(int(p) for p in m.group(1).split("."))
+
+
+def kaggle_cli_reports_docker_image_push_support(version: tuple[int, ...] | None) -> bool:
+    """Return True when the installed CLI is expected to transmit metadata docker_image.
+
+    Kaggle API 1.7.4.5 reads docker_image_pinning_type only and silently drops docker_image.
+    Support landed in #774 and ships in kaggle 2.x (ApiSaveKernelRequest.docker_image).
+    """
+    if version is None:
+        return False
+    return version >= (2, 0, 0)
+
+
+def probe_kaggle_cli_docker_image_support() -> dict:
+    """Inspect the local `kaggle` CLI for docker_image push support (no network)."""
+    info: dict = {
+        "kaggle_executable": shutil.which("kaggle"),
+        "version_text": None,
+        "version": None,
+        "supports_docker_image_push": False,
+        "probe": None,
+    }
+    if not info["kaggle_executable"]:
+        info["probe"] = "kaggle executable not found on PATH"
+        return info
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            kaggle("kernels", "pull", OFFICIAL_NOTEBOOK, "-m", "-p", tmp, timeout=120)
-            image = json.loads((Path(tmp) / "kernel-metadata.json").read_text()).get("docker_image")
-            if image:
-                return image
-    except Exception as e:
-        print(f"WARN  could not read official notebook docker image ({e}); using fallback.")
-    return FALLBACK_DOCKER_IMAGE
+        proc = subprocess.run(
+            ["kaggle", "--version"],
+            capture_output=True,
+            text=True,
+            stdin=subprocess.DEVNULL,
+            timeout=30,
+        )
+        info["version_text"] = (proc.stdout + proc.stderr).strip()
+        info["version"] = parse_kaggle_cli_version(info["version_text"] or "")
+    except (OSError, subprocess.TimeoutExpired) as e:
+        info["probe"] = f"kaggle --version failed: {e}"
+        return info
+
+    # Prefer inspecting the CLI's own package source (same interpreter as the kaggle script).
+    exe = Path(str(info["kaggle_executable"])).resolve()
+    try:
+        shebang = exe.read_text(encoding="utf-8", errors="ignore").splitlines()[0]
+        py = shebang[2:].strip() if shebang.startswith("#!") else ""
+        if py:
+            proc = subprocess.run(
+                [
+                    py,
+                    "-c",
+                    "import kaggle.api.kaggle_api_extended as m, pathlib; "
+                    "p=pathlib.Path(m.__file__); t=p.read_text(encoding='utf-8', errors='ignore'); "
+                    "print(p); print('yes' if 'request.docker_image' in t else 'no')",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            lines = [ln.strip() for ln in (proc.stdout or "").splitlines() if ln.strip()]
+            if len(lines) >= 2:
+                info["probe"] = f"cli_package_source:{lines[0]}"
+                info["supports_docker_image_push"] = lines[1] == "yes"
+                return info
+            info["probe"] = f"cli_package_probe_failed:{(proc.stderr or proc.stdout or '').strip()[:200]}"
+    except (OSError, subprocess.TimeoutExpired, IndexError) as e:
+        info["probe"] = f"cli_package_probe_error:{type(e).__name__}:{e}"
+
+    info["supports_docker_image_push"] = kaggle_cli_reports_docker_image_push_support(info["version"])
+    if info["probe"] is None:
+        info["probe"] = "version_heuristic"
+    return info
+
+
+def require_kaggle_cli_docker_image_support(*, dry_run: bool) -> dict:
+    """Abort real pushes when the local CLI cannot send docker_image."""
+    info = probe_kaggle_cli_docker_image_support()
+    ver = ".".join(str(x) for x in info["version"]) if info["version"] else "?"
+    print(
+        f"kaggle CLI: {info['kaggle_executable'] or '(missing)'} "
+        f"version={ver} docker_image_push={'yes' if info['supports_docker_image_push'] else 'NO'} "
+        f"({info['probe']})"
+    )
+    if dry_run or info["supports_docker_image_push"]:
+        return info
+    die(
+        "BLOCKER: local Kaggle CLI does not transmit kernel-metadata.json `docker_image`.\n"
+        f"Detected: {info.get('version_text') or 'unknown'} ({info.get('probe')}).\n"
+        "Kaggle API 1.7.4.5 only sends docker_image_pinning_type (original|latest) and "
+        "silently ignores docker_image — that is why Python 3.13 'latest' kernels still appear.\n"
+        "Install a modern CLI that sets ApiSaveKernelRequest.docker_image (kaggle>=2.0, "
+        "Python >=3.11), e.g.:\n"
+        "  python3.12 -m venv ~/.venvs/data266-kaggle-312\n"
+        "  source ~/.venvs/data266-kaggle-312/bin/activate\n"
+        "  python -m pip install --upgrade pip 'kaggle>=2.0' PyYAML six\n"
+        "  hash -r; which kaggle; kaggle --version\n"
+        "Then re-run: python team-b/kaggle/run_kaggle.py --check-cli"
+    )
+
+
+def pull_notebook_docker_image(notebook: str = OFFICIAL_NOTEBOOK) -> str:
+    """Pull kernel-metadata.json for a public notebook and return its docker_image (if any)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        kaggle("kernels", "pull", notebook, "-m", "-p", tmp, timeout=120)
+        meta_path = Path(tmp) / "kernel-metadata.json"
+        image = json.loads(meta_path.read_text()).get("docker_image")
+        if not image:
+            die(
+                f"No docker_image field in metadata for {notebook} "
+                "(value was null/missing). Cannot treat this notebook as a verified pin."
+            )
+        return str(image)
+
+
+def normalize_image_verification(raw: str | None, *, dry_run: bool) -> str | None:
+    value = (raw or os.environ.get(IMAGE_VERIFICATION_ENV, "") or "").strip().lower()
+    if not value:
+        return None if dry_run else None
+    if value not in ALL_IMAGE_SOURCES:
+        die(
+            f"Invalid --image-verification {value!r}. "
+            f"Choose one of: {', '.join(ALL_IMAGE_SOURCES)}"
+        )
+    return value
+
+
+def resolve_docker_image(
+    explicit: str | None,
+    *,
+    dry_run: bool,
+    image_verification: str | None,
+    accept_unverified_image: bool,
+) -> tuple[str, str]:
+    """Choose the kernel docker_image for metadata.
+
+    Default: the Team B probe-verified Python 3.12.13 / L4×4 digest. Overrides via
+    --docker-image / $G5B_KAGGLE_DOCKER_IMAGE still require a verification source.
+    Never silently falls back to Kaggle "latest" / Python 3.13.
+    """
+    image = (explicit or os.environ.get(DOCKER_IMAGE_ENV, "") or "").strip()
+    verification = normalize_image_verification(image_verification, dry_run=dry_run)
+    using_default = False
+    if not image:
+        image = VERIFIED_DOCKER_IMAGE
+        using_default = True
+        if verification is None:
+            verification = DEFAULT_IMAGE_VERIFICATION
+
+    src = (
+        "default-verified-probe"
+        if using_default and not (explicit or "").strip() and not os.environ.get(DOCKER_IMAGE_ENV, "").strip()
+        else ("--docker-image" if (explicit or "").strip() else f"${DOCKER_IMAGE_ENV}")
+    )
+
+    if image in {CANDIDATE_V173_DOCKER_IMAGE, CANDIDATE_V173_TAG}:
+        print(
+            f"WARN  {src} is the GitHub v173 candidate, not the Team B probe-verified default. "
+            f"Prefer {VERIFIED_DOCKER_IMAGE} ({VERIFIED_RUNTIME_SOURCE})."
+        )
+
+    if verification is None:
+        # Explicit non-default image without verification source.
+        if dry_run:
+            verification = DEFAULT_IMAGE_VERIFICATION if image == VERIFIED_DOCKER_IMAGE else "dry-run"
+        else:
+            die(
+                "Real pushes require --image-verification "
+                f"({'|'.join(ALL_IMAGE_SOURCES)}) or ${IMAGE_VERIFICATION_ENV}.\n"
+                "Verified paths:\n"
+                f"  gpu-probe        — default Team B L4×4 / Python {VERIFIED_PYTHON} digest\n"
+                "  notebook-pull   — kernels pull of a GPU session that printed Python 3.12.x\n"
+                "  session-python  — you confirmed sys.version is 3.12.x on that image in UI\n"
+                f"Default image: {VERIFIED_DOCKER_IMAGE}"
+            )
+
+    if verification == "dry-run":
+        print(f"docker_image ({src}, verification=dry-run): {image}")
+        return image, verification
+
+    if verification not in VERIFIED_IMAGE_SOURCES and not accept_unverified_image:
+        die(
+            "BLOCKER: image is not verified for Team B evaluation.\n"
+            f"Requested verification={verification!r} for docker_image={image}.\n"
+            f"Use the probe-verified default ({VERIFIED_DOCKER_IMAGE}) with "
+            f"--image-verification {DEFAULT_IMAGE_VERIFICATION}, or provide "
+            "notebook-pull|session-python evidence for a different digest.\n"
+            f"Probe source: {VERIFIED_RUNTIME_SOURCE}\n"
+            "Override only for explicit experimentation: --accept-unverified-image."
+        )
+
+    if verification == "gpu-probe" and image != VERIFIED_DOCKER_IMAGE:
+        die(
+            "BLOCKER: --image-verification gpu-probe only applies to the probe-verified digest.\n"
+            f"Expected: {VERIFIED_DOCKER_IMAGE}\n"
+            f"Got:      {image}\n"
+            "Use notebook-pull|session-python for a different image, or omit --docker-image "
+            "to use the verified default."
+        )
+
+    print(f"docker_image ({src}, verification={verification}): {image}")
+    if image == VERIFIED_DOCKER_IMAGE:
+        print(f"verified runtime: {VERIFIED_RUNTIME_SOURCE}")
+    return image, verification
 
 
 def normalize_variant(raw: str) -> str:
@@ -265,6 +502,18 @@ def upload_dataset(user: str, variant: str, variant_dir: Path, message: str) -> 
     die(f"Dataset {dataset} not ready after 10 min (last status: {status})")
 
 
+def kernel_title_for_slug(kernel_slug: str) -> str:
+    """Title must slugify to the same kernel slug (Kaggle CLI warns / misbehaves otherwise)."""
+    title = kernel_slug
+    as_slug = slugify(title)
+    if as_slug != kernel_slug:
+        die(
+            f"Internal error: kernel title {title!r} slugifies to {as_slug!r}, "
+            f"expected {kernel_slug!r}."
+        )
+    return title
+
+
 def push_kernel(
     user: str,
     kernel_slug: str,
@@ -274,9 +523,10 @@ def push_kernel(
     machine: str,
     timeout: int | None,
     *,
-    allow_network: bool,
+    docker_image: str,
 ) -> str:
     kernel_id = f"{user}/{kernel_slug}"
+    title = kernel_title_for_slug(kernel_slug)
     runner = (TB_KAGGLE / "kaggle_runner.py").read_text()
     config_line = "RUN_CONFIG = " + repr(run_config)
     runner, n = re.subn(r"^RUN_CONFIG = .*$", lambda _: config_line, runner, count=1, flags=re.M)
@@ -285,9 +535,12 @@ def push_kernel(
     with tempfile.TemporaryDirectory() as tmp:
         kdir = Path(tmp)
         (kdir / "kaggle_runner.py").write_text(runner)
+        # Match the successful Team B L4×4 / Py3.12 probe metadata shape: pin docker_image
+        # explicitly, set machine_shape + --accelerator NvidiaL4, leave pinning_type unset
+        # (the working probe did not include docker_image_pinning_type).
         (kdir / "kernel-metadata.json").write_text(json.dumps({
             "id": kernel_id,
-            "title": kernel_slug,
+            "title": title,
             "code_file": "kaggle_runner.py",
             "language": "python",
             "kernel_type": "script",
@@ -296,7 +549,7 @@ def push_kernel(
             "enable_tpu": False,
             "enable_internet": False,
             "machine_shape": machine,
-            "docker_image": official_docker_image(allow_network=allow_network),
+            "docker_image": docker_image,
             "dataset_sources": [WHEELHOUSE, dataset],
             "competition_sources": [COMPETITION],
             "kernel_sources": [],
@@ -305,9 +558,9 @@ def push_kernel(
         if DRY_RUN:
             keep_dry_run(kdir, "kernel")
             return kernel_id
-        # GPU/machine comes from kernel-metadata.json (enable_gpu + machine_shape).
-        # Do NOT pass `--accelerator`: Kaggle CLI 1.7.x rejects it as an unrecognized argument.
-        args = ["kernels", "push", "-p", str(kdir)]
+        # kaggle>=2.x: --accelerator overrides/sets machine_shape on the save request.
+        # 1.7.4.5 rejected this flag; real pushes already require CLI 2.x for docker_image.
+        args = ["kernels", "push", "-p", str(kdir), "--accelerator", machine]
         if timeout:
             args += ["-t", str(timeout)]
         try:
@@ -360,12 +613,39 @@ def inspect_dry_run_stage(variant: str, model: str, user_placeholder: str, datas
     meta = json.loads((kn / "kernel-metadata.json").read_text())
     print(f"kernel private: {'PASS' if meta.get('is_private') else 'FAIL'}")
     print(f"internet off:   {'PASS' if not meta.get('enable_internet') else 'FAIL'}")
-    print(f"competition:    {meta.get('competition_sources')}")
+    print(f"enable_gpu:     {'PASS' if meta.get('enable_gpu') else 'FAIL'}")
+    print(
+        f"machine_shape:  "
+        f"{'PASS' if meta.get('machine_shape') == DEFAULT_MACHINE else 'FAIL'} "
+        f"({meta.get('machine_shape')!r})"
+    )
+    print(
+        f"docker_image:   "
+        f"{'PASS' if meta.get('docker_image') == VERIFIED_DOCKER_IMAGE else 'CHECK'} "
+        f"({meta.get('docker_image')})"
+    )
+    print(
+        f"pinning_type absent: "
+        f"{'PASS' if 'docker_image_pinning_type' not in meta else 'FAIL'} "
+        f"(matches successful probe metadata)"
+    )
+    title_ok = meta.get("title") == meta.get("id", "").split("/")[-1]
+    print(f"title==slug:    {'PASS' if title_ok else 'FAIL'} (title={meta.get('title')!r})")
+    print(
+        f"competition:    "
+        f"{'PASS' if meta.get('competition_sources') == [COMPETITION] else 'FAIL'} "
+        f"{meta.get('competition_sources')}"
+    )
     print(f"datasets:       {meta.get('dataset_sources')}")
     print(f"models:         {meta.get('model_sources')}")
+    print(f"push would use: kaggle kernels push --accelerator {meta.get('machine_shape')}")
     runner = (kn / "kaggle_runner.py").read_text()
     print(f"runner uses G5B marker: {'PASS' if 'G5B_REPO_MARKER' in runner else 'FAIL'}")
     print(f"runner avoids G5A marker: {'PASS' if 'G5A_REPO_MARKER' not in runner else 'FAIL'}")
+    print(
+        f"runner has runtime_preflight: "
+        f"{'PASS' if 'def runtime_preflight' in runner else 'FAIL'}"
+    )
     # No credentials staged
     secret_hits = [p for p in ds.rglob("*") if p.name in {"kaggle.json", ".env"}]
     print(f"no secrets in stage: {'PASS' if not secret_hits else 'FAIL ' + str(secret_hits)}")
@@ -378,14 +658,62 @@ def inspect_dry_run_stage(variant: str, model: str, user_placeholder: str, datas
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("variant", help="Team B variant path, e.g. team-b/variants/base")
-    ap.add_argument("split", choices=["smoke", "dev", "train"], help="task split")
+    ap.add_argument("variant", nargs="?", help="Team B variant path, e.g. team-b/variants/base")
+    ap.add_argument("split", nargs="?", choices=["smoke", "dev", "train"], help="task split")
     ap.add_argument("--task-ids", nargs="+", default=[], help="run only these instance_ids")
     ap.add_argument("--max-tasks", type=int, default=0, help="first N tasks of the split")
     ap.add_argument(
         "--machine",
         default=DEFAULT_MACHINE,
         help=f"Kaggle machine_shape written into kernel-metadata.json (default {DEFAULT_MACHINE})",
+    )
+    ap.add_argument(
+        "--docker-image",
+        default=None,
+        help=(
+            "Kaggle docker_image digest/tag (or set "
+            f"${DOCKER_IMAGE_ENV}). Default: probe-verified "
+            f"{VERIFIED_DOCKER_IMAGE} (Python {VERIFIED_PYTHON}, 4×L4)."
+        ),
+    )
+    ap.add_argument(
+        "--image-verification",
+        default=None,
+        choices=list(ALL_IMAGE_SOURCES),
+        help=(
+            "How the docker_image was verified. Default for the probe digest: "
+            f"{DEFAULT_IMAGE_VERIFICATION}. Other digests need notebook-pull|session-python "
+            f"(or set ${IMAGE_VERIFICATION_ENV}). github-release-candidate needs "
+            "--accept-unverified-image."
+        ),
+    )
+    ap.add_argument(
+        "--accept-unverified-image",
+        action="store_true",
+        help=(
+            "Allow github-release-candidate pins (e.g. v173) without notebook verification. "
+            "Still subject to CLI docker_image support."
+        ),
+    )
+    ap.add_argument(
+        "--print-notebook-docker-image",
+        action="store_true",
+        help=f"pull {OFFICIAL_NOTEBOOK} metadata, print docker_image, exit (does not push)",
+    )
+    ap.add_argument(
+        "--print-verified-runtime",
+        action="store_true",
+        help="print the Team B probe-verified Python 3.12 + L4×4 docker_image and exit",
+    )
+    ap.add_argument(
+        "--check-cli",
+        action="store_true",
+        help="probe local kaggle CLI for docker_image push support and exit (no upload)",
+    )
+    ap.add_argument(
+        "--print-candidate-v173",
+        action="store_true",
+        help="print the GitHub-documented v173 GPU candidate reference and exit",
     )
     ap.add_argument("--timeout", type=int, help="kernel run-time limit in seconds")
     ap.add_argument("--no-wait", action="store_true", help="push and return; fetch later with --fetch")
@@ -398,6 +726,68 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    if args.print_candidate_v173:
+        print(CANDIDATE_V173_DOCKER_IMAGE)
+        print(f"tag: {CANDIDATE_V173_TAG}", file=sys.stderr)
+        print(f"python: {CANDIDATE_V173_PYTHON}", file=sys.stderr)
+        print(f"source: {CANDIDATE_V173_SOURCE}", file=sys.stderr)
+        print(
+            "STATUS: GitHub candidate only — Team B default is the probe-verified digest "
+            f"({VERIFIED_DOCKER_IMAGE}).",
+            file=sys.stderr,
+        )
+        return 0
+
+    if args.print_verified_runtime:
+        print(VERIFIED_DOCKER_IMAGE)
+        print(json.dumps({
+            "docker_image": VERIFIED_DOCKER_IMAGE,
+            "python": VERIFIED_PYTHON,
+            "machine_shape": DEFAULT_MACHINE,
+            "gpu_count": REQUIRED_GPU_COUNT,
+            "gpu_name": f"NVIDIA {REQUIRED_GPU_NAME}",
+            "competition": COMPETITION,
+            "enable_internet": False,
+            "image_verification": DEFAULT_IMAGE_VERIFICATION,
+            "source": VERIFIED_RUNTIME_SOURCE,
+        }, indent=2), file=sys.stderr)
+        return 0
+
+    if args.check_cli:
+        info = probe_kaggle_cli_docker_image_support()
+        print(json.dumps({
+            "kaggle_executable": info["kaggle_executable"],
+            "version_text": info["version_text"],
+            "version": list(info["version"]) if info["version"] else None,
+            "supports_docker_image_push": info["supports_docker_image_push"],
+            "supports_accelerator_flag": bool(
+                info["version"] and info["version"] >= (2, 0, 0)
+            ),
+            "probe": info["probe"],
+            "verified_docker_image": VERIFIED_DOCKER_IMAGE,
+            "verified_runtime": VERIFIED_RUNTIME_SOURCE,
+            "candidate_v173": CANDIDATE_V173_DOCKER_IMAGE,
+            "candidate_status": "not-team-b-default",
+        }, indent=2))
+        return 0 if info["supports_docker_image_push"] else 2
+
+    if args.print_notebook_docker_image:
+        image = pull_notebook_docker_image(OFFICIAL_NOTEBOOK)
+        print(image)
+        print(
+            "NOTE: Prefer the Team B probe-verified digest "
+            f"({VERIFIED_DOCKER_IMAGE}). Getting Started may drift or return null.",
+            file=sys.stderr,
+        )
+        return 0
+
+    if not args.variant or not args.split:
+        ap.error(
+            "variant and split are required unless "
+            "--print-notebook-docker-image / --print-verified-runtime / "
+            "--check-cli / --print-candidate-v173 is set"
+        )
+
     global DRY_RUN
     variant = normalize_variant(args.variant)
     variant_dir = REPO / variant
@@ -407,14 +797,21 @@ def main() -> int:
         DRY_RUN = TB_KAGGLE / "runs" / "_dryrun"
         DRY_RUN.mkdir(parents=True, exist_ok=True)
         user = "dry-run-user"
-        allow_network = False
     else:
         user = kaggle_user()
-        allow_network = True
 
     kernel_id = f"{user}/{kernel_slug}"
 
     if not args.fetch:
+        # Image pin + modern CLI are only required when staging/pushing a kernel.
+        require_kaggle_cli_docker_image_support(dry_run=bool(args.dry_run))
+        docker_image, image_verification = resolve_docker_image(
+            args.docker_image,
+            dry_run=bool(args.dry_run),
+            image_verification=args.image_verification,
+            accept_unverified_image=bool(args.accept_unverified_image),
+        )
+
         if args.split == "dev" and (args.task_ids or args.max_tasks):
             print("NOTE: partial dev runs are fine for debugging; log only full-dev scores for selection.")
 
@@ -466,9 +863,24 @@ def main() -> int:
             "git_rev": git_rev,
             "dirty": dirty,
             "team": "B",
+            "docker_image": docker_image,
+            "image_verification": image_verification,
+            "required_cpython": f"{REQUIRED_CPYTHON[0]}.{REQUIRED_CPYTHON[1]}",
+            "required_gpu_count": REQUIRED_GPU_COUNT,
+            "required_gpu_name": REQUIRED_GPU_NAME,
+            "machine_shape": args.machine,
+            "competition": COMPETITION,
+            "enable_internet": False,
         }
         push_kernel(
-            user, kernel_slug, run_config, model, dataset, args.machine, args.timeout, allow_network=allow_network,
+            user,
+            kernel_slug,
+            run_config,
+            model,
+            dataset,
+            args.machine,
+            args.timeout,
+            docker_image=docker_image,
         )
         if DRY_RUN:
             inspect_dry_run_stage(variant, model, user, dataset, kernel_id)

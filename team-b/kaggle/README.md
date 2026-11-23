@@ -15,9 +15,52 @@ Do **not** treat this infrastructure as competition code-sharing permission betw
 ## 1. Kaggle prerequisites
 
 1. Kaggle account phone-verified; competition rules accepted for **Team B** (`GROUP_PROGRAMMING_05_b`).
-2. Kaggle CLI installed; token in `~/.kaggle/kaggle.json` or `access_token` (**never commit**).
+2. **Modern Kaggle CLI (`kaggle>=2.0`, Python ≥3.11).** API **1.7.4.5 only sends
+   `docker_image_pinning_type` and silently ignores `docker_image`** — that path cannot
+   pin Python 3.12. Probe with:
+   ```bash
+   python team-b/kaggle/run_kaggle.py --check-cli
+   ```
+   Recommended local CLI:
+   ```bash
+   python3.12 -m venv ~/.venvs/data266-kaggle-312
+   source ~/.venvs/data266-kaggle-312/bin/activate
+   python -m pip install --upgrade pip 'kaggle>=2.0' PyYAML six
+   hash -r; which kaggle; kaggle --version
+   ```
+   Token in `~/.kaggle/kaggle.json` or `access_token` (**never commit**).
 3. Enough L4 GPU quota (L4 counts 2×). Internet is **off** in evaluation kernels.
 4. Local clone of this repo on a Team B branch that contains the variant you want to score.
+5. **Probe-verified Python 3.12 + L4×4 runtime (default).** The official
+   `metric/gemma-4-developer-agent-wheelhouse` ships **cp312** wheels. A Python 3.13
+   kernel fails during `install_wheelhouse()` before any Gemma inference. The launcher
+   defaults to the Team B competition probe runtime (internet off, `NvidiaL4`):
+
+   | Field | Verified value |
+   |---|---|
+   | Docker image | `gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461` |
+   | Python | 3.12.13 |
+   | GPUs | 4 × NVIDIA L4 |
+   | Machine / accelerator | `NvidiaL4` (`kaggle kernels push --accelerator NvidiaL4`) |
+   | Competition | `gemma-4-developer-agent` |
+   | Internet | off |
+
+   ```bash
+   python team-b/kaggle/run_kaggle.py --print-verified-runtime
+   # optional override:
+   # export G5B_KAGGLE_DOCKER_IMAGE='...'
+   # export G5B_KAGGLE_IMAGE_VERIFICATION=notebook-pull
+   ```
+
+   Metadata matches the successful probe shape: explicit `docker_image`, `enable_internet: false`,
+   `machine_shape: NvidiaL4`, competition attached — and **no** `docker_image_pinning_type`
+   field. CLI 2.x also passes `--accelerator NvidiaL4`. The launcher refuses unverified
+   alternate digests rather than silently falling back to “latest”/3.13. Teammates only need
+   the shared digest above (no personal probe kernel ID).
+
+6. **Runtime preflight** (inside the kernel, **before** the ~41-wheel install) hard-fails unless
+   CPython 3.12, cp312 wheel tags, and **4 visible NVIDIA L4 GPUs** are present. Expected
+   `docker_image` / machine shape are recorded in `RUN_CONFIG` / `run_info.json`.
 
 ## 2. Obtain official sample adapters
 
@@ -74,10 +117,13 @@ V1 and V2 live on separate feature branches; check out the branch that contains 
 ## 5. Two-task diagnostic (manual)
 
 ```bash
+source ~/.venvs/data266-kaggle-312/bin/activate   # kaggle 2.2.5+
+python team-b/kaggle/run_kaggle.py --check-cli    # expect supports_docker_image_push: true
 python team-b/kaggle/run_kaggle.py team-b/variants/<name> smoke --max-tasks 2
 ```
 
 Uses your quota. Kernel name pattern: `g5b-eval-team-b-variants-<name>-smoke` (truncated to 50 chars).
+Defaults to the probe-verified Python 3.12.13 / L4×4 docker image + `--accelerator NvidiaL4`.
 
 ## 6. Full 10-task smoke (manual)
 
