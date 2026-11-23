@@ -28,6 +28,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -96,20 +97,27 @@ def variant_model(variant_dir: Path) -> str:
     return str((cfg or {}).get("model", "gemma-4-31b-it-qat-w4a16-ct")).split("/")[-1]
 
 
-def upload_repo(user: str, message: str) -> str:
+def upload_repo(user: str, message: str) -> tuple[str, str]:
+    """Upload the repo as a new dataset version. Returns (dataset, upload_id).
+
+    upload_id is written into G5A_REPO_MARKER and passed to the kernel, which refuses to run if the mounted
+    dataset carries a different id. Right after `datasets version`, Kaggle can still report the *previous*
+    version as "ready", so without this check a run could silently evaluate the old upload (found by Bhoomika).
+    """
     dataset = f"{user}/{DATASET_SLUG}"
+    upload_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     with tempfile.TemporaryDirectory() as tmp:
         stage = Path(tmp)
         for d in UPLOAD_DIRS:
             if (REPO / d).is_dir():
                 shutil.copytree(REPO / d, stage / d, ignore=UPLOAD_IGNORE)
-        (stage / "G5A_REPO_MARKER").write_text("data266 group 5a repo snapshot\n")
+        (stage / "G5A_REPO_MARKER").write_text(f"data266 group 5a repo snapshot\nupload_id={upload_id}\n")
         (stage / "dataset-metadata.json").write_text(json.dumps({
             "title": DATASET_SLUG, "id": dataset, "licenses": [{"name": "Apache 2.0"}],
         }))
         if DRY_RUN:
             keep_for_dry_run(stage, "dataset")
-            return dataset
+            return dataset, upload_id
         # `datasets status` exits 0 only if the dataset exists (a missing one of your own returns 403).
         exists = subprocess.run(["kaggle", "datasets", "status", dataset], capture_output=True).returncode == 0
         if exists:
@@ -118,10 +126,13 @@ def upload_repo(user: str, message: str) -> str:
         else:
             print(f"Creating private dataset {dataset} ...")
             kaggle("datasets", "create", "-p", str(stage), "-r", "tar", "-q")
-    for _ in range(60):  # wait for Kaggle to process the upload
+    # Wait for Kaggle to process the upload. The status can still say "ready" for the previous version for a while,
+    # so give processing a head start; the kernel's upload_id check catches anything that slips through.
+    time.sleep(90)
+    for _ in range(60):
         status = kaggle("datasets", "status", dataset, check=False).lower()
         if "ready" in status:
-            return dataset
+            return dataset, upload_id
         time.sleep(10)
     raise SystemExit(f"Dataset {dataset} not ready after 10 min (last status: {status})")
 
@@ -220,9 +231,9 @@ def main() -> int:
             return 1
         git_rev = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
         dirty = bool(subprocess.run(["git", "-C", str(REPO), "status", "--porcelain"], capture_output=True, text=True).stdout.strip())
-        dataset = upload_repo(user, f"{variant} {args.split} @ {git_rev}{'+dirty' if dirty else ''}")
+        dataset, upload_id = upload_repo(user, f"{variant} {args.split} @ {git_rev}{'+dirty' if dirty else ''}")
         run_config = {"variant": variant, "split": args.split, "task_ids": args.task_ids,
-                      "max_tasks": args.max_tasks, "git_rev": git_rev, "dirty": dirty}
+                      "max_tasks": args.max_tasks, "git_rev": git_rev, "dirty": dirty, "upload_id": upload_id}
         push_kernel(user, kernel_slug, run_config, variant_model(variant_dir), dataset, args.machine, args.timeout)
         if DRY_RUN:
             print(f"[dry-run] would push kernel {kernel_id}; nothing uploaded.")

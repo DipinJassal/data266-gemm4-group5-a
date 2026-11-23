@@ -26,3 +26,4 @@ lora/outputs/
 
 # Competition data (download with kaggle CLI; never commit)
 data/
+kaggle.json

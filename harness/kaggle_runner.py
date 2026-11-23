@@ -181,6 +181,13 @@ def main() -> None:
 
     data_dir = find_one("**/gemma-4-developer-agent/tasks.jsonl", "the competition data").parent
     repo_dir = find_one("**/G5A_REPO_MARKER", "our repo dataset (uploaded by run_kaggle.py)").parent
+    want = cfg.get("upload_id")
+    if want:  # refuse to evaluate a stale dataset version (see upload_repo in run_kaggle.py)
+        marker = (repo_dir / "G5A_REPO_MARKER").read_text()
+        if f"upload_id={want}" not in marker:
+            raise SystemExit(f"STALE UPLOAD: the mounted repo dataset is an older version (marker: {marker.strip()!r}, "
+                             f"expected upload_id={want}). Kaggle had not finished processing the new version; rerun.")
+        log(f"repo dataset upload_id {want} verified")
 
     # 1. Copy the variant to a writable folder.
     src = repo_dir / variant
