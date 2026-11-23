@@ -1,4 +1,6 @@
-# Skills pack V1 (`poushali-skills-pack-v1`): smoke analysis
+# Skills pack V1 (`poushali-skills-pack-v1`): smoke and dev analysis
+
+**Status (Nov 23):** negative on smoke (1/10), but **6/30 on dev**, the team's best local dev score; merged (PR #22) and submitted to Kaggle by Dipin on Nov 23 (ref 58798802, built from `08f7b70`). One dev run with no matched control dev score, so it is a submission candidate, not evidence that the skill helps.
 
 Owner: Poushali. Variant: `dipin-step-budget-v1` plus one skill, `skills/fix-and-verify/SKILL.md`, and one prompt line that tells the agent to load it first.
 Control: Khushi's matched control run of `dipin-step-budget-v1` (RUN-006, `docs/v1_smoke_analysis.md`). Same 10 smoke tasks, same budget (4.5 min, 50 tool calls), 4x L4.
@@ -48,31 +50,65 @@ edit the most likely function now". The full smoke ran on that version.
 - **Loading works.** With the trigger line, `load_skill("fix-and-verify")` was the first call in 12/12 tasks across both runs. This confirms Team B's finding from the other side: the trigger line is what makes the model load a skill.
 - **Following does not.** The skill's three main rules were broken often: no reproduction script before editing (22 pre-edit Python runs vs 9), no scratch files via `write_file` (3 tasks), first edit by call 10 (only 2 tasks reached a source edit at all, vs 5 in the control).
 - **Same tasks, same ceiling.** The one resolved task is the one every arm resolves. `rich_3180` and `rich_3506` are empty in every arm; in this run their median gap between tool calls was 35 s and 91 s (long thinking), so they time out with 4 to 10 calls regardless of instructions.
-- **n = 10, one run.** Resolved is 1 vs 1, within run-to-run noise (the control itself scored 2/10 in Dipin's run). The process metrics point the wrong way, so this is not proposed for submission or the combined agent.
+- **n = 10, one run.** Resolved is 1 vs 1, within run-to-run noise (the control itself scored 2/10 in Dipin's run). The process metrics point the wrong way, so at this point it was not proposed for submission (changed after the dev run, below).
+- **Crashes on smoke: none.** All 9 unresolved smoke tasks carry the harness error `Agent exceeded session timeout (4.5 min)`, which is the budget cut-off, not a crash; the 10th task (`fastapi_13537`) finished without error. No sandbox, tool or context-window errors. `requests_7505` took 5.8 min wall time, as it did in the control (347 s), also without an error other than the time-out.
 
-## Conclusion
+## Conclusion on smoke (Nov 22)
 
-Closed as a documented negative result (rule 7). A skill is a cheap, valid way to ship procedural know-how, and the load trigger is reliable,
+On smoke alone this was a documented negative result (rule 7). A skill is a cheap, valid way to ship procedural know-how, and the load trigger is reliable,
 but this 31B quantized model does not reliably follow a multi-rule procedure it loaded at the start once the task gets long. Hard limits
 that the harness enforces (the budget in `eval_config.yaml`) or a smaller context per decision (an `agent_tool` sub-agent) are more likely to change behaviour than more instructions.
-A dev run was later requested by the team (RUN-P05 below).
+The team then scored every variant on dev (RUN-P05 below), which changed the status.
 
 ## Dev run (RUN-P05, Nov 23)
 
 Dipin asked every member to score their variants on dev (Nov 22). This run used exactly the files of the full smoke run (`SKILL.md` sha256 `bb7d2d4e…`, checked in the kernel output),
-on 4x L4 with the same budget. The skill was the first call in 30/30 tasks.
+on 4x L4 with the same budget. Kernel, `run_info.json`, `harness_results.jsonl`, file hashes and the `dirty: true` explanation:
+`docs/runs/poushali-skills-pack-v1-dev-20261123T191033Z/`. The skill was the first call in 30/30 tasks.
 
 | | Dev (30) | Dev excl. 7 environment-blocked (23) | Empty | Patches with a scratch file | Avg / max min |
 |---|---:|---:|---:|---:|---|
 | Baseline (1 min / 10 calls) | 2/30 | 2/23 | 20 | n/a | 1.1 |
 | Khushi V1 `khushi-structured-prompt-v1` (RUN-007) | 5/30 | 5/23 | n/a | 9 | n/a |
 | Bhoomika V1 `bhoomika-lora-patches-v1` (alpha 8) | 5/30 | 5/23 | 4 | n/a | 3.4 |
-| **Skills pack V1 (RUN-P05)** | **6/30 (20.0%)** | **6/23 (26.1%)** | 5 | 5 (3 scratch only) | 4.0 / 4.7 |
+| **Skills pack V1 (RUN-P05)** | **6/30 (20.0%)** | **6/23 (26.1%)** | 5 | 6 (3 scratch only) | 4.0 / 4.7 |
 
 Resolved: `fastapi_14077`, `fastapi_14301`, `fastapi_14492`, `fastapi_14616`, `rich_3718`, `rich_3905` (fastapi 4/15, rich 2/11, requests 0/3, httpx 0/1).
 The first five are exactly the tasks Khushi's V1 resolved; the extra one is `fastapi_14616`. None of the 7 blocked tasks passed, as expected.
 8/30 tasks ran pytest (the baseline ran it in 0/30).
 
+### How the 24 unsuccessful tasks ended
+
+Sources: `harness_results.jsonl` (`error`), the final patch in `submission.csv`, and the Phase 2 `test_output` in `task_details/`. Each task gets one primary label.
+
+| Primary label | Tasks | Count |
+|---|---|---:|
+| Environment-blocked (missing `dirty_equals` / `inline_snapshot`, or `pytest-httpbin`), from the team's list of 7 | `fastapi_12942`, `13207`, `13713`, `14246`, `14303`, `14356`, `requests_7433` | 7 |
+| Environment-blocked, **newly found**: the hidden tests' `tests/utils.py` imports `inline_snapshot` (the patch was also incomplete: `Depends()` has no `scope` argument) | `fastapi_14262` | 1 |
+| Empty patch: budget ran out before any source edit | `fastapi_14186`, `rich_3521` | 2 |
+| Empty patch: context-window crash (`ContextWindowExceededError`, prompt reached 16,385 tokens + 16,384 requested output) | `rich_3935` | 1 |
+| Scratch files only, no source change | `rich_3063`, `rich_4076` | 2 |
+| Patch broke import (literal `
+` written into `fastapi/routing.py`, syntax error at collection) | `fastapi_14306` | 1 |
+| Wrong or incomplete source fix (hidden tests fail or error) | `fastapi_14258`, `fastapi_15588`, `httpx_3672`, `requests_7315`, `requests_7427`, `rich_3052`, `rich_3278`, `rich_3675`, `rich_3930`, `rich_4070` | 10 |
+| **Total** | | **24** |
+
+How they ended in time: 19 hit the 4.5 min session time-out (all 19 are unresolved; all 6 resolved tasks finished without error), 1 crashed on the
+context window (`rich_3935`), and 4 finished early but wrong (`fastapi_14303`, `fastapi_14356`, `requests_7315`, `rich_3278`).
+Scratch files reached 6 final patches (`fastapi_12942`, `fastapi_13207`, `fastapi_14258`, `fastapi_15588` with `verify_sse.py`, `rich_3063`, `rich_4076`).
+
+`fastapi_14262` suggests the blocked list may be 8/30, not 7/30. It was missed before because earlier dev runs left it empty, so Phase 2 never
+ran. Not yet confirmed against the reference patch; the 23-task figure above still uses the team's 7.
+
+### Cleanup rule (`rm`)
+
+The skill's section 5 says to delete files you created and never files that existed before. Across all 40 traced tasks (smoke + dev) the agent
+ran `rm` 3 times, always on its own scratch files (`rm repro.py test_multidict.py repro_header.py`, `rm /tmp/repro.py /tmp/repro_subtitle.py`,
+`rm /tmp/repro.py`), never on a tracked file, and never used `git clean`, `git checkout` or `git restore`. The submitted folder is kept
+byte-identical to the evaluated one (`08f7b70`) so the dev score and Kaggle submission stay reproducible. Tighter wording for any later version
+or the combined agent: *"Only delete files that `git status --short` lists as untracked (`??`) and that you created in this task, one by exact name.
+Never use wildcards, `-r`, `git clean`, `git checkout` or `git restore`, and never delete a tracked file."*
+
 **Reading it carefully:** this is one run, and the gain over the other V1s is one task. The control `dipin-step-budget-v1` still has no dev score,
 so the gain can't be credited to the skill alone, and the smoke result (1/10) pointed the other way. It is the best local dev score in the team so
-far and worth a submission slot, but it isn't evidence that the skill works. All figures are from our local harness, not Kaggle's official scorer.
+far and was submitted on Nov 23, but it isn't evidence that the skill works. All figures are from our local harness, not Kaggle's official scorer.

@@ -39,8 +39,8 @@ task is the one every variant resolves, and two `rich` tasks timed out in every 
 metrics point the wrong way. When the team later scored every variant on dev, the skills pack reached **6/30 (20.0%)**,
 the best local dev score so far (Prompts V1 and LoRA V1: 5/30; baseline 2/30). It solved the same five tasks as Prompts V1
 plus one more, loaded the skill in 30/30 tasks and ran pytest in 8/30 (baseline 0/30). This is one run and a one-task gain,
-and the control has no dev score, so it does not show that the skill helps; it does make the skills pack a submission
-candidate.
+and the control has no dev score, so it does not show that the skill helps; it was still submitted to Kaggle on
+Nov 23 as the team's best local result.
 
 **V2: test-runner sub-agent.** V2 targets the same "no task ran the repository's tests" pattern with an `agent_tool`
 instead of instructions. `test_runner_agent` may only use `run_command`, at most 3 times: it finds the tests related to
@@ -58,7 +58,7 @@ gets a trigger line.
 When it was called (`fastapi_13537`), the sub-agent did exactly its job: 3 commands, a correct `PASS` from 13 related
 tests, 15.5 seconds, and the coder submitted next, finishing in 2.9 minutes (the fastest run of that task in any variant).
 In every other task the coder kept editing or went back to its own reproduction script, and in neither run did it ever run
-pytest itself. The scores are within the control's own run-to-run range, so V2 is also a documented negative result, with
+pytest itself. The scores are within the control's own run-to-run range, so V2 is a documented negative result, with
 no dev run spent.
 
 **Takeaways.**
