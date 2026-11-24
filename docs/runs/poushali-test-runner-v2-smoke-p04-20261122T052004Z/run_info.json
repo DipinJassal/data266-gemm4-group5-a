@@ -1,0 +1,24 @@
+{
+  "variant": "variants/poushali-test-runner-v2",
+  "split": "smoke",
+  "n_tasks": 10,
+  "model": "gemma-4-31b-it-qat-w4a16-ct",
+  "git_rev": "41dd0af",
+  "dirty": false,
+  "adapters": [
+    "main_lora",
+    "tool_lora"
+  ],
+  "gpu_count": 4,
+  "budgets": {
+    "timeout_seconds": 60,
+    "verification_timeout_seconds": 300,
+    "max_tool_calls": 50,
+    "max_time_minutes": 4.5,
+    "max_turns": 50
+  },
+  "vllm_start_seconds": 412.5,
+  "started_utc": "2026-11-22T04:26:56.229019+00:00",
+  "finished_utc": "2026-11-22T05:19:13.278415+00:00",
+  "resolved": 1
+}
