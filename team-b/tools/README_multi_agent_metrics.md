@@ -29,7 +29,12 @@ Observed `harness_results.jsonl` fields (Team A sample under `docs/runs/...` on 
 
 Team B’s runner documents that `SessionTrace` is **not** embedded into `task_details/` (field skipped; see `save_full_result`). Trace order for analyzer/critic therefore depends on `swegemma/traces/` (or equivalent JSON that still contains tool/function-call nodes).
 
-**No frozen official swegemma trace schema is checked into this repository.** Event extraction is best-effort over several JSON shapes (`name`, `tool`, `function_call.name`, nested `events` lists). Unrecognized files yield `not_available`, not zeros.
+**No frozen official swegemma trace schema is checked into this repository.** Event extraction is best-effort over several JSON shapes:
+
+- Real Team B Kaggle downloads (Nov 2026): `swegemma/traces/trace_<instance_id>.json` with `steps[].tool_calls[].function_name`
+- Older / synthetic fixtures: `name`, `tool`, `function_call.name`, nested `events` lists
+
+Unrecognized files yield `not_available`, not zeros.
 
 ## CLI
 
@@ -84,7 +89,7 @@ python team-b/tools/analyze_multi_agent_traces.py \
 
 **Important:** `edits_after_critic` only means a source edit happened after the critic ran. It does **not** prove the feedback was correct or that the agent followed it.
 
-Trace files are matched by **exact** task id (filename stem or `traces/<id>/`). Substring globs are not used. If `harness_results.jsonl` is missing, the CLI still builds a report from `task_details/` / `traces/` stubs; resolution fields stay `not_available`.
+Trace files are matched by **exact** task id. Accepted filenames include `trace_<id>.json` and `<id>.json`, plus `traces/<id>/trace.json`. Substring globs are not used. If `harness_results.jsonl` is missing, the CLI still builds a report from `task_details/` / `traces/` stubs; resolution fields stay `not_available`.
 
 ## Smoke vs dev vs official Kaggle score
 

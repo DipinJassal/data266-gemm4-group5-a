@@ -326,5 +326,240 @@ class TestReviewerRegressions(unittest.TestCase):
             self.assertIn("fastapi_11194", report)
 
 
+class TestRealTraceCompatibility(unittest.TestCase):
+    """Sanitized structures matching Team B Kaggle downloads (no real patches/secrets)."""
+
+    def _sanitized_swegemma_trace(self, with_critic: bool = False) -> dict:
+        """Minimal shape of swegemma/traces/trace_<id>.json from V1/V2 smoke runs."""
+        steps = [
+            {
+                "step_id": 1,
+                "source": "system",
+                "message": "system prompt placeholder",
+                "extra": {"event_type": "system_instruction", "author": "harness"},
+            },
+            {
+                "step_id": 2,
+                "source": "agent",
+                "message": "localize",
+                "model_name": "main_lora",
+                "tool_calls": [
+                    {
+                        "tool_call_id": "call_1",
+                        "function_name": "code_analyzer_agent",
+                        "arguments": {"request": "plan the fix"},
+                        "extra": {"author": "swe_baseline_agent"},
+                    }
+                ],
+                "extra": {"author": "swe_baseline_agent"},
+            },
+            {
+                "step_id": 3,
+                "source": "agent",
+                "message": "edit",
+                "model_name": "main_lora",
+                "tool_calls": [
+                    {
+                        "tool_call_id": "call_2",
+                        "function_name": "edit_file",
+                        "arguments": {"filepath": "pkg/mod.py", "old_string": "a", "new_string": "b"},
+                        "extra": {"author": "swe_baseline_agent"},
+                    }
+                ],
+                "observation": {"content": "{\"status\": \"ok\"}"},
+                "extra": {"author": "swe_baseline_agent"},
+            },
+        ]
+        if with_critic:
+            steps.append(
+                {
+                    "step_id": 4,
+                    "source": "agent",
+                    "message": "review",
+                    "model_name": "main_lora",
+                    "tool_calls": [
+                        {
+                            "tool_call_id": "call_3",
+                            "function_name": "diff_critic_agent",
+                            "arguments": {"request": "Please review the current workspace diff."},
+                            "extra": {"author": "swe_baseline_agent"},
+                        }
+                    ],
+                    "extra": {"author": "swe_baseline_agent"},
+                }
+            )
+            steps.append(
+                {
+                    "step_id": 5,
+                    "source": "agent",
+                    "message": "inspect diff",
+                    "model_name": "tool_lora",
+                    "tool_calls": [
+                        {
+                            "tool_call_id": "call_4",
+                            "function_name": "run_command",
+                            "arguments": {"command": "git diff"},
+                            "extra": {"author": "diff_critic_agent"},
+                        }
+                    ],
+                    "observation": {"content": "{\"status\": \"ok\", \"stdout\": \"diff --git a/pkg/mod.py\"}"},
+                    "extra": {"author": "diff_critic_agent"},
+                }
+            )
+        return {
+            "schema_version": "swegemma-trace-sanitized-v1",
+            "agent": {"name": "adk-eval-core", "version": "1.0"},
+            "steps": steps,
+            "final_metrics": {"total_steps": len(steps)},
+        }
+
+    def test_function_name_extraction(self):
+        payload = {
+            "steps": [
+                {
+                    "tool_calls": [
+                        {"tool_call_id": "call_1", "function_name": "diff_critic_agent", "arguments": {}},
+                        {"tool_call_id": "call_2", "function_name": "edit_file", "arguments": {}},
+                    ]
+                }
+            ]
+        }
+        evs: list[ToolEvent] = []
+        extract_events_from_obj(payload, "sanitized", evs)
+        names = [e.name for e in evs]
+        self.assertEqual(names.count("diff_critic_agent"), 1)
+        self.assertEqual(names.count("edit_file"), 1)
+        self.assertEqual([e.kind for e in evs if e.name == "diff_critic_agent"][0], "critic")
+
+    def test_subagent_return_echo_not_double_counted(self):
+        """Real traces set observation.extra.tool_name to the sub-agent on return."""
+        payload = {
+            "steps": [
+                {
+                    "tool_calls": [
+                        {
+                            "tool_call_id": "call_3",
+                            "function_name": "code_analyzer_agent",
+                            "arguments": {"request": "plan"},
+                        }
+                    ]
+                },
+                {
+                    "observation": {
+                        "content": "{\"status\": \"error\"}",
+                        "extra": {
+                            "tool_name": "code_analyzer_agent",
+                            "author": "swe_baseline_agent",
+                        },
+                    }
+                },
+            ]
+        }
+        evs: list[ToolEvent] = []
+        extract_events_from_obj(payload, "sanitized", evs)
+        self.assertEqual([e.name for e in evs if e.kind == "analyzer"], ["code_analyzer_agent"])
+
+    def test_trace_prefix_filename_and_end_to_end_v2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = Path(tmp)
+            results = run / "results" / "team-b__variants__diff-critic" / "smoke"
+            traces = results / "swegemma" / "traces"
+            details = results / "task_details"
+            traces.mkdir(parents=True)
+            details.mkdir(parents=True)
+            tid = "fastapi_13537"
+            (results / "harness_results.jsonl").write_text(
+                json.dumps(
+                    {
+                        "instance_id": tid,
+                        "repo": "fastapi/fastapi",
+                        "resolved": True,
+                        "wall_seconds": 277.0,
+                        "tool_calls": 16,
+                        "patch_chars": 1731,
+                        "error": None,
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            # task_details without embedded events (real downloads skip SessionTrace)
+            (details / f"{tid}.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": tid,
+                        "resolved": True,
+                        "trace": "<skipped: saved separately in swegemma/traces/>",
+                        "tool_calls": 16,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (traces / f"trace_{tid}.json").write_text(
+                json.dumps(self._sanitized_swegemma_trace(with_critic=True)),
+                encoding="utf-8",
+            )
+            # Neighbor id must not be picked up via substring
+            (traces / "trace_fastapi_135370.json").write_text(
+                json.dumps({"steps": [{"tool_calls": [{"function_name": "submit_patch"}]}]}),
+                encoding="utf-8",
+            )
+
+            payloads, _notes = gather_trace_payloads(run, results, tid)
+            rels = [rel for rel, _ in payloads]
+            self.assertTrue(any(rel.endswith(f"trace_{tid}.json") for rel in rels))
+            self.assertFalse(any("135370" in rel for rel in rels))
+
+            out = run / "out"
+            rc = main(
+                [
+                    "--run-dir",
+                    str(run),
+                    "--variant",
+                    "diff-critic",
+                    "--output-dir",
+                    str(out),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            import csv
+            with (out / "per_task.csv").open(encoding="utf-8") as fh:
+                row = next(csv.DictReader(fh))
+            self.assertEqual(row["trace_status"], "present")
+            self.assertEqual(row["critic_invoked"], "True")
+            self.assertEqual(row["critic_call_count"], "1")
+            # Critic started but no submit_patch in sanitized fixture → ordering unknown
+            self.assertEqual(row["critic_before_submit"], NA)
+
+    def test_trace_prefix_discover_ids_without_harness(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = Path(tmp)
+            traces = run / "swegemma" / "traces"
+            traces.mkdir(parents=True)
+            (traces / "trace_rich_3180.json").write_text(
+                json.dumps(self._sanitized_swegemma_trace(with_critic=False)),
+                encoding="utf-8",
+            )
+            out = run / "out"
+            rc = main(
+                [
+                    "--run-dir",
+                    str(run),
+                    "--variant",
+                    "analyzer-plan",
+                    "--output-dir",
+                    str(out),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual(summary["counts"]["tasks"], 1)
+            csv_text = (out / "per_task.csv").read_text(encoding="utf-8")
+            self.assertIn("rich_3180", csv_text)
+            # Instance id column is stripped; path may still mention trace_<id>.json
+            instance_id = csv_text.splitlines()[1].split(",")[0]
+            self.assertEqual(instance_id, "rich_3180")
+
+
 if __name__ == "__main__":
     unittest.main()

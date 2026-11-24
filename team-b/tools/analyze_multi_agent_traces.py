@@ -159,11 +159,31 @@ def _maybe_name(obj: dict) -> str | None:
     Nested ``function_call`` / ``functionCall`` wrappers are discovered by the
     recursive walker. Looking into them here would emit the same call twice
     (once from the parent, once from the child).
+
+    Real Team B swegemma traces (Nov 2026) use ``function_name`` on
+    ``tool_calls`` entries; older ADK-like fixtures use ``name`` /
+    ``function_call.name``.
+
+    Observation echoes often set ``tool_name`` to the sub-agent that just
+    returned. Those are not new invocations — only count sub-agent names from
+    ``tool_name`` when the object also looks like a call (``arguments`` /
+    ``tool_call_id``).
     """
-    for key in ("name", "tool", "tool_name", "toolName", "agent_name", "agentName"):
+    for key in ("function_name", "name", "tool", "agent_name", "agentName"):
         v = obj.get(key)
         if isinstance(v, str) and v.strip():
             return v.strip()
+
+    for key in ("tool_name", "toolName"):
+        v = obj.get(key)
+        if not isinstance(v, str) or not v.strip():
+            continue
+        name = v.strip()
+        low = name.lower()
+        if low in ANALYZER_AGENT_NAMES or low in CRITIC_AGENT_NAMES:
+            if not any(k in obj for k in ("arguments", "args", "tool_call_id", "id")):
+                continue
+        return name
     return None
 
 
@@ -260,6 +280,8 @@ def gather_trace_payloads(run_dir: Path, results_parent: Path, instance_id: str)
         run_dir / "swegemma" / "traces",
         run_dir / "traces",
     ):
+        # Observed Team B Kaggle layout: swegemma/traces/trace_<instance_id>.json
+        candidates.append(base / f"trace_{instance_id}.json")
         candidates.append(base / f"{instance_id}.json")
         candidates.append(base / instance_id / "trace.json")
         candidates.append(base / instance_id / "events.json")
@@ -315,7 +337,11 @@ def discover_trace_only_instance_ids(run_dir: Path) -> list[str]:
         if not traces.is_dir():
             continue
         for p in sorted(traces.glob("*.json")):
-            add(p.stem)
+            stem = p.stem
+            # Strip the harness prefix used by real Team B downloads.
+            if stem.startswith("trace_") and len(stem) > len("trace_"):
+                stem = stem[len("trace_") :]
+            add(stem)
         for sub in sorted(p for p in traces.iterdir() if p.is_dir()):
             if (sub / "trace.json").is_file() or (sub / "events.json").is_file():
                 add(sub.name)
