@@ -62,6 +62,20 @@ Do **not** treat this infrastructure as competition code-sharing permission betw
    CPython 3.12, cp312 wheel tags, and **4 visible NVIDIA L4 GPUs** are present. Expected
    `docker_image` / machine shape are recorded in `RUN_CONFIG` / `run_info.json`.
 
+7. **Stale dataset-version protection (required for re-uploads of `g5b-agents`).** After
+   `kaggle datasets version`, Kaggle can briefly report the *previous* version as ready
+   (Bhoomika / shared harness PR #24). This launcher ports that fix:
+   - each upload gets a unique `upload_id`
+   - the id is written into `G5B_REPO_MARKER` and into kernel `RUN_CONFIG`
+   - the runner verifies exact equality **before** wheel install / vLLM / tasks and exits with
+     `STALE UPLOAD` on mismatch
+   - real uploads wait **90 seconds** before polling status (dry-run never sleeps / never uploads)
+
+   **Limitation:** the first create of `g5b-agents` is less exposed; later versions (e.g. switching
+   from analyzer-plan to diff-critic) need this check. Concurrent `--no-wait` kernels still share one
+   dataset slug — staging the full `team-b/variants/` tree mitigates missing-variant races, but
+   upload_id still only proves the *dataset version* matches the push that launched that kernel.
+
 ## 2. Obtain official sample adapters
 
 `*.safetensors` are git-ignored. On a fresh clone, `validate.py` fails until you restore them:

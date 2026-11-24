@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -373,6 +374,196 @@ class TestPythonGate(unittest.TestCase):
                 with self.assertRaises(SystemExit) as ctx:
                     runner.runtime_preflight({})
         self.assertIn("cp312", str(ctx.exception))
+
+
+class TestStaleUploadProtection(unittest.TestCase):
+    """PR #24 upload_id race fix ported to Team B g5b-agents."""
+
+    def test_make_upload_id_unique(self):
+        rk = _load_run_kaggle()
+        a, b = rk.make_upload_id(), rk.make_upload_id()
+        self.assertNotEqual(a, b)
+        self.assertRegex(a, r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
+
+    def test_stage_dataset_writes_upload_id_and_skips_team_a(self):
+        rk = _load_run_kaggle()
+        uid = "20261124T000000Z-deadbeef"
+        with tempfile.TemporaryDirectory() as tmp:
+            stage = Path(tmp) / "dataset"
+            rk.stage_dataset("team-b/variants/base", REPO / "team-b/variants/base", stage, upload_id=uid)
+            marker = (stage / "G5B_REPO_MARKER").read_text()
+            self.assertIn(f"upload_id={uid}", marker)
+            self.assertIn("selected_variant=team-b/variants/base", marker)
+            self.assertTrue((stage / "team-b" / "variants" / "base" / "agent.yaml").is_file())
+            for bad in ("baseline", "variants", "combined", "lora"):
+                self.assertFalse((stage / bad).exists())
+
+    def test_verify_mounted_upload_id_ok(self):
+        runner = _load_runner()
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "G5B_REPO_MARKER").write_text(
+                "snap\nupload_id=abc-123\nselected_variant=team-b/variants/base\n"
+            )
+            with redirect_stdout(io.StringIO()):
+                runner.verify_mounted_upload_id(repo, {"upload_id": "abc-123"})
+
+    def test_verify_mounted_upload_id_mismatch(self):
+        runner = _load_runner()
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "G5B_REPO_MARKER").write_text("snap\nupload_id=old-version\n")
+            with self.assertRaises(SystemExit) as ctx:
+                runner.verify_mounted_upload_id(repo, {"upload_id": "new-version"})
+            self.assertIn("STALE UPLOAD", str(ctx.exception))
+            self.assertIn("new-version", str(ctx.exception))
+
+    def test_verify_mounted_upload_id_missing_marker(self):
+        runner = _load_runner()
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(SystemExit) as ctx:
+                runner.verify_mounted_upload_id(Path(tmp), {"upload_id": "abc"})
+            self.assertIn("STALE UPLOAD", str(ctx.exception))
+
+    def test_verify_mounted_upload_id_missing_config(self):
+        runner = _load_runner()
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "G5B_REPO_MARKER").write_text("snap\nupload_id=abc\n")
+            with self.assertRaises(SystemExit) as ctx:
+                runner.verify_mounted_upload_id(Path(tmp), {})
+            self.assertIn("upload_id", str(ctx.exception))
+
+    def test_upload_dataset_dry_run_no_sleep_no_api(self):
+        rk = _load_run_kaggle()
+        slept: list[float] = []
+        kaggle_calls: list[tuple] = []
+
+        def fake_sleep(seconds):
+            slept.append(seconds)
+
+        def boom(*args, **kwargs):
+            kaggle_calls.append(args)
+            raise AssertionError("kaggle must not be called in dry-run")
+
+        dry = REPO / "team-b" / "kaggle" / "runs" / "_dryrun_test_upload_id"
+        try:
+            dry.mkdir(parents=True, exist_ok=True)
+            with mock.patch.object(rk, "DRY_RUN", dry), mock.patch.object(
+                rk, "kaggle", side_effect=boom
+            ), mock.patch.object(rk.time, "sleep", side_effect=fake_sleep), redirect_stdout(
+                io.StringIO()
+            ):
+                dataset, upload_id = rk.upload_dataset(
+                    "test-user",
+                    "team-b/variants/base",
+                    REPO / "team-b/variants/base",
+                    "dry-run message",
+                )
+            self.assertEqual(dataset, "test-user/g5b-agents")
+            self.assertTrue(upload_id)
+            self.assertEqual(slept, [])
+            self.assertEqual(kaggle_calls, [])
+            marker = (dry / "dataset" / "G5B_REPO_MARKER").read_text()
+            self.assertIn(f"upload_id={upload_id}", marker)
+        finally:
+            shutil.rmtree(dry, ignore_errors=True)
+
+    def test_upload_dataset_waits_before_ready_poll_when_previous_ready(self):
+        """Simulate previous version still reporting ready; still return new upload_id."""
+        rk = _load_run_kaggle()
+        slept: list[float] = []
+        status_calls = {"n": 0}
+
+        def fake_sleep(seconds):
+            slept.append(seconds)
+
+        def fake_kaggle(*args, check=True, timeout=None):
+            if args[:2] == ("datasets", "version"):
+                return "ok"
+            if args[:2] == ("datasets", "status"):
+                status_calls["n"] += 1
+                return "ready"  # previous version may still look ready
+            return "ok"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            # Keep DRY_RUN unset so upload path runs; mock subprocess status existence.
+            with mock.patch.object(rk, "DRY_RUN", None), mock.patch.object(
+                rk, "kaggle", side_effect=fake_kaggle
+            ), mock.patch.object(rk.time, "sleep", side_effect=fake_sleep), mock.patch.object(
+                rk.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0),  # dataset exists → version path
+            ), redirect_stdout(io.StringIO()):
+                dataset, upload_id = rk.upload_dataset(
+                    "test-user",
+                    "team-b/variants/base",
+                    REPO / "team-b/variants/base",
+                    "msg",
+                )
+        self.assertEqual(dataset, "test-user/g5b-agents")
+        self.assertTrue(upload_id)
+        self.assertGreaterEqual(len(slept), 1)
+        self.assertEqual(slept[0], 90)
+        self.assertGreaterEqual(status_calls["n"], 1)
+
+    def test_require_supported_machine_rejects_non_l4(self):
+        rk = _load_run_kaggle()
+        err = io.StringIO()
+        with redirect_stderr(err), self.assertRaises(SystemExit) as ctx:
+            rk.require_supported_machine("NvidiaT4")
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("Unsupported --machine", err.getvalue())
+        rk.require_supported_machine("NvidiaL4")  # no raise
+
+    def test_run_config_includes_matching_upload_id_via_push_kernel(self):
+        rk = _load_run_kaggle()
+        captured: list[str] = []
+
+        def fake_kaggle(*args, check=True, timeout=None):
+            return "ok"
+
+        real_write = Path.write_text
+
+        def spy_write(self, data, encoding=None, errors=None, newline=None):
+            if self.name == "kaggle_runner.py":
+                captured.append(data if isinstance(data, str) else data.decode())
+            kwargs = {}
+            if encoding is not None:
+                kwargs["encoding"] = encoding
+            if errors is not None:
+                kwargs["errors"] = errors
+            if newline is not None:
+                kwargs["newline"] = newline
+            return real_write(self, data, **kwargs)
+
+        uid = "20261124T120000Z-abcd1234"
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_tb = Path(tmp) / "team-b" / "kaggle"
+            fake_tb.mkdir(parents=True)
+            (fake_tb / "kaggle_runner.py").write_text(
+                (KAGGLE_DIR / "kaggle_runner.py").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            with mock.patch.object(rk, "kaggle", side_effect=fake_kaggle), mock.patch.object(
+                rk, "TB_KAGGLE", fake_tb
+            ), mock.patch.object(rk, "DRY_RUN", None), mock.patch.object(Path, "write_text", spy_write):
+                rk.push_kernel(
+                    user="test-user",
+                    kernel_slug="g5b-eval-team-b-variants-base-smoke",
+                    run_config={
+                        "variant": "team-b/variants/base",
+                        "split": "smoke",
+                        "upload_id": uid,
+                        "docker_image": rk.VERIFIED_DOCKER_IMAGE,
+                    },
+                    model="gemma-4-31b-it-qat-w4a16-ct",
+                    dataset="test-user/g5b-agents",
+                    machine="NvidiaL4",
+                    timeout=None,
+                    docker_image=rk.VERIFIED_DOCKER_IMAGE,
+                )
+        self.assertTrue(captured)
+        self.assertIn(f"'upload_id': '{uid}'", captured[0])
 
 
 if __name__ == "__main__":

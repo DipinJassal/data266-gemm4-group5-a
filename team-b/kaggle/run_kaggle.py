@@ -34,6 +34,7 @@ Real pushes require a Kaggle CLI that transmits metadata `docker_image` (kaggle>
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -42,6 +43,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -412,13 +414,32 @@ def structural_checks(variant: str, variant_dir: Path) -> list[str]:
     return problems
 
 
-def stage_dataset(variant: str, variant_dir: Path, stage: Path) -> None:
+def make_upload_id() -> str:
+    """Unique id stamped into G5B_REPO_MARKER for each dataset upload (PR #24 race fix)."""
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
+
+
+def require_supported_machine(machine: str) -> None:
+    """Reject non-L4×4 machines before upload/push (preflight also checks inside the kernel)."""
+    if machine != DEFAULT_MACHINE:
+        die(
+            f"Unsupported --machine {machine!r}. Team B evaluations require "
+            f"{DEFAULT_MACHINE} (4× NVIDIA L4). Refusing to upload or push."
+        )
+
+
+def stage_dataset(variant: str, variant_dir: Path, stage: Path, *, upload_id: str) -> None:
     """Build the private Team B dataset contents under stage/.
 
     Stages the full team-b/variants/ tree (not only the selected variant) so two
     concurrent --no-wait kernels sharing <you>/g5b-agents cannot lose each other's folder.
     Still never stages Team A baseline/, variants/, combined/, or lora/.
+
+    upload_id is written into G5B_REPO_MARKER so the kernel can refuse a stale mounted
+    dataset version (same race fixed for Team A in harness PR #24).
     """
+    if not upload_id or "upload_id=" in upload_id:
+        die(f"Invalid upload_id {upload_id!r}")
     if stage.exists():
         shutil.rmtree(stage)
     stage.mkdir(parents=True)
@@ -455,6 +476,7 @@ def stage_dataset(variant: str, variant_dir: Path, stage: Path) -> None:
     )
     (stage / "G5B_REPO_MARKER").write_text(
         "data266 group 5 team-b private evaluation snapshot\n"
+        f"upload_id={upload_id}\n"
         f"selected_variant={variant}\n"
         f"staged_variants={','.join(staged)}\n"
         "do-not-upload-team-a-variants\n"
@@ -478,15 +500,23 @@ def keep_dry_run(src: Path, name: str) -> Path:
     return dest
 
 
-def upload_dataset(user: str, variant: str, variant_dir: Path, message: str) -> str:
+def upload_dataset(user: str, variant: str, variant_dir: Path, message: str) -> tuple[str, str]:
+    """Upload the private Team B dataset. Returns (dataset, upload_id).
+
+    upload_id is written into G5B_REPO_MARKER and passed to the kernel via RUN_CONFIG.
+    Right after `datasets version`, Kaggle can still report the *previous* version as
+    "ready"; without the marker check a run could silently evaluate an older upload
+    (Bhoomika / Dipin PR #24). Dry-run never calls the API and never sleeps 90s.
+    """
     dataset = f"{user}/{DATASET_SLUG}"
+    upload_id = make_upload_id()
     with tempfile.TemporaryDirectory() as tmp:
         stage = Path(tmp) / "dataset"
-        stage_dataset(variant, variant_dir, stage)
+        stage_dataset(variant, variant_dir, stage, upload_id=upload_id)
         write_dataset_metadata(stage, dataset)
         if DRY_RUN:
             keep_dry_run(stage, "dataset")
-            return dataset
+            return dataset, upload_id
         exists = subprocess.run(["kaggle", "datasets", "status", dataset], capture_output=True).returncode == 0
         if exists:
             print(f"Uploading new version of private Team B dataset {dataset} ...")
@@ -494,10 +524,13 @@ def upload_dataset(user: str, variant: str, variant_dir: Path, message: str) -> 
         else:
             print(f"Creating private Team B dataset {dataset} ...")
             kaggle("datasets", "create", "-p", str(stage), "-r", "tar", "-q")
+    # Head start before polling: status can still say "ready" for the previous version.
+    # The kernel's upload_id check catches anything that slips through.
+    time.sleep(90)
     for _ in range(60):
         status = kaggle("datasets", "status", dataset, check=False).lower()
         if "ready" in status:
-            return dataset
+            return dataset, upload_id
         time.sleep(10)
     die(f"Dataset {dataset} not ready after 10 min (last status: {status})")
 
@@ -602,6 +635,7 @@ def inspect_dry_run_stage(variant: str, model: str, user_placeholder: str, datas
     print(f"model:        {model}")
     print(f"variant:      {variant}")
     marker = ds / "G5B_REPO_MARKER"
+    marker_text = marker.read_text() if marker.is_file() else ""
     print(f"G5B_REPO_MARKER: {'PASS' if marker.is_file() else 'FAIL'}")
     print(f"selected variant staged: {'PASS' if (ds / variant / 'agent.yaml').is_file() else 'FAIL'}")
     staged_names = sorted(p.name for p in (ds / "team-b" / "variants").iterdir() if p.is_dir()) if (ds / "team-b" / "variants").is_dir() else []
@@ -646,6 +680,21 @@ def inspect_dry_run_stage(variant: str, model: str, user_placeholder: str, datas
         f"runner has runtime_preflight: "
         f"{'PASS' if 'def runtime_preflight' in runner else 'FAIL'}"
     )
+    print(
+        f"runner verifies upload_id: "
+        f"{'PASS' if 'verify_mounted_upload_id' in runner or 'STALE UPLOAD' in runner else 'FAIL'}"
+    )
+    # Extract RUN_CONFIG from staged kernel and check marker upload_id match.
+    m = re.search(r"^RUN_CONFIG = (\{.*\})$", runner, flags=re.M)
+    cfg_ok = False
+    if m:
+        try:
+            cfg = ast.literal_eval(m.group(1))
+            uid = cfg.get("upload_id") if isinstance(cfg, dict) else None
+            cfg_ok = isinstance(uid, str) and bool(uid) and f"upload_id={uid}" in marker_text
+        except (SyntaxError, ValueError):
+            cfg_ok = False
+    print(f"upload_id marker==RUN_CONFIG: {'PASS' if cfg_ok else 'FAIL'}")
     # No credentials staged
     secret_hits = [p for p in ds.rglob("*") if p.name in {"kaggle.json", ".env"}]
     print(f"no secrets in stage: {'PASS' if not secret_hits else 'FAIL ' + str(secret_hits)}")
@@ -854,7 +903,10 @@ def main() -> int:
             subprocess.run(["git", "-C", str(REPO), "status", "--porcelain"], capture_output=True, text=True).stdout.strip()
         )
         model = variant_model(variant_dir) if (variant_dir / "agent.yaml").is_file() else "gemma-4-31b-it-qat-w4a16-ct"
-        dataset = upload_dataset(user, variant, variant_dir, f"{variant} {args.split} @ {git_rev}{'+dirty' if dirty else ''}")
+        require_supported_machine(args.machine)
+        dataset, upload_id = upload_dataset(
+            user, variant, variant_dir, f"{variant} {args.split} @ {git_rev}{'+dirty' if dirty else ''}"
+        )
         run_config = {
             "variant": variant,
             "split": args.split,
@@ -863,6 +915,7 @@ def main() -> int:
             "git_rev": git_rev,
             "dirty": dirty,
             "team": "B",
+            "upload_id": upload_id,
             "docker_image": docker_image,
             "image_verification": image_verification,
             "required_cpython": f"{REQUIRED_CPYTHON[0]}.{REQUIRED_CPYTHON[1]}",

@@ -151,6 +151,34 @@ def _probe_wheelhouse_tags(wheelhouse: Path) -> dict:
     }
 
 
+def verify_mounted_upload_id(repo_dir: Path, cfg: dict) -> None:
+    """Refuse to evaluate if the mounted g5b-agents dataset is a stale version.
+
+    Port of harness PR #24 (G5A) to Team B's G5B_REPO_MARKER. Must run before
+    wheel install, vLLM, or task evaluation.
+    """
+    want = cfg.get("upload_id")
+    if not want:
+        raise SystemExit(
+            "BLOCKER: RUN_CONFIG is missing upload_id. Re-push with the current "
+            "team-b/kaggle launcher (stale-dataset protection from PR #24)."
+        )
+    marker_path = repo_dir / "G5B_REPO_MARKER"
+    if not marker_path.is_file():
+        raise SystemExit(
+            f"STALE UPLOAD: mounted repo dataset has no G5B_REPO_MARKER at {marker_path} "
+            f"(expected upload_id={want})."
+        )
+    marker = marker_path.read_text()
+    if f"upload_id={want}" not in marker:
+        raise SystemExit(
+            f"STALE UPLOAD: the mounted repo dataset is an older version "
+            f"(marker: {marker.strip()!r}, expected upload_id={want}). "
+            "Kaggle had not finished processing the new version; rerun the launcher."
+        )
+    log(f"repo dataset upload_id {want} verified")
+
+
 def runtime_preflight(cfg: dict) -> dict:
     """Environment gates that must pass before installing the 41 competition wheels.
 
@@ -324,6 +352,8 @@ def main() -> None:
 
     data_dir = find_one("**/gemma-4-developer-agent/tasks.jsonl", "the competition data").parent
     repo_dir = find_one("**/G5B_REPO_MARKER", "our repo dataset (uploaded by team-b/kaggle/run_kaggle.py)").parent
+    # Fail before wheels / vLLM / tasks if Kaggle mounted an older g5b-agents version.
+    verify_mounted_upload_id(repo_dir, cfg)
 
     # 1. Copy the variant to a writable folder.
     src = repo_dir / variant
