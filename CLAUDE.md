@@ -44,7 +44,38 @@ Items marked *(Rules tab)* still need checking on the Kaggle Rules page.
 
 Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika → Dipin. Nobody approves their own variant.
 
-## Status (last updated Nov 20, 2026)
+## Status (last updated Nov 21, 2026)
+
+**Scoreboard (local harness; smoke = 10 train tasks, dev = 30 held-out tasks)**
+
+| Variant | Owner | Change (vs control) | Smoke | Dev | Kaggle |
+|---|---|---|---|---|---|
+| `baseline` | — | unmodified sample (1 min / 10 calls) | — | **2/30** | not submitted |
+| `dipin-step-budget-v1` (control) | Dipin | 4.5 min / 50 calls | 2/10, 1/10 | **not run** | not submitted |
+| `khushi-structured-prompt-v1` | Khushi | structured-loop prompt | 1/10 | **5/30** | not submitted |
+| `khushi-anti-looping-v2` | Khushi | time-budget prompt | 2/10, 1/10 | — (negative, closed) | — |
+| `sarvesh-sampling-v1` | Sarvesh | thinking off | 2/10 | — | not submitted |
+| `bhoomika-lora-patches-v1` | Bhoomika | LoRA on reference patches (alpha 8) | 2/10 | **5/30** | **submitted Nov 22** (ref 58709756, pending) |
+| `bhoomika-lora-runs-v2` | Bhoomika | LoRA on curated agent runs (alpha 8) | 2/10, 1/10 (18-run retrain) | — (neutral, no dev) | merged #19 |
+| `sarvesh-best-of-n-v2` | Sarvesh | prompt-only single retry | 2/10 | — | merged #21 |
+| `poushali-skills-pack-v1` (PR #22, merged Nov 23) | Poushali | fix-and-verify skill | 1/10 | **6/30** (best so far) | **submitted Nov 23** (ref 58798802), pending |
+| PR #23 test-runner V2 | Poushali | test-runner `agent_tool` | negative | — | open PR (Khushi reviews) |
+| `dipin-output-trimming-v1` | Dipin | "keep tool output small" prompt section | skipped (straight to dev) | **5/30** (1 context crash vs 2 for Khushi's V1; avg 3.9 min) | — |
+| Combined agent v1 | Dipin | Team A merge: structured prompt + output trimming + single retry + import/scratch-file checks, 4.0 min | — | **4/30** (13 empty; negative, closed) | not submitted |
+| Combined agent v2 | Dipin | output-trimming prompt + `max_output_tokens` 8192 + one pre-submit import/scratch line, 4.5 min | — | **5/30** (2 empty, 0 context crashes) | zip built (`g5a-submit-combined-v2`); blocked: only 1 pending submission allowed |
+| Combined agent v3 | Dipin | v2 + keep own messages short, never re-quote code or restate the issue | — | **5/30** (no effect: messages not shorter) | not submitted |
+
+**All three 5/30 variants (structured prompt, output trimming, and per-repo counts for LoRA V1) solve the same tasks:** fastapi_14077, fastapi_14301, fastapi_14492, rich_3718, rich_3905. That points to the shared 4.5 min / 50-call budget doing the work, so the V2 control's own dev/Kaggle score is the most important missing number.
+Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
+7/30 dev tasks can't pass in our harness (missing test packages, `docs/scoring_environment_comparison.md`), so 23/30 is the local ceiling.
+**Kaggle submissions** (Dipin makes all of them; 1 per team per day, and **only 1 pending at a time**: a new one is refused until the previous one is scored, which took ~25 h):
+- Nov 22: `bhoomika-lora-patches-v1` (ref 58709756) → **0.10** (local dev 5/30 = 16.7%). Public leaderboard top: many teams tied at 0.24.
+- Nov 23: `poushali-skills-pack-v1` (ref 58798802, PR #22, local dev **6/30**, best so far: Khushi V1's 5 tasks + `fastapi_14616`) → pending. Built from her branch at `08f7b70` (SKILL.md sha `bb7d2d4e…`, all 9 files hash-checked) via the private dataset `dipinjassal/g5a-poushali-skills-v1` and notebook `g5a-submit-poushali-skills-pack-v1`.
+- Next in line: combined v2 (dev 5/30, zip built in `g5a-submit-combined-v2`).
+**How to submit (code competition):** uploading a zip with `kaggle competitions submit -f` fails with 400. The submission must be a notebook's
+`/kaggle/working/submission.zip` output: push a CPU notebook (internet off, competition + `dipinjassal/g5a-agents` attached) that copies the variant
+folder and zips it (example: kernel `dipinjassal/g5a-submit-bhoomika-lora-patches-v1`), then
+`kaggle competitions submit gemma-4-developer-agent -k <user>/<kernel> -f submission.zip -v <version> -m "..."`.
 
 **Done**
 - Repo created and public: https://github.com/DipinJassal/data266-gemm4-group5-a. All 4 teammates invited with write access (Sarvesh0827, Poushali0202, khushidonda, bhoomikaa); each must accept the invite.
@@ -66,7 +97,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - **Bhoomika V1 `bhoomika-lora-patches-v1`** (PR #12, merged Nov 20): V2 + LoRA trained on 75 train-split reference-patch trajectories, served at alpha 8. Smoke 2/10 (same as control), **dev 5/30 = 16.7%**, avg 3.4 min. Alpha 32 got 1/10 on smoke twice (overfit, repeats failing edits). Weights are in the private Kaggle dataset `bhoomikalnu/g5a-lora-v1-adapter` (not in git).
 
 **Next for Dipin**
-- [ ] Create the Kaggle team, invite all 4, agree the team name with the other team.
+- [x] Create the Kaggle team, invite all 4, agree the team name with the other team. *(Team in place, confirmed Nov 21.)*
 - [ ] Check the items marked *(Rules tab)* above on the Kaggle Rules page and post the rules to the team.
 - [x] First real harness run (2 smoke tasks). Three launcher bugs were found and fixed along the way (Python literal, push hang, pinned Python 3.12 image).
 - [ ] Announce the harness to the team (`harness/README.md`).
@@ -76,8 +107,14 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 - [x] **V2 `dipin-step-budget-v1` on smoke (Nov 10): 2/10**, no crashes, avg 4.2 min per task (max 4.8, under the 6 min target).
   3 empty patches, 5 wrong. The 2 smoke tasks the baseline failed in the harness test now pass. Smoke is part of train, so this isn't a dev score.
 - [ ] Run V2 on dev (~2.5 h of GPU time) for the real comparison against 2/30 **(now urgent: Bhoomika's and Khushi's V1 both got 5/30 on top of V2, and neither gain can be credited until V2 has a dev score)**, then pick its `Source:` reference and submit on a spare slot.
-- [ ] Fix the `run_kaggle.py` race Bhoomika found: the kernel can start before the new `g5a-agents` dataset version is ready and silently run the previous upload.
-- [ ] Get access to `bhoomikalnu/g5a-lora-v1-adapter` (asked on PR #12; currently 403), needed to submit her V1 and for the combined agent.
+- [x] Fix the `run_kaggle.py` race Bhoomika found. *(Branch `dipin/output-trimming-v1`, not yet on main: each upload gets an `upload_id`, and the kernel stops with "STALE UPLOAD" if the mounted dataset doesn't match.)*
+- [x] Get access to `bhoomikalnu/g5a-lora-v1-adapter`. *(Shared Nov 21. Downloaded and checked: config identical to the repo's, 820 bf16 tensors, rank 16, all 60 layers, language model only.
+  Copied into `variants/bhoomika-lora-patches-v1/adapters/` (git-ignored) and built `harness/runs/bhoomika-lora-patches-v1-submission.zip` (183 MiB, validates).)*
+- [ ] **Daily Kaggle submissions** (Dipin only). Nov 22: `bhoomika-lora-patches-v1` ✅. Nov 23: `poushali-skills-pack-v1` ✅ (dev 6/30). Next: combined v2;
+  Nov 24 `dipin-step-budget-v1` (budget-only reference); then baseline, the other 5/30 variant, combined agent. Pick the final 2 by Dec 2.
+- [x] Review PRs. *(Nov 21: #19 and #21 approved and merged; #22 and #23 commented, waiting on Khushi's questions; they'll need a rebase on `docs/experiment_log.md`.)*
+- [ ] Combined agent (Nov 23). **v1 built Nov 22** on branch `dipin/combined-v1` (stacked on PR #24), Team A work only (nothing from `team-b/`): Khushi's structured loop + Dipin's output-trimming rules + Sarvesh's single retry + new checks aimed at the 25 unsolved dev tasks (import check of changed modules, fix imports on rename, delete scratch files, exact new-parameter names). Budget cut to **4.0 min** / 50 calls so ~120 Kaggle tasks stay well under the 12-hour limit (worst case ~9 h). LoRA left out (no gain over prompts; v2 candidate). **Dev result (Nov 22): 4/30** (fastapi 3/15, rich 1/11), 13 empty patches vs 5 for output trimming; avg 3.8 min. Negative: stacking prompt rules made the agent investigate longer, only 17/30 tasks reached a source edit (vs 25/30), and 8 tasks that trimming edited within 20–220 s never got an edit. The 4.0 min cut explains at most 1–2 of them. **Config bug found:** `max_output_tokens: 16384` makes vLLM reject any request once the input passes 16,384 tokens ("you requested 16384 output tokens and your prompt contains at least 16385 input tokens"), so every variant has had only half the 32K window; this caused all context crashes so far. Write-up: `docs/combined_v1_analysis.md`; v1 kept at tag `combined-v1-negative` (never on main). **v2 dev (Nov 23): 5/30**, same 5 tasks again; empty patches 5 → 2 and context crashes 1 → 0, but the extra patches are wrong fixes. v2: output-trimming prompt + `max_output_tokens` 8192 + one short import/scratch-file line, back to 4.5 min (Bhoomika's 4.5 min submission was still PENDING with no timeout error at 13.8 h). v2 zip is built and checked (`g5a-submit-combined-v2`, version 1) but blocked until Bhoomika's V1 finishes scoring. **v3** (trace analysis: 62% of generated tokens are the agent's own messages, 18% re-quoted code, at ~27 tok/s): adds two lines to keep messages short; **dev 5/30, no effect** (the model ignored the rule; trace text is likely its thinking). Bhoomika's **LoRA V3** (branch `bhoomika/lora-v3`, 21 runs / 57 pieces, train split only) was **trained on Dipin's quota (Nov 23, `g5a-lora-v2-train`)**: 150 min cap hit at step 87, held-out loss 0.309 → 0.194, r16/alpha 32, 820 tensors; trained and held-out tasks all train split (rule 3 checked). Adapter in the private dataset `dipinjassal/g5a-lora-v3-adapter` (sha256 `0041a1ca…`), shared with Bhoomika (Can edit, still private). **Dev run started on Dipin's quota Nov 23** as `variants/bhoomika-lora-v3` (her V2 folder + V3 weights, alpha 8; branch `dipin/run-bhoomika-lora-v3`, kernel `g5a-eval-variants-bhoomika-lora-v3-dev`), so Bhoomika doesn't need to repeat dev. **Dev result: 4/30**: solved `rich_3278` (no earlier variant did) but lost `fastapi_14301` and `rich_3718`. Not submitted. Nov 23 slot went to `poushali-skills-pack-v1` (dev 6/30); combined v2 is next.
+- [ ] V1 output trimming: `dipin-output-trimming-v1` on branch `dipin/output-trimming-v1` scored **5/30 on dev** (Nov 22; same 5 tasks as Khushi's V1). Open a PR (reviewer: Bhoomika); the branch also carries the harness upload_id fix (confirmed working in this run).
 - [x] Nov 12: send Khushi the baseline dev run ZIP (prepared: `harness/runs/baseline-dev-20261110.zip`, local and git-ignored): results, patches,
   traces, readable logs. That run did **not** save Phase 2 test output; `kaggle_runner.py` now saves each task's full result to `task_details/`.
   *(Received by Khushi Nov 12; analysed in `docs/error_analysis.md`. The ZIP itself stays out of git.)*
@@ -233,6 +270,7 @@ Each variant `README.md` has exactly three lines:
 - **V1, Nov 14 — Sampling settings:** small sweep of temperature / top-p and thinking mode on vs off on the smoke set; submit the best.
   *Progress (Nov 13–14):* `variants/sarvesh-sampling-v1/` (thinking off on V2 budget). Full smoke **2/10** (ties `dipin-step-budget-v1`); logs in `docs/runs/sarvesh-sampling-v1-smoke-full-20261114T031152Z/`. Harness path fix: `\` → `/` in `run_kaggle.py` / `kaggle_runner.py`. **Next:** Nov 14 team Kaggle submit after Dipin review; optional temp trials / dev later.
 - **V2, Nov 19 — Best-of-N attempts:** several attempts, keep the patch that passes the agent's own reproduction test, stop early on a pass. If `agent.yaml` can't express this, use "if your test fails, retry once with a different approach."
+  *Progress (Nov 21):* `variants/sarvesh-best-of-n-v2/` (prompt-only single retry on `dipin-step-budget-v1`). Smoke **2/10** (RUN-S02; 4 empty, 4 failed; avg 4.32 min). Logged in experiment workbook. **Next:** Dipin review + rescheduled Kaggle submit slot (Nov 19 missed). Optional later V3: lower `max_output_tokens` (context crash on `fastapi_14609`).
 - **V3 (optional):** max output tokens or step-limit tuning.
 
 **Other:** reviews Khushi.
