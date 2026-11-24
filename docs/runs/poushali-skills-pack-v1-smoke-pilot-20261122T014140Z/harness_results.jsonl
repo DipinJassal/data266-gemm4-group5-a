@@ -1,0 +1,2 @@
+{"instance_id": "fastapi_11194", "repo": "fastapi/fastapi", "resolved": true, "duration_seconds": 279.89541990099997, "wall_seconds": 280.0, "tool_calls": 28, "test_exit_code": 0, "patch_chars": 2554, "error": null, "total_tokens": 0}
+{"instance_id": "fastapi_13537", "repo": "fastapi/fastapi", "resolved": true, "duration_seconds": 248.1329621010001, "wall_seconds": 248.2, "tool_calls": 14, "test_exit_code": 0, "patch_chars": 823, "error": null, "total_tokens": 0}

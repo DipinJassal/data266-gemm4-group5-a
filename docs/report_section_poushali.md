@@ -13,8 +13,8 @@ malformed tool-call arguments, and no task ran the repository's own tests. V1 ad
 five rules: make the first source edit within 10 tool calls, use exact tool-call argument names (with examples), check
 the fix by running only the related test file (`pytest -q -x --tb=short <file> | tail -25`) and treat missing test
 dependencies as pre-existing, keep diffs small, and keep scratch scripts out of the patch. It deliberately avoids a
-reproduce-first step, because Prompts V1 showed that pre-edit reproduction used up the budget. Team B found that this
-model never loads a skill from its description alone [Team B, retrieval section], so the system prompt gets one line
+reproduce-first step, because Prompts V1 showed that pre-edit reproduction used up the budget. Team B observed that this
+model did not load a skill from its description alone [Team B, retrieval section], so the system prompt gets one line
 telling the agent to call `load_skill` first. Everything else is the budget-fixed control (4.5 min, 50 tool calls).
 
 **Results.**
@@ -64,10 +64,10 @@ no dev run spent.
 **Takeaways.**
 1. Skills are a cheap, valid way to ship know-how in a declarative submission, and a one-line trigger in the system
    prompt makes the model load them reliably.
-2. Loading is not following: a multi-rule procedure read once at the start of the task does not reliably change what a
-   quantized 31B model does several minutes later. Limits the harness enforces, such as the budget in `eval_config.yaml`,
-   changed behaviour more than instructions did.
-3. Timing decides whether a trigger works: "your first action" got the skill loaded 12/12, while "after your edit" got
+2. Loading is not following: in our smoke runs, a multi-rule procedure read once at the start of the task often did not
+   change what the model did several minutes later. Limits the harness enforces, such as the budget in `eval_config.yaml`,
+   may matter more than instructions, though we did not test that directly.
+3. Timing seemed to decide whether a trigger worked: "your first action" got the skill loaded 12/12, while "after your edit" got
    the sub-agent called in only 1 of 9 tasks that made a source edit. The sub-agent itself was fast and correct.
 4. Tool constraints matter for instructions: telling the agent to use a path its tools cannot reach produced the very
    failure the rule was meant to prevent.
@@ -89,4 +89,4 @@ no dev run spent.
 - Found: `write_file` can't write `/tmp`, so scratch scripts need `run_command`
 - V2 `test_runner_agent`: runs only related tests, returns a 4-line PASS/FAIL/BLOCKED verdict
 - Works when called (15.5 s, correct PASS, task done in 2.9 min), but called in only **1 of 9** tasks with an edit; smoke 2/10, 1/10
-- Lesson: "first action" triggers work, "after X" triggers don't; enforced limits beat instructions
+- Lesson (small samples): "first action" triggers worked, "after X" triggers mostly didn't
