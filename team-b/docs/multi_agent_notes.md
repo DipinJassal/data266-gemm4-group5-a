@@ -61,4 +61,16 @@ Root uses `main_lora`; analyzer/critic use `tool_lora` in the inherited base con
 | `analyzer-plan` (V1) | `b/analyzer-plan` | Prompt policy on **existing** analyzer |
 | `diff-critic` (V2) | `b/diff-critic` | New critic `agent_tool` + one revision |
 
-Both copy `team-b/variants/base` and change only that one architectural intervention. Runtime scores are **pending** until adapters are restored and Kaggle smoke/dev are run.
+Both copy `team-b/variants/base` and change only that one architectural intervention.
+
+### Logged Team B scores (do not conflate splits)
+
+| Variant | Diagnostic (2) | Smoke (10) | Dev (30) | Official Kaggle |
+|---|---|---|---|---|
+| Team B base (ref) | — | — | 7/30 (team-lead-reported) | — |
+| `analyzer-plan` | 1/2 (`63a3eb2`) | 0/10 | 5/30 (team-lead-reported; local artifacts unavailable) | not confirmed |
+| `diff-critic` | 1/2 (`2cd4327`) | 1/10 | 6/30 (verified run `20261124T102323Z`) | not confirmed |
+
+Neither multi-agent variant was selected for the combined agent (both below base on **dev**). Dev ≠ official competition score.
+
+Smoke mechanism summary: V1 analyzer invoked 8/10 with 6 analyzer context-window failures; V2 critic invoked 1/10 with 0 completed feedback returns. See `team-b/report/sections/multi-agent.md` and `docs/experiment_log.csv`.

@@ -1,7 +1,7 @@
 # Report section — Multi-agent (Parth Patel)
 
 Team B · Group 5 · DATA 266 · Gemma 4 Developer Agent
-Status: **first draft (Nov 20, 2026)** — architectures implemented; smoke/dev/Kaggle numbers **pending**.
+Status: **final multi-agent selection note (Nov 24, 2026)** — diagnostic, smoke, and **dev** logged; neither variant selected for the combined agent; **official Kaggle** submission for these variants not confirmed.
 
 ## 1. Role in Team B
 
@@ -36,11 +36,6 @@ New read-oriented sub-agent `diff_critic_agent` registered as a second `agent_to
 ### Hypothesis
 One post-edit review of the **actual** workspace diff against the issue reduces right-file/wrong-fix failures before submission ([3]).
 
-### Known limitations (pre-runtime)
-- `run_command` is not technically read-only.
-- Plain `git diff` misses untracked files; staged-only changes need `--cached` awareness.
-- Effectiveness unmeasured until smoke traces are collected.
-
 ## 4. How each differs from the fixed base
 
 | Aspect | Base | V1 | V2 |
@@ -52,43 +47,70 @@ One post-edit review of the **actual** workspace diff against the issue reduces 
 
 ## 5. Evaluation methodology
 
-Follow Team B split roles (`TEAM_B_GUIDE.md`):
+Follow Team B split roles (`TEAM_B_GUIDE.md`). Scores from different splits are **not interchangeable**:
 
-| Split | Role | Cadence |
+| Split / score | Role | How to cite |
 |---|---|---|
-| smoke (10) | debug crashes, time, tool use | iterate |
-| train (`--max-tasks 20`) | optional Phase-2 tuning | iterate |
-| dev (30) | selection / validation | **one** run per finished candidate |
-| Kaggle hidden | held-out | 1 submission/team/day |
+| 2-task diagnostic (`smoke` + `--max-tasks 2`) | Launcher / adapter / crash check | Label **diagnostic**, not smoke |
+| Full smoke (10) | Debug time, tool use, mechanism | Label **smoke** |
+| Dev (30, once per finished candidate) | Selection / validation | Label **dev** |
+| Official Kaggle submission | Held-out team score | Label **official Kaggle** only |
 
-Compare each variant to Team B base (and Team A reference smoke for the budget agent only as a labeled reference, never as our Kaggle score). Trace metrics of interest: analyzer/critic call rates, order relative to edits, revision rate, empty patches, wall time, tool calls, resolved tasks.
+Compare each variant to Team B base when that base run exists. Trace metrics of interest: analyzer/critic call rates, order relative to edits, completed sub-agent feedback, empty patches, wall time, tool calls, resolved tasks.
 
-Launcher: Team B independent workflow (`team-b/kaggle/`, dataset `g5b-agents`, kernels `g5b-eval-*`) once adapters are restored.
+Launcher: Team B independent workflow (`team-b/kaggle/`, dataset `g5b-agents`, kernels `g5b-eval-*`). Offline metrics: `team-b/tools/analyze_multi_agent_traces.py` (PR #18).
 
-## 6. Risks and trade-offs
+**Runtime constants for logged Team B runs:** Python 3.12.13, NVIDIA L4×4, docker digest `37c64f7…`, internet off, competition `gemma-4-developer-agent`, budgets 4.5 min / 50 tool calls / 50 turns.
 
-- Extra sub-agent calls spend turns/time inside 4.5 minutes; risk of more timeouts or empty patches.
-- Prompt-only policies may be ignored (seen in Team A time-awareness negatives).
-- Critic false positives could cause harmful one-shot “fixes.”
-- Cross-team GitHub sharing vs Kaggle private-sharing rules remains a process risk for the group; runtime evidence must stay attributed to Team B.
+## 6. Results (Team B only)
 
-## 7. What remains untested
+Artifact locations (worktrees; not committed):
 
-- Restored `adapter_model.safetensors` + `validate.py --zip`
-- 2-task diagnostic and full 10-task smoke for V1 and V2
-- Trace-level mechanism checks
-- One-shot `dev` per finished candidate
-- Team B Kaggle submission scores
+| Run | Path / provenance |
+|---|---|
+| V1 diagnostic | `_wt-team-b-v1-kaggle-prep/.../smoke/20261123T063400Z` |
+| V1 full smoke | `_wt-team-b-v1-kaggle-prep/.../smoke/20261123T073029Z` |
+| V1 **dev** | **team-lead-reported** by Ashmitha (local Kaggle artifacts not available) |
+| V2 diagnostic | `_wt-team-b-v2-kaggle-prep/.../smoke/20261123T084132Z` |
+| V2 full smoke | `_wt-team-b-v2-kaggle-prep/.../smoke/20261124T070909Z` |
+| V2 **dev** | `_wt-team-b-v2-kaggle-prep/.../dev/20261124T102323Z` (verified locally) |
 
-## 8. Results (pending)
-
-| Variant | Smoke resolved | Smoke avg min/task | Empty patches | Dev resolved | Kaggle | Notes |
+| Variant | Commit | Diagnostic | Smoke | Dev (30) | Official Kaggle | Combined selection |
 |---|---|---|---|---|---|---|
-| Team B base (ref) | pending / Team A smoke ref 2/10 @ 4.2 min labeled reference | — | — | — | — | Do not treat Team A numbers as Team B official |
-| `analyzer-plan` | **pending** | **pending** | **pending** | **pending** | **pending** | PR draft; no GPU run yet |
-| `diff-critic` | **pending** | **pending** | **pending** | **pending** | **pending** | PR draft; no GPU run yet |
+| Team B base (ref) | — | — | — | **7/30** (team-lead-reported) | — | selection baseline |
+| `analyzer-plan` (V1) | `63a3eb2` | **1/2** | **0/10** | **5/30** (team-lead-reported) | **not confirmed** | **not selected** |
+| `diff-critic` (V2) | `2cd4327` | **1/2** | **1/10** | **6/30** (local artifacts) | **not confirmed** | **not selected** |
 
-## 9. References
+**V2 dev breakdown (verified):** PASS 6 / FAIL 18 / EMPTY 6. Passing IDs: `fastapi_14077`, `fastapi_14301`, `fastapi_14492`, `rich_3278`, `rich_3718`, `rich_3905`.
+
+**Smoke mechanism notes (unchanged):** V1 analyzer invoked 8/10 with 6 analyzer context-window failures; V2 critic invoked 1/10 with 0 completed feedback returns. Team A smoke reference for the budget agent (2/10) remains a labeled reference only.
+
+## 7. Failure analysis and selection decision
+
+### V1 — context overhead and timeouts
+- Analyzer-first is often followed on smoke (8/10), but analyzer sessions frequently hit context limits.
+- Dev **5/30** (team-lead-reported) is below Team B base **7/30** → **not selected** for the combined agent.
+
+### V2 — critic under-used on smoke; modest dev gain still below base
+- Smoke: critic rarely reached; the 1/10 resolve was not attributable to completed critic feedback.
+- Dev **6/30** (verified) is still below Team B base **7/30** → **not selected** for the combined agent.
+- Honest negative / null contribution for the multi-agent track under the fixed budget: neither intervention beat the Team B base on **dev**.
+
+## 8. Risks, trade-offs, limitations
+
+- Extra sub-agent calls spend turns/time inside 4.5 minutes → more timeouts (confirmed on smoke).
+- Prompt-only policies may be ignored (V2 critic under-called on smoke).
+- Critic `run_command` is not technically read-only; plain `git diff` misses untracked files.
+- V1 **dev** lacks local Kaggle artifact provenance (team-lead-reported only).
+- `run_info.git_rev` was dirty on several logged runs.
+- **Dev ≠ official Kaggle.** Neither multi-agent variant has a confirmed official competition submission score in this log.
+
+## 9. What remains
+
+- Confirm whether any Team B **official Kaggle** submission uses a non–multi-agent combined agent (out of scope for this section’s scores).
+- Keep PR #13 / #14 as implementation history; selection decision is documented here and in `docs/experiment_log.csv`.
+
+## 10. References
 
 3. Kon et al., SWE-Protégé, arXiv:2602.22124.
 6. Zhao et al., Category-aware iterative expert training, arXiv:2609.23377.
