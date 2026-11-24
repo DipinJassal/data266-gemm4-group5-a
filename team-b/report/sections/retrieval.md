@@ -1,6 +1,6 @@
 # Retrieval and code-graph localization (Ishan, Team B) — first draft (Nov 21)
 
-> Only the Kaggle column is still open: V1 was submitted Nov 21 and is scoring; graph-expand-2 is submitted Nov 21, 4 pm Pacific.
+> Both Kaggle scores are in: graph-localize 0.12, graph-expand-2 0.08 (public leaderboard, one submission each).
 
 ## Task analysis (G.2)
 
@@ -30,15 +30,17 @@ budget before the first edit (23/30 dev patches changed no source file).
 |---|---|---|---|---|---|
 | base (Team A run) | smoke | 2/10 | 4.2 | 3 | — |
 | graph-localize | smoke, 2-task diagnostic | 2/2 | 4.1 | 0 | — |
-| graph-localize | smoke (10) | 1/10 | 4.7 | 2 | pending (submitted Nov 21) |
+| graph-localize | smoke (10) | 1/10 | 4.7 | 2 | **0.12** (public) |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
 | graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | see smoke (10) row |
-| graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | scheduled Nov 21 |
+| graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | **0.08** (public) |
 
 The 2-task diagnostics run on the first two smoke tasks, which the base agent also solves, so they show that a variant
-runs and follows its routine, **not** that it beats base. Comparative claims wait for the full smoke/dev runs and
-the Kaggle scores. We did not run dev: both variants scored 1/10 on smoke, and about 10 GPU-quota hours for two dev
-runs would not change which variant goes into the combined agent. The Kaggle score is the held-out result.
+runs and follows its routine, **not** that it beats base. The full smoke runs and the Kaggle scores are the
+comparison. We did not run dev: both variants scored 1/10 on smoke, and about 10 GPU-quota hours for two dev
+runs would not change which variant goes into the combined agent. The Kaggle score is the held-out result: 0.12 for
+graph-localize and 0.08 for graph-expand-2, one submission each, so the gap may be noise. No base Kaggle score is
+recorded in the repo yet, so these do not show a gain or a loss against base.
 
 ## What worked, what didn't
 
