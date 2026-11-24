@@ -7,4 +7,5 @@
 - Dev (30 tasks, one run, validation used for selection): **4/30 = 13.3%**, **4/23 = 17.4%** without the 7 tasks that cannot pass locally. Avg 4.0 min per task. Passes: fastapi_14077, fastapi_14492, rich_3718, rich_3905.
 - Finding: 7 of 10 smoke tasks hit the 4.5 min limit before `submit_patch`, so the checklist rarely runs. Time, not patch hygiene, is the bottleneck.
 - Compared with the base agent on the same dev split (7/30, 7/23): patch-hygiene is **3 tasks worse**. Its 4 passes are a subset of the base's 7. The 3 tasks it lost (fastapi_14301, rich_3063, rich_3278) all hit the 4.5 min timeout. With one run each this is not a significant difference, but there is no sign of a gain.
+- The base agent was then submitted to Kaggle and scored **0.10** (held-out), so patch-hygiene was not submitted.
 - Decision: **not promoted**. Patch-hygiene is left out of the combined agent.
