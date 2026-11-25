@@ -14,7 +14,7 @@ Analyzer tip used for this write-up: commit `a554359` on `b/multi-agent-metrics`
 
 Nested harness path pattern (under each run dir):
 
-`results/team-b__variants__<variant>/<split>/harness_results.jsonl`  
+`results/team-b__variants__<variant>/<split>/harness_results.jsonl`
 `results/team-b__variants__<variant>/<split>/swegemma/traces/trace_<instance_id>.json`
 
 ## Aggregate metrics (CLI + harness)
