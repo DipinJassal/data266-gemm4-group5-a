@@ -1,6 +1,6 @@
 # Retrieval and code-graph localization (Ishan, Team B) — first draft (Nov 21)
 
-> Both Kaggle scores are in: graph-localize 0.12, graph-expand-2 0.08 (public leaderboard, one submission each).
+> Kaggle public scores (one submission each): base 0.10, graph-localize 0.12, graph-expand-2 0.08.
 
 ## Task analysis (G.2)
 
@@ -29,6 +29,7 @@ budget before the first edit (23/30 dev patches changed no source file).
 | Run | Split | Score | Avg min/task | Empty patches | Kaggle |
 |---|---|---|---|---|---|
 | base (Team A run) | smoke | 2/10 | 4.2 | 3 | — |
+| base (run by Ashmitha) | dev (30) | 7/30 | 3.7 | 5 | **0.10** (public) |
 | graph-localize | smoke, 2-task diagnostic | 2/2 | 4.1 | 0 | — |
 | graph-localize | smoke (10) | 1/10 | 4.7 | 2 | **0.12** (public) |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
@@ -38,9 +39,12 @@ budget before the first edit (23/30 dev patches changed no source file).
 The 2-task diagnostics run on the first two smoke tasks, which the base agent also solves, so they show that a variant
 runs and follows its routine, **not** that it beats base. The full smoke runs and the Kaggle scores are the
 comparison. We did not run dev: both variants scored 1/10 on smoke, and about 10 GPU-quota hours for two dev
-runs would not change which variant goes into the combined agent. The Kaggle score is the held-out result: 0.12 for
-graph-localize and 0.08 for graph-expand-2, one submission each, so the gap may be noise. No base Kaggle score is
-recorded in the repo yet, so these do not show a gain or a loss against base.
+runs would not change which variant goes into the combined agent. Base has a dev run (7/30, or 7/23 without the 7 tasks that
+cannot run locally; reported by Ashmitha), but our variants do not, so that row is context and not a comparison.
+
+The Kaggle score is the held-out result: base 0.10, graph-localize 0.12 (+0.02) and graph-expand-2 0.08 (-0.02). Each is
+one submission and the differences are small, so they do not show a gain or a loss against base. Neither variant has
+evidence of beating base, on smoke or on Kaggle.
 
 ## What worked, what didn't
 
