@@ -58,6 +58,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 | `bhoomika-lora-patches-v1` | Bhoomika | LoRA on reference patches (alpha 8) | 2/10 | **5/30** | **submitted Nov 22** (ref 58709756, pending) |
 | `bhoomika-lora-runs-v2` | Bhoomika | LoRA on curated agent runs (alpha 8) | 2/10, 1/10 (18-run retrain) | — (neutral, no dev) | merged #19 |
 | `sarvesh-best-of-n-v2` | Sarvesh | prompt-only single retry | 2/10 | — | merged #21 |
+| `sarvesh-failfix-v1` | Sarvesh | mandatory fail→fix after first edit (on `dipin-base-v2`) | 2/10 | **6/30** (tie; closed, no gain) | not proposed |
 | `poushali-skills-pack-v1` (PR #22, merged Nov 23) | Poushali | fix-and-verify skill | 1/10 | **6/30** (best so far) | **submitted Nov 23** (ref 58798802) → **0.12** (best Kaggle score so far) |
 | PR #23 test-runner V2 | Poushali | test-runner `agent_tool` | negative | — | open PR (Khushi reviews) |
 | `dipin-output-trimming-v1` | Dipin | "keep tool output small" prompt section | skipped (straight to dev) | **5/30** (1 context crash vs 2 for Khushi's V1; avg 3.9 min) | — |
@@ -274,6 +275,7 @@ Each variant `README.md` has exactly three lines:
   *Progress (Nov 13–14):* `variants/sarvesh-sampling-v1/` (thinking off on V2 budget). Full smoke **2/10** (ties `dipin-step-budget-v1`); logs in `docs/runs/sarvesh-sampling-v1-smoke-full-20261114T031152Z/`. Harness path fix: `\` → `/` in `run_kaggle.py` / `kaggle_runner.py`. **Next:** Nov 14 team Kaggle submit after Dipin review; optional temp trials / dev later.
 - **V2, Nov 19 — Best-of-N attempts:** several attempts, keep the patch that passes the agent's own reproduction test, stop early on a pass. If `agent.yaml` can't express this, use "if your test fails, retry once with a different approach."
   *Progress (Nov 21):* `variants/sarvesh-best-of-n-v2/` (prompt-only single retry on `dipin-step-budget-v1`). Smoke **2/10** (RUN-S02; 4 empty, 4 failed; avg 4.32 min). Logged in experiment workbook. **Next:** Dipin review + rescheduled Kaggle submit slot (Nov 19 missed). Optional later V3: lower `max_output_tokens` (context crash on `fastapi_14609`).
+- **Fail→fix (Nov 25):** `variants/sarvesh-failfix-v1/` — one-change prompt on `dipin-base-v2` (mandatory pytest after first edit + one alternate fix). Smoke **2/10** (RUN-S03); dev **6/30** (RUN-S04) — ties base-v2/skills; lost `fastapi_14616`, gained `rich_3063`. Closed as no gain; not proposed for submit. Logs under `docs/runs/sarvesh-failfix-v1-*`.
 - **V3 (optional):** max output tokens or step-limit tuning.
 
 **Other:** reviews Khushi.
