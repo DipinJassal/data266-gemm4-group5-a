@@ -1,0 +1,3 @@
+**What changed:** `thinking_budget` 4096 → 1024 tokens (main agent and sub-agent share `configs/sampling.yaml`); everything else is `dipin-base-v2`.
+**Why:** in the smoke (train-split) control run, turns with more than 45 s of thinking were 5% of tool calls but 35% of the time between calls (~150 s possible per 4096-token turn at ~27 tokens/s); tasks run out of time after 14–18 calls without editing. Turning thinking off entirely (`sarvesh-sampling-v1`) gave no gain, so this caps it instead.
+**Source:** [3] SWE-Protégé (small models stall; budget their effort), [4] SWE-Master (test-time compute allocation).

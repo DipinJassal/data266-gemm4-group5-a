@@ -1,0 +1,9 @@
+# dipin-base-v3: thinking_budget 4096 -> 1024 (only change vs dipin-base-v2).
+# In the smoke (train-split) control run, turns with >45 s of thinking were 5% of tool calls but 35% of the time
+# between calls; at ~27 tokens/s a 4096-token turn can think for ~150 s. 1024 caps a turn at ~40 s.
+temperature: 0.2
+top_p: 0.95
+max_output_tokens: 8192
+thinking_config:
+  thinking_budget: 1024
+  include_thoughts: true

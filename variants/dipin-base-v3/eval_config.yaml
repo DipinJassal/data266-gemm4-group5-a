@@ -1,0 +1,9 @@
+# dipin-base-v2: combined v2 with more time. In combined v2's dev run 17/30 tasks were cut off at 4.5 min,
+# most after they had already edited (still testing or correcting). 7 min per task; most tasks finish well
+# before the cap, which keeps the 12-hour limit in reach. No command ever hit the 60 s timeout in our v2/v3
+# traces, so it stays at 60. Turns raised so they never bind before tool calls.
+evaluation:
+  timeout_seconds: 60
+  max_tool_calls: 50
+  max_time_minutes: 7
+  max_turns: 80
