@@ -84,12 +84,25 @@ python team-b/tools/analyze_multi_agent_traces.py \
 |---|---|
 | Critic invoked / count / &gt;1 call | Trace events naming `diff_critic_agent` (or `diff_critic`) |
 | Critic-before-submit | First critic index &lt; first `submit_patch`; `not_available` if critic ran but no submit event exists |
-| OK vs problems / issue count | Critic response text (`OK` vs `Problems:` numbered lines) |
+| OK vs problems / issue count | Critic response text (`OK` vs `Problems:` numbered lines) on the critic event |
 | Edits after critic | Any `edit_file`/`write_file` **after** first critic call |
 
 **Important:** `edits_after_critic` only means a source edit happened after the critic ran. It does **not** prove the feedback was correct or that the agent followed it.
 
+### Response-extraction limitation (real Kaggle traces)
+
+On Team B swegemma downloads, `diff_critic_agent` / `code_analyzer_agent` **invocations** are reliable via `steps[].tool_calls[].function_name`. The critic’s protocol answer (`OK` / `Problems:`) usually appears **later**:
+
+1. as a critic-authored step `message` (often just `OK`), and/or
+2. as a system observation `{"raw": "OK"}` with `extra.tool_name = "diff_critic_agent"`.
+
+The CLI’s `critic_response_class` only reads text attached to the extracted critic **call** event. When the body lives only on those later steps, the field stays `not_available` even though a completed return may be visible under manual inspection. Do **not** treat response-class `not_available` alone as proof that zero feedback completed — confirm in the trace (or see the saved-run evidence note below). Invocation rates remain trustworthy.
+
 Trace files are matched by **exact** task id. Accepted filenames include `trace_<id>.json` and `<id>.json`, plus `traces/<id>/trace.json`. Substring globs are not used. If `harness_results.jsonl` is missing, the CLI still builds a report from `task_details/` / `traces/` stubs; resolution fields stay `not_available`.
+
+### Saved-run evidence (PR #18)
+
+Verified aggregates and direct critic-return checks against local V1 smoke / V2 smoke / V2 dev artifacts are summarized in [`PR18_saved_run_evidence.md`](./PR18_saved_run_evidence.md). That note documents provenance, limitations, and reproduction commands; it does **not** commit raw traces.
 
 ## Smoke vs dev vs official Kaggle score
 
