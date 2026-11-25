@@ -1,0 +1,9 @@
+name: diff_critic_agent
+description: Reviews the current proposed patch against the issue and returns OK or up to three concrete problems.
+model: gemma-4-31b-it-qat-w4a16-ct
+adapter: tool_lora
+instruction: !include ../prompts/critic.md
+tools:
+  - run_command
+  - read_file
+generate_content_config: !include ../configs/sampling.yaml
