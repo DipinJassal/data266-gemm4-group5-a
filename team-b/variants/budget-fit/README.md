@@ -17,6 +17,9 @@
 2. Mean minutes per task <= 5.5 on dev, so ~120 hidden tasks fit inside 12 h with setup time.
 Both must hold to submit. If (1) holds but (2) fails, lower `max_tool_calls` before submitting.
 
+## Dev-set caveat
+The longer budget was chosen after looking at base's timeouts on dev (15/30). The team guide says not to iterate on dev, so treat this variant's dev score as optimistic; the Kaggle score is the real result.
+
 ## Results
 **Dev (30 tasks, run 20261125T174222Z, L4x4):** 6/30, base 7/30. Passes: fastapi_14077, 14301, 14492, rich_3278, 3718, 3905 (base minus rich_3063; no new passes). Session timeouts 5 (base 15), context-window errors 0 (base 2), mean 4.8 min per task (max 8.2). 22 of 24 failures submitted a patch that failed the tests; 5 tasks cannot be graded locally (missing `dirty_equals` / `inline_snapshot`).
 

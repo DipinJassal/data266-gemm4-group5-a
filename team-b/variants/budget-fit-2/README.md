@@ -12,5 +12,8 @@
 
 **Dev gate (set before the run):** resolved >= 7/30 and mean time per task <= 5.5 min (~120 hidden tasks inside 12 h).
 
+## Dev-set caveat
+The 40-call cap and the `compile()` check came from looking at budget-fit's dev failures. The team guide says not to iterate on dev, so any dev score of this variant is optimistic; only a Kaggle score is a real result.
+
 ## Results
 Not run: the weekly Kaggle GPU quota on the account used for dev runs is spent until 2026-11-28 00:00 UTC. `harness/validate.py` OK and `run_kaggle.py --dry-run` structural checks pass.
