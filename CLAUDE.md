@@ -64,6 +64,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 | Combined agent v1 | Dipin | Team A merge: structured prompt + output trimming + single retry + import/scratch-file checks, 4.0 min | — | **4/30** (13 empty; negative, closed) | not submitted |
 | Combined agent v2 | Dipin | output-trimming prompt + `max_output_tokens` 8192 + one pre-submit import/scratch line, 4.5 min | — | **5/30** (2 empty, 0 context crashes) | zip built (`g5a-submit-combined-v2`); blocked: only 1 pending submission allowed |
 | Combined agent v3 | Dipin | v2 + keep own messages short, never re-quote code or restate the issue | — | **5/30** (no effect: messages not shorter) | not submitted |
+| `dipin-base-v2` (branch `dipin/base-v2`) | Dipin | new Team A base: combined v2 + 7 min / 50 calls / 80 turns, short budget section (edit by ~call 15), `git grep` instead of graph tools, one-word exit | — | **6/30** (10 time-outs vs 17; avg 5.1 min, max 7.2) | not submitted; candidate for the next slot |
 
 **All three 5/30 variants (structured prompt, output trimming, and per-repo counts for LoRA V1) solve the same tasks:** fastapi_14077, fastapi_14301, fastapi_14492, rich_3718, rich_3905. That points to the shared 4.5 min / 50-call budget doing the work, so the V2 control's own dev/Kaggle score is the most important missing number.
 Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
