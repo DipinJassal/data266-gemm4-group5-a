@@ -1,0 +1,3 @@
+**What changed:** Shortened prompts/system.md: first source edit within five tool calls, at most two targeted test executions in total, and no rereading files. Model, sampling, tools and execution budgets match base.
+**Why:** Tests whether reducing repeated reading and verification leaves more of the fixed task budget for a source fix; requested as the next Team B candidate. No evaluation result yet.
+**Source:** Team B base (credited to Dipin) and Ashmitha's edit-early experiment plan relayed on Nov 24, 2026. Compare task outcomes against base dev 7/30; an official submission requires at least 7/30 and prior team coordination.

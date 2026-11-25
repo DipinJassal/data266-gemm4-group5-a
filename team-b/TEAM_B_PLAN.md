@@ -50,7 +50,7 @@ Team A covers: Context & time budget (Dipin), Sampling (Sarvesh), Prompts (Khush
 
 | Member | Area | V1 | V2 | Optional V3 (Phase 2) |
 |---|---|---|---|---|
-| Ashmitha | Lead & evaluation | Patch hygiene | Combined agent | Final tuning of the combined agent |
+| Ashmitha | Evaluation & integration | Patch hygiene | Combined agent | Final tuning of the combined agent |
 | Parth | Multi-agent | Analyzer + coder | Coder + critic | Category-routed specialists |
 | Ishan | Retrieval / code graph | Graph-first localization | Graph expansion | Retrieval hints in the analyzer (with Parth) |
 | Naveen | Testing & verification | Reproduce-first skill | Regression check before submit | Retry once if own test fails |
@@ -121,7 +121,7 @@ Each variant follows the same 8-step loop (referred to below as **"the variant l
 
 ---
 
-### Ashmitha — Lead & evaluation
+### Ashmitha — Evaluation & integration
 
 **Setup (Nov 13–14)**
 - [ ] Create Kaggle team `GROUP_PROGRAMMING_05_b`; invite Parth, Ishan, Naveen; confirm all 4 joined.
