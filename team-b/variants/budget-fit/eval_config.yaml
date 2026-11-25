@@ -1,0 +1,10 @@
+# budget-fit: per-task budget taken from the public "Budget-Fit Single Agent"
+# notebook (verracodeguacas) instead of Team A's 4.5 min / 50 calls.
+# 8 min lets slow fixes land; the 28-call cap ends runs that keep exploring and
+# keeps ~120 hidden tasks inside the 12 h limit. timeout_seconds 240 because the
+# scoring test run is reported to reuse this value (requests tests need ~100 s).
+evaluation:
+  timeout_seconds: 240
+  max_tool_calls: 28
+  max_time_minutes: 8
+  max_turns: 80
