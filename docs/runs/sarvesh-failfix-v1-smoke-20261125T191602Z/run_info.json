@@ -1,0 +1,24 @@
+{
+  "variant": "variants/sarvesh-failfix-v1",
+  "split": "smoke",
+  "n_tasks": 10,
+  "model": "gemma-4-31b-it-qat-w4a16-ct",
+  "git_rev": "f53cd1c",
+  "dirty": true,
+  "adapters": [
+    "main_lora",
+    "tool_lora"
+  ],
+  "gpu_count": 4,
+  "budgets": {
+    "timeout_seconds": 60,
+    "verification_timeout_seconds": 300,
+    "max_tool_calls": 50,
+    "max_time_minutes": 7.0,
+    "max_turns": 80
+  },
+  "vllm_start_seconds": 421.5,
+  "started_utc": "2026-11-25T17:55:00.313496+00:00",
+  "finished_utc": "2026-11-25T19:06:09.358043+00:00",
+  "resolved": 2
+}
