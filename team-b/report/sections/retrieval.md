@@ -1,6 +1,7 @@
 # Retrieval and code-graph localization (Ishan, Team B) — first draft (Nov 21)
 
 > Kaggle public scores (one submission each): base 0.10, graph-localize 0.12, graph-expand-2 0.08.
+> Dev (validation, used for selection): base 7/30, graph-localize 5/30. graph-expand-2 has no dev run.
 
 ## Task analysis (G.2)
 
@@ -32,19 +33,23 @@ budget before the first edit (23/30 dev patches changed no source file).
 | base (run by Ashmitha) | dev (30) | 7/30 | 3.7 | 5 | **0.10** (public) |
 | graph-localize | smoke, 2-task diagnostic | 2/2 | 4.1 | 0 | — |
 | graph-localize | smoke (10) | 1/10 | 4.7 | 2 | **0.12** (public) |
+| graph-localize (run by Ashmitha, Nov 25) | dev (30) | **5/30** | 3.8 | 3 | see smoke (10) row |
 | graph-expand | smoke, 2-task diagnostic | 2/2 | 4.2 | 0 | not submitted |
 | graph-expand-2 | smoke, 2-task diagnostic | 1/2 | 4.4 | 0 | see smoke (10) row |
 | graph-expand-2 | smoke (10) | 1/10 | 4.6 | 3 | **0.08** (public) |
 
 The 2-task diagnostics run on the first two smoke tasks, which the base agent also solves, so they show that a variant
 runs and follows its routine, **not** that it beats base. The full smoke runs and the Kaggle scores are the
-comparison. We did not run dev: both variants scored 1/10 on smoke, and about 10 GPU-quota hours for two dev
-runs would not change which variant goes into the combined agent. Base has a dev run (7/30, or 7/23 without the 7 tasks that
-cannot run locally; reported by Ashmitha), but our variants do not, so that row is context and not a comparison.
+comparison. We first skipped dev because both variants scored 1/10 on smoke. Ashmitha then ran graph-localize on dev
+with files identical to the merged variant: **5/30, against 7/30 for base** (Ashmitha's base run). Its five passes are all
+base passes; it lost rich_3063 and rich_3278 and solved nothing new. Two tasks on one run of 30 is within noise, so this is
+no evidence of a gain, not proof of a loss. graph-expand-2 was not run on dev. Dev is the selection set, so these are
+validation scores.
 
 The Kaggle score is the held-out result: base 0.10, graph-localize 0.12 (+0.02) and graph-expand-2 0.08 (-0.02). Each is
-one submission and the differences are small, so they do not show a gain or a loss against base. Neither variant has
-evidence of beating base, on smoke or on Kaggle.
+one submission and the differences are small, so they do not show a gain or a loss against base. For graph-localize, dev
+(below base) and Kaggle (above base) point in opposite directions, which is consistent with noise.
+Neither variant has evidence of beating base on smoke, dev or Kaggle.
 
 ## What worked, what didn't
 
@@ -70,6 +75,11 @@ evidence of beating base, on smoke or on Kaggle.
   (vs 1/10 for graph-localize), but `get_code_subgraph` never. 9/10 tasks hit the time limit again; 4 patches contain
   only a scratch script and 3 are empty. More graph context did not turn into more fixes: the extra graph calls cost
   turns, and the agent still spent the rest of its budget on reproduction scripts.
+- **Dev: the same scratch-file pattern, including both lost tasks.** In the 30-task dev run of graph-localize, 18 tasks
+  hit the 4.5 min limit (base 15, reported by Ashmitha) and one hit the context window. 3 patches are empty and 8 more
+  contain only scratch scripts (`repro.py` and similar), so 19/30 change a source file. Both tasks lost against base
+  (rich_3063, rich_3278) ended as scratch-only patches after a timeout. The graph routine was only partly followed:
+  `search_similar_code` was the first call in 19/30 tasks and `get_code_neighbors` was used in 4/30.
 - **Few tasks ever reach a source edit, and late.** From the 10-task smoke traces: only **3/10** tasks in each variant
   edited a non-test, non-scratch source file at all. When they did, the first source edit came after a median of
   **11 tool calls / 2.4 min** (graph-localize) and **14 calls / 2.8 min** (graph-expand-2), leaving under 2 minutes to
