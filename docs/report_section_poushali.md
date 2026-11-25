@@ -13,8 +13,8 @@ malformed tool-call arguments, and no task ran the repository's own tests. V1 ad
 five rules: make the first source edit within 10 tool calls, use exact tool-call argument names (with examples), check
 the fix by running only the related test file (`pytest -q -x --tb=short <file> | tail -25`) and treat missing test
 dependencies as pre-existing, keep diffs small, and keep scratch scripts out of the patch. It deliberately avoids a
-reproduce-first step, because Prompts V1 showed that pre-edit reproduction used up the budget. Team B found that this
-model never loads a skill from its description alone [Team B, retrieval section], so the system prompt gets one line
+reproduce-first step, because Prompts V1 showed that pre-edit reproduction used up the budget. Team B observed that this
+model did not load a skill from its description alone [Team B, retrieval section], so the system prompt gets one line
 telling the agent to call `load_skill` first. Everything else is the budget-fixed control (4.5 min, 50 tool calls).
 
 **Results.**
@@ -39,8 +39,8 @@ task is the one every variant resolves, and two `rich` tasks timed out in every 
 metrics point the wrong way. When the team later scored every variant on dev, the skills pack reached **6/30 (20.0%)**,
 the best local dev score so far (Prompts V1 and LoRA V1: 5/30; baseline 2/30). It solved the same five tasks as Prompts V1
 plus one more, loaded the skill in 30/30 tasks and ran pytest in 8/30 (baseline 0/30). This is one run and a one-task gain,
-and the control has no dev score, so it does not show that the skill helps; it does make the skills pack a submission
-candidate.
+and the control has no dev score, so it does not show that the skill helps; it was still submitted to Kaggle on
+Nov 23 as the team's best local result.
 
 **V2: test-runner sub-agent.** V2 targets the same "no task ran the repository's tests" pattern with an `agent_tool`
 instead of instructions. `test_runner_agent` may only use `run_command`, at most 3 times: it finds the tests related to
@@ -58,16 +58,16 @@ gets a trigger line.
 When it was called (`fastapi_13537`), the sub-agent did exactly its job: 3 commands, a correct `PASS` from 13 related
 tests, 15.5 seconds, and the coder submitted next, finishing in 2.9 minutes (the fastest run of that task in any variant).
 In every other task the coder kept editing or went back to its own reproduction script, and in neither run did it ever run
-pytest itself. The scores are within the control's own run-to-run range, so V2 is also a documented negative result, with
+pytest itself. The scores are within the control's own run-to-run range, so V2 is a documented negative result, with
 no dev run spent.
 
 **Takeaways.**
 1. Skills are a cheap, valid way to ship know-how in a declarative submission, and a one-line trigger in the system
    prompt makes the model load them reliably.
-2. Loading is not following: a multi-rule procedure read once at the start of the task does not reliably change what a
-   quantized 31B model does several minutes later. Limits the harness enforces, such as the budget in `eval_config.yaml`,
-   changed behaviour more than instructions did.
-3. Timing decides whether a trigger works: "your first action" got the skill loaded 12/12, while "after your edit" got
+2. Loading is not following: in our smoke runs, a multi-rule procedure read once at the start of the task often did not
+   change what the model did several minutes later. Limits the harness enforces, such as the budget in `eval_config.yaml`,
+   may matter more than instructions, though we did not test that directly.
+3. Timing seemed to decide whether a trigger worked: "your first action" got the skill loaded 12/12, while "after your edit" got
    the sub-agent called in only 1 of 9 tasks that made a source edit. The sub-agent itself was fast and correct.
 4. Tool constraints matter for instructions: telling the agent to use a path its tools cannot reach produced the very
    failure the rule was meant to prevent.
@@ -89,4 +89,4 @@ no dev run spent.
 - Found: `write_file` can't write `/tmp`, so scratch scripts need `run_command`
 - V2 `test_runner_agent`: runs only related tests, returns a 4-line PASS/FAIL/BLOCKED verdict
 - Works when called (15.5 s, correct PASS, task done in 2.9 min), but called in only **1 of 9** tasks with an edit; smoke 2/10, 1/10
-- Lesson: "first action" triggers work, "after X" triggers don't; enforced limits beat instructions
+- Lesson (small samples): "first action" triggers worked, "after X" triggers mostly didn't
