@@ -55,7 +55,7 @@ data266-gemm4-group5-a/
     ├── TEAM_B_PLAN.md              Detailed plan and per-member to-dos (Ashmitha)
     ├── REPO_LAYOUT.md              This file (Ashmitha)
     ├── docs/
-    │   ├── competition_summary.md  Lead & evaluation (G.1): Ashmitha
+    │   ├── competition_summary.md  Evaluation & integration (G.1): Ashmitha
     │   ├── task_eda.md             Retrieval (G.2): Ishan
     │   ├── retrieval_eval.md       Retrieval: Ishan
     │   ├── multi_agent_notes.md    Multi-agent: Parth
@@ -64,32 +64,32 @@ data266-gemm4-group5-a/
     ├── notebooks/
     │   ├── task_eda.ipynb          Retrieval (Colab, CPU): Ishan
     │   ├── retrieval_eval.ipynb    Retrieval (Colab, CPU): Ishan
-    │   └── results_charts.ipynb    Lead & evaluation, score over time (G.4): Ashmitha
+    │   └── results_charts.ipynb    Evaluation & integration, score over time (G.4): Ashmitha
     ├── variants/
     │   ├── _template/README.md     3-line README template
     │   ├── base/                   Starting point for every variant (not a variant)
-    │   ├── patch-hygiene/          V1 Lead & evaluation: Ashmitha
+    │   ├── patch-hygiene/          V1 Evaluation & integration: Ashmitha
     │   ├── analyzer-plan/          V1 Multi-agent: Parth
     │   ├── diff-critic/            V2 Multi-agent: Parth
     │   ├── graph-localize/         V1 Retrieval: Ishan
     │   ├── graph-expand/           V2 Retrieval: Ishan (+ skills/graph-expand/SKILL.md)
     │   ├── repro-first/            V1 Verification: Naveen (+ skills/reproduce-first/SKILL.md)
     │   └── regression-check/       V2 Verification: Naveen
-    ├── combined/                   V2 Lead & evaluation, combined agent: Ashmitha
+    ├── combined/                   V2 Evaluation & integration, combined agent: Ashmitha
     ├── results/                    Small run summaries from summarize.py (each owner commits theirs)
     ├── report/
     │   ├── sections/
-    │   │   ├── lead-evaluation.md  Ashmitha
-    │   │   ├── multi-agent.md      Parth
-    │   │   ├── retrieval.md        Ishan
-    │   │   └── verification.md     Naveen
+    │   │   ├── evaluation-integration.md  Ashmitha
+    │   │   ├── multi-agent.md             Parth
+    │   │   ├── retrieval.md               Ishan
+    │   │   └── verification.md            Naveen
     │   ├── contribution_table.md   Everyone adds their row; Ashmitha compiles
     │   └── kaggle_evidence/        Submission history screenshots: Ashmitha
     └── slides/
-        ├── lead-evaluation.md      Ashmitha
-        ├── multi-agent.md          Parth
-        ├── retrieval.md            Ishan
-        └── verification.md         Naveen
+        ├── evaluation-integration.md  Ashmitha
+        ├── multi-agent.md             Parth
+        ├── retrieval.md               Ishan
+        └── verification.md            Naveen
 ```
 
 Variant folder names have **no version suffix** (V1/V2 is tracked in `TEAM_B_GUIDE.md`, "Variants and folders").

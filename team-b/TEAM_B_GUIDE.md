@@ -59,7 +59,7 @@ Source: Kaggle's official `HARNESS_README.md` (see Team A's root guide file, Rul
 
 | Member | Role | Area (2 variants each) | Reviewed by |
 |---|---|---|---|
-| **Ashmitha** | Kaggle team, baseline, experiment log, Kaggle evidence, combined agent | Lead & evaluation (patch hygiene; combined agent) | Naveen |
+| **Ashmitha** | Kaggle team, baseline, experiment log, Kaggle evidence, combined agent | Evaluation & integration (patch hygiene; combined agent) | Naveen |
 | **Parth** | Multi-agent owner | Multi-agent (analyzer + coder; coder + critic) | Ashmitha |
 | **Ishan** | Task data EDA (G.2) | Retrieval / code graph (graph-first localization; graph expansion) | Parth |
 | **Naveen** | Team B error analysis | Testing & verification (reproduce-first; regression check) | Ishan |
@@ -74,7 +74,7 @@ Every variant is `team-b/variants/base` plus one change. Folder names describe t
 
 | Owner | Area | V1 (folder) | V2 (folder) |
 |---|---|---|---|
-| Ashmitha | Lead & evaluation | `patch-hygiene` | combined agent (`team-b/combined/`) |
+| Ashmitha | Evaluation & integration | `patch-hygiene` | combined agent (`team-b/combined/`) |
 | Parth | Multi-agent | `analyzer-plan` | `diff-critic` |
 | Ishan | Retrieval / code graph | `graph-localize` | `graph-expand` |
 | Naveen | Testing & verification | `repro-first` | `regression-check` |
@@ -199,7 +199,7 @@ team-b/
   combined/                     V2: Team B combined agent (Ashmitha)
   results/                      Small run summaries (summarize.py --csv output), committed by each owner
   report/
-    sections/<area>.md          One section per area: lead-evaluation (Ashmitha), multi-agent (Parth),
+    sections/<area>.md          One section per area: evaluation-integration (Ashmitha), multi-agent (Parth),
                                 retrieval (Ishan), verification (Naveen)
     contribution_table.md       One row per member; Ashmitha compiles
     kaggle_evidence/            Submission history screenshots (Ashmitha)
@@ -244,7 +244,7 @@ All commands run from the repo root.
 
 Full task lists are in `TEAM_B_PLAN.md`. Summary:
 
-### Ashmitha — Lead & evaluation
+### Ashmitha — Evaluation & integration
 - Setup: Kaggle team, branch + skeleton, baseline submission, the base agent (reuse Team A's scores), experiment log, `competition_summary.md`.
 - **V1, Nov 16 — Patch hygiene:** prompt checklist before `submit_patch`: check `git status` / `git diff --stat`,
   delete scratch files (`repro.py`, logs) and debug prints, `python -m py_compile` on changed files, no test files
