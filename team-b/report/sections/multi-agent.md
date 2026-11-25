@@ -75,11 +75,13 @@ Artifact locations (worktrees; not committed):
 | V2 full smoke | `_wt-team-b-v2-kaggle-prep/.../smoke/20261124T070909Z` |
 | V2 **dev** | `_wt-team-b-v2-kaggle-prep/.../dev/20261124T102323Z` (verified locally) |
 
-| Variant | Commit | Diagnostic | Smoke | Dev (30) | Official Kaggle | Combined selection |
-|---|---|---|---|---|---|---|
-| Team B base (ref) | — | — | — | **7/30** (team-lead-reported) | — | selection baseline |
-| `analyzer-plan` (V1) | `63a3eb2` | **1/2** | **0/10** | **5/30** (team-lead-reported) | **not confirmed** | **not selected** |
-| `diff-critic` (V2) | `2cd4327` | **1/2** | **1/10** | **6/30** (local artifacts) | **not confirmed** | **not selected** |
+| Variant | Commit | Diagnostic | Smoke | Dev (30) | Avg min/task (where verified) | Official Kaggle | Combined selection |
+|---|---|---|---|---|---|---|---|
+| Team B base (ref) | — | — | — | **7/30** (team-lead-reported) | — (no local artifacts) | — | selection baseline |
+| `analyzer-plan` (V1) | `63a3eb2` | **1/2** | **0/10** | **5/30** (team-lead-reported) | diag **4.6**; smoke **4.3**; dev blank | **not confirmed** | **not selected** |
+| `diff-critic` (V2) | `2cd4327` | **1/2** | **1/10** | **6/30** (local artifacts) | diag **4.6**; smoke **4.6**; dev **4.1** | **not confirmed** | **not selected** |
+
+Averages are `mean(wall_seconds)/60` from each run’s `harness_results.jsonl` (one decimal). V1 **dev** and Team B base **dev** averages are blank because local Kaggle artifacts are unavailable.
 
 **V2 dev breakdown (verified):** PASS 6 / FAIL 18 / EMPTY 6. Passing IDs: `fastapi_14077`, `fastapi_14301`, `fastapi_14492`, `rich_3278`, `rich_3718`, `rich_3905`.
 

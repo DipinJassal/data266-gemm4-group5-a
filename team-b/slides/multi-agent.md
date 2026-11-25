@@ -14,11 +14,13 @@ We test two **independent**, one-change interventions on `team-b/variants/base`:
 - **V2 `diff-critic` (`2cd4327`):** new `diff_critic_agent` reviews real `git diff` once → ≤1 revision → submit
 
 ## Results (label the split)
-| | Diagnostic (2) | Smoke (10) | Dev (30) | Official Kaggle |
-|---|---|---|---|---|
-| Team B base | — | — | **7/30** (team-lead) | — |
-| V1 | 1/2 | **0/10** | **5/30** (team-lead) | not confirmed |
-| V2 | 1/2 | **1/10** | **6/30** (verified) | not confirmed |
+| | Diagnostic (2) | Smoke (10) | Dev (30) | Avg min/task | Official Kaggle |
+|---|---|---|---|---|---|
+| Team B base | — | — | **7/30** (team-lead) | — | — |
+| V1 | 1/2 | **0/10** | **5/30** (team-lead) | 4.6 / 4.3 / — | not confirmed |
+| V2 | 1/2 | **1/10** | **6/30** (verified) | 4.6 / 4.6 / **4.1** | not confirmed |
+
+Averages = mean harness `wall_seconds`/60 where local artifacts exist; V1/base **dev** blank.
 
 ## Selection
 Neither multi-agent variant beat base on **dev** → **not selected** for the combined agent. Dev is not an official competition score.
