@@ -11,7 +11,10 @@ Examples (run from the repo root):
 
 What it does:
   1. Validates the selected Team B variant offline (harness/validate.py).
-     Missing adapter_model.safetensors is allowed only with `--dry-run`; real runs abort.
+     Adapters are required only when referenced by the root agent or reachable
+     sub-agents (including agent_tool). Missing adapter_model.safetensors for a
+     referenced adapter is allowed only with `--dry-run`; real runs abort.
+     Adapter-free agents may omit adapters/ entirely.
   2. Stages a PRIVATE Team B dataset `<you>/g5b-agents` containing ONLY:
        - G5B_REPO_MARKER
        - harness/ (shared splits + tooling; runs/ excluded)
@@ -379,23 +382,130 @@ def only_adapter_weight_errors(errors: list[str]) -> bool:
     return all("adapter_model.safetensors" in e for e in errors)
 
 
+def collect_referenced_adapters(variant_dir: Path) -> tuple[set[str], list[str]]:
+    """Return adapter names referenced by the root agent and reachable sub-agents.
+
+    Follows ``agent_tool`` / ``sub_agents`` ``config_path`` links the same way
+    ``harness/validate.py`` does. Returns ``(adapter_names, problems)``.
+
+    ``problems`` are hard failures (missing root, illegal/missing includes,
+    malformed YAML, non-string adapter fields). Callers must not ignore them.
+    An empty adapter set with no problems means a valid adapter-free agent.
+    """
+    problems: list[str] = []
+    adapters: set[str] = set()
+    root = variant_dir.resolve()
+    if not root.is_dir():
+        return adapters, [f"variant directory missing: {variant_dir}"]
+
+    checker = Checker(root)
+    root_cfg_path = checker.find_root()
+    # find_root records errors on checker when missing/ambiguous
+    problems.extend(checker.errors)
+    if root_cfg_path is None:
+        return adapters, problems
+
+    seen: set[Path] = set()
+
+    def walk(path: Path, cfg, label: str) -> None:
+        try:
+            resolved = path.resolve()
+        except OSError as e:
+            problems.append(f"{label}: cannot resolve agent path: {e}")
+            return
+        if resolved in seen:
+            return
+        seen.add(resolved)
+        if not isinstance(cfg, dict):
+            problems.append(f"{label}: agent config must be a mapping")
+            return
+
+        name = cfg.get("name", "?")
+        where = f"{label} ({name})"
+        adapter = cfg.get("adapter")
+        if adapter is not None and adapter != "":
+            if not isinstance(adapter, str):
+                problems.append(f"{where}: adapter must be a string, got {type(adapter).__name__}")
+            else:
+                adapters.add(adapter)
+
+        for tool in cfg.get("tools") or []:
+            if isinstance(tool, dict) and "agent_tool" in tool:
+                follow(path, (tool.get("agent_tool") or {}).get("config_path"), f"{where} agent_tool")
+            elif isinstance(tool, dict):
+                # Same reachability as harness/validate.Checker.check_agent.
+                walk(path, tool, f"{where} inline tool agent")
+        for sub in cfg.get("sub_agents") or []:
+            follow(path, (sub or {}).get("config_path"), f"{where} sub_agent")
+
+    def follow(from_file: Path, config_path, label: str) -> None:
+        if not config_path:
+            problems.append(f"{label}: missing config_path")
+            return
+        n_before = len(checker.errors)
+        target = checker.resolve_include(from_file, config_path)
+        for err in checker.errors[n_before:]:
+            if err not in problems:
+                problems.append(err)
+        if target is None:
+            return
+        n_before = len(checker.errors)
+        loaded = checker.load_yaml(target)
+        new_errs = checker.errors[n_before:]
+        for err in new_errs:
+            if err not in problems:
+                problems.append(err)
+        if loaded is None:
+            if not any("invalid YAML" in e for e in new_errs):
+                problems.append(f"{label}: failed to load {config_path!r}")
+            return
+        walk(target, loaded, checker.rel(target))
+
+    n_before = len(checker.errors)
+    root_cfg = checker.load_yaml(root_cfg_path)
+    new_errs = checker.errors[n_before:]
+    for err in new_errs:
+        if err not in problems:
+            problems.append(err)
+    if root_cfg is None:
+        if not any("invalid YAML" in e for e in new_errs):
+            problems.append(f"{root_cfg_path.name}: failed to load root agent config")
+        return adapters, problems
+    walk(root_cfg_path, root_cfg, root_cfg_path.name)
+    return adapters, problems
+
+
 def structural_checks(variant: str, variant_dir: Path) -> list[str]:
-    """Offline checks that do not require adapter weights or Kaggle credentials."""
+    """Offline checks that do not require adapter weights or Kaggle credentials.
+
+    Adapter ``adapter_config.json`` files are required only for adapters referenced
+    by the root agent or reachable sub-agents. Weights are enforced later by
+    ``harness/validate.py`` (waived only under ``--dry-run`` when they are the sole errors).
+    """
     problems: list[str] = []
     if not variant_dir.is_dir():
         problems.append(f"variant directory missing: {variant_dir}")
         return problems
-    if not (variant_dir / "agent.yaml").is_file():
+    if not (variant_dir / "agent.yaml").is_file() and not (variant_dir / "agent.yml").is_file():
+        # Prefer explicit message; collect_referenced_adapters also reports via Checker.find_root
         problems.append("agent.yaml missing at variant root")
     for rel in (
         "eval_config.yaml",
         "configs/sampling.yaml",
         "prompts/system.md",
-        "adapters/main_lora/adapter_config.json",
-        "adapters/tool_lora/adapter_config.json",
     ):
         if not (variant_dir / rel).is_file():
             problems.append(f"missing required relative file: {rel}")
+
+    adapters, adapter_problems = collect_referenced_adapters(variant_dir)
+    for p in adapter_problems:
+        if p not in problems:
+            problems.append(p)
+    for name in sorted(adapters):
+        rel = f"adapters/{name}/adapter_config.json"
+        if not (variant_dir / rel).is_file():
+            problems.append(f"missing required relative file: {rel}")
+
     # Absolute / Team A path leakage in text configs
     for p in variant_dir.rglob("*"):
         if not p.is_file() or p.suffix.lower() not in {".yaml", ".yml", ".md", ".json", ".txt"}:
@@ -698,11 +808,37 @@ def inspect_dry_run_stage(variant: str, model: str, user_placeholder: str, datas
     # No credentials staged
     secret_hits = [p for p in ds.rglob("*") if p.name in {"kaggle.json", ".env"}]
     print(f"no secrets in stage: {'PASS' if not secret_hits else 'FAIL ' + str(secret_hits)}")
-    weight_hits = list(ds.rglob("*.safetensors"))
-    if weight_hits:
-        print(f"adapter weights in stage: PRESENT ({len(weight_hits)} files) — OK for private upload, never commit")
+    # Adapter weights matter only for adapters referenced by the *selected* variant.
+    selected = ds / variant
+    if selected.is_dir() and (
+        (selected / "agent.yaml").is_file() or (selected / "agent.yml").is_file()
+    ):
+        refs, ref_problems = collect_referenced_adapters(selected)
     else:
-        print("adapter weights in stage: MISSING — restore before real Kaggle runs; structural dry-run still OK")
+        refs, ref_problems = set(), ["selected variant agent.yaml missing in stage"]
+    if ref_problems:
+        print(f"adapter refs: FAIL ({'; '.join(ref_problems[:3])})")
+    elif not refs:
+        print("adapter weights in stage: NOT REQUIRED (selected variant references no adapters)")
+    else:
+        missing = [
+            name
+            for name in sorted(refs)
+            if not (selected / "adapters" / name / "adapter_model.safetensors").is_file()
+        ]
+        present = [name for name in sorted(refs) if name not in missing]
+        if not missing:
+            print(
+                f"adapter weights in stage: PRESENT for {present} — OK for private upload, never commit"
+            )
+        else:
+            print(
+                f"adapter weights in stage: MISSING for {missing} "
+                "(referenced by selected variant) — restore before real Kaggle runs; "
+                "structural dry-run still OK"
+            )
+            if present:
+                print(f"adapter weights in stage: PRESENT for {present}")
 
 
 def main() -> int:
