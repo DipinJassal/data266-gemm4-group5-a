@@ -1,12 +1,12 @@
 # Testing and verification
 
-Owner: Naveen. Draft updated November 24, 2026. Local implementation and packaging checks are complete. Initial and R2 pilots each resolved 1/2 of the same two tasks; full-smoke and dev results remain pending. Reproduce-first is in [draft PR #20](https://github.com/DipinJassal/data266-gemm4-group5-a/pull/20); regression-check is a local implementation awaiting coordination and its own PR. Reviewers cannot yet inspect regression-check in GitHub, so its design and local validation below are author-reported, not independently reviewed.
+Owner: Naveen. Updated November 25, 2026. Reproduce-first remains in [draft PR #20](https://github.com/DipinJassal/data266-gemm4-group5-a/pull/20): initial and R2 pilots each resolved 1/2 of the same two tasks. The separately evaluated edit-early variant resolved 5/30 dev tasks against the reported base 7/30 and was merged as experiment evidence in [PR #31](https://github.com/DipinJassal/data266-gemm4-group5-a/pull/31), without promotion. Coordination with Poushali is complete. Regression-check remains a local, unevaluated implementation; its design and offline checks below are author-reported and are not inspectable in GitHub. Further experiments are deferred under the team's current hold on new cap or prompt-only variants.
 
 ## Research question and baseline
 
 Can an issue-specific reproduction or a targeted regression check improve patch correctness within the existing 4.5-minute budget? The two variants below are independent copies of `team-b/variants/base`, not a sequence of accumulated changes. Both retain the base model, adapters, sampling, analyzer sub-agent and evaluation settings: 4.5 minutes, 50 tool calls, 50 turns and a 60-second command timeout.
 
-The historical one-minute sample-agent run resolved 2/30 dev tasks. Khushi's published labels identify 23 tasks with no source change, five failed source patches whose wrong-fix/regression causes cannot be separated, and two resolves. These counts motivate what to measure, not a claim that either new variant improves results. The budget-fixed base is the appropriate control for attribution. Ashmitha now reports 7/30 dev at 3.7 minutes per task in [PR #6's log](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/3f63a05055d2669719ba48d0e81cd07e8dd0ebb4/team-b/docs/experiment_log.csv); raw artifacts and matched-run provenance have not been independently checked, and that PR remains unmerged. See [Team B error analysis](../../docs/error_analysis_b.md) for sources, definitions and separate run identities.
+The historical one-minute sample-agent run resolved 2/30 dev tasks. Khushi's published labels identify 23 tasks with no source change, five failed source patches whose wrong-fix/regression causes cannot be separated, and two resolves. These counts motivate what to measure, not a claim that either new variant improves results. The budget-fixed base is the appropriate control for attribution. Ashmitha now reports 7/30 dev at 3.7 minutes per task in [PR #6's log](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/3f63a05055d2669719ba48d0e81cd07e8dd0ebb4/team-b/docs/experiment_log.csv); raw artifacts and matched-run provenance have not been independently checked, and the log is now part of the Team B integration branch. See [Team B error analysis](../../docs/error_analysis_b.md) for sources, definitions and separate run identities.
 
 ## V1 Reproduce first
 
@@ -26,7 +26,7 @@ A newly failing test that previously passed can trigger one source-only correcti
 
 This follows the Team B plan's V2 assignment and assigned reference [4]. The base already asks for a targeted check; the added intervention is explicit coverage of changed modules and comparison with their pre-edit test outcomes. **Hypothesis:** this may catch newly broken existing behavior. **Risk:** running tests twice consumes time and may encounter environment failures unrelated to the patch.
 
-Poushali's [test-runner implementation](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/8718aaaca81c752760ec9965723e108e60ffe0c2/variants/poushali-test-runner-v2/prompts/test_runner.md) delegates post-edit test discovery and execution to a sub-agent. This draft keeps verification in the root agent and adds a before/after comparison to distinguish newly introduced regressions. Coordination with Poushali remains pending; this is a proposed distinction, not an agreed comparison. V2 evaluation is on hold until coordination is resolved.
+Poushali's [test-runner implementation](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/8718aaaca81c752760ec9965723e108e60ffe0c2/variants/poushali-test-runner-v2/prompts/test_runner.md) delegates post-edit test discovery and execution to a sub-agent. This draft keeps verification in the root agent and adds a before/after comparison to distinguish newly introduced regressions. Poushali confirmed that this comparison is appropriate. Her recommendations are to record whether tests actually execute before and after editing, place the final test trigger before `submit_patch`, keep output short, and distinguish missing dependencies from patch failures. The local coordinated design uses bounded output while preserving the test exit status. Coordination is complete; evaluation remains deferred under the current team priorities. Her confirmation is design feedback, not runtime validation of this variant.
 
 ## Evaluation status and method
 
@@ -38,14 +38,14 @@ Poushali's [test-runner implementation](https://github.com/DipinJassal/data266-g
 | Skill metadata | Name, description, directory and registration checked | Not applicable |
 | Submission ZIP | Passed integrity checks; 12 files, `agent.yaml` at root | Passed integrity checks; 11 files, `agent.yaml` at root |
 | Participant evaluator on Kaggle | Both pilots ran both tasks; skill loaded in all four task executions | Pending |
-| Two-task smoke pilots | Initial: 1/2 at 4.085 min/task. R2: 1/2 at 4.565 min/task. One timeout each; R2 empty patch replaced the scratch-only failure. | Pending coordination and execution |
-| Full smoke, 10 tasks | Pending | Pending coordination and execution |
+| Two-task smoke pilots | Initial: 1/2 at 4.085 min/task. R2: 1/2 at 4.565 min/task. One timeout each; R2 empty patch replaced the scratch-only failure. | Not run; deferred |
+| Full smoke, 10 tasks | Not run; deferred | Not run; deferred |
 | Final dev, 30 tasks | Pending | Pending |
 | Official Kaggle result | Pending | Pending |
 
 ZIP checks used official sample adapter weights in local staging. Weights and ZIPs are excluded from source deliverables. Local validation establishes packaging consistency; it does not establish runtime skill loading, instruction compliance, correctness or score.
 
-Start with a two-task smoke pilot, then the full smoke split. Preserve the pilot before reusing its kernel for a full run. Inspect crashes, task completeness, verification behavior and average task time below approximately six minutes. Tune only on smoke/train. Freeze each candidate before its single final dev run, and record actual outcomes beside the matched base in the experiment log. A later change creates a new candidate. Label dev as validation used for selection and the official Kaggle result as held-out evaluation.
+For a future team-authorized experiment, start with a two-task smoke pilot, then the full smoke split. Preserve the pilot before reusing its kernel for a full run. Inspect crashes, task completeness, verification behavior and average task time below approximately six minutes. Tune only on smoke/train. Freeze each candidate before its single final dev run, and record actual outcomes beside the matched base in the experiment log. A later change creates a new candidate. Label dev as validation used for selection and the official Kaggle result as held-out evaluation.
 
 Use the same task IDs, harness revision, environment, model and budgets in a matched comparison. Keep full-split scores as the main result. Missing dependencies and other environment limitations should be separately labeled; any sensitivity analysis excluding blocked tasks must not replace the full score. Use [the shared label method](../../docs/error_analysis_b.md#labeling-future-team-b-runs) and preserve per-task traces, final patches and test output for review.
 
@@ -62,6 +62,27 @@ Time to first source edit makes the cost concrete: R2's resolved task, `fastapi_
 | Initial | 1/2 | 4.085 min | 1 | 0 | 1 |
 | R2 | 1/2 | 4.565 min | 1 | 1 | 0 |
 
+### Edit-early: completed follow-up experiment
+
+At the team lead's request, edit-early tested a shorter root prompt: make the first source edit within five tool calls, run targeted tests at most twice, and avoid rereading files. It independently copies base; only the root prompt changes at runtime. Model, adapters, sampling, analyzer and the 4.5-minute / 50-call / 50-turn budget remain unchanged. This is a separate prompt experiment, not an evaluated revision of the reproduce-first skill or regression-check design.
+
+The frozen candidate was `9824af2` (clean working tree), evaluated once on the 30-task dev split on Kaggle L4 x4. The [result summary](../../results/edit-early-dev-20261125.md) and [per-task evidence](../../results/edit-early-dev-20261125.json) record provenance and the independently recounted task outcomes. Source and evidence were merged through PR #31; no official submission was made.
+
+| Dev result | Edit-early |
+|---|---:|
+| Resolved | 5/30 (16.7%); reported base 7/30 |
+| Session timeouts | 18 |
+| Turns-budget exhaustion | 1 |
+| Empty patches | 6 |
+| Context-window errors | 0 |
+| Mean task time | 4.0665 min (`duration_seconds` / 60) |
+
+The five passes were `fastapi_14077`, `fastapi_14301`, `fastapi_14492`, `rich_3063` and `rich_3905`. Compared with the team's reported base pass list, edit-early lost `rich_3278` and `rich_3718` and added no passes. Both lost tasks timed out with empty patches and no source edit. The base's raw run was not independently recounted here, so this comparison uses the team's published control results.
+
+Trace inspection found successful implementation edits within the first five recorded tool requests in only 6/30 tasks; 22/30 eventually made one. Repeated reads of a previously read path occurred in 28/30, including reads of different line ranges. Explicit pytest commands appeared in 9/30; this does not measure every form of verification or establish compliance with the two-test limit. Trace request ordinals differ from harness tool counts on 13 tasks and must not be treated as interchangeable.
+
+Edit-early did not meet the team's >=7/30 submission threshold and was not promoted. Shortening the prompt did not ensure that the model followed its early-edit instructions. One dev run does not establish a general causal effect; dev was used for selection, and no further edits or repeat runs were made to chase its score.
+
 ### Comparison with other members' findings
 
 Ishan's [merged retrieval report](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/e13ba96f7b0ce5d722c536233da28c742340db23/team-b/report/sections/retrieval.md) reports 1/10 smoke for both evaluated graph variants and source edits in only 3/10 tasks per variant. The [log merged through PR #26](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/96b0a25cb01e8b256d9e1e94069b160fd81689b4/team-b/docs/experiment_log.csv) now records public Kaggle scores of **0.12 for graph-localize** and **0.08 for graph-expand-2**, one submission each. The newer [base score entry in PR #6](https://github.com/DipinJassal/data266-gemm4-group5-a/blob/ab8fa0a888e05f48c4e285786851a3d972d74664/team-b/docs/experiment_log.csv) records **0.10** for Team B's base (submission ref **58768806**). The graph variants are therefore +0.02 and -0.02 against the base, respectively. With one submission per candidate, these small differences do not establish a reliable improvement or deterioration. These official scores must remain separate from local smoke/dev fractions.
@@ -74,7 +95,7 @@ Her [updated test-runner analysis](https://github.com/DipinJassal/data266-gemm4-
 
 ### Next work and limits
 
-[Ishan's review](https://github.com/DipinJassal/data266-gemm4-group5-a/pull/20#pullrequestreview-6009156735) proposes editing before verification, shortening the skill, and checking remaining time. These are untested proposals for this variant. Poushali already reports difficulties with edit-early instructions and post-edit tool triggers, so another wording revision is not assumed to help. Preserve both candidates and obtain a reviewable comparison plan before spending further quota. Full smoke, final dev, official submission, and the coordinated regression-check experiment remain incomplete.
+[Ishan's review](https://github.com/DipinJassal/data266-gemm4-group5-a/pull/20#pullrequestreview-6009156735) proposes editing before verification, shortening the skill, and checking remaining time. These changes have not been evaluated in the reproduce-first skill. The separately completed edit-early experiment above tested an earlier-edit prompt and did not beat base. Reproduce-first was rebased at `8ab19ce` with evaluated files unchanged and both pilot rows preserved; re-review is pending. Its full smoke/dev and official submission remain incomplete. Regression-check coordination is complete, but its execution remains deferred. The remaining analysis of Ishan's 20 smoke traces can label timeouts, empty patches and scratch-only patches; missing per-task test output prevents reliable separation of wrong fixes from regressions.
 
 Evidence links above are pinned to commits so this documentation remains readable before PR #20 merges. Detailed reports record ZIP hashes and provenance. Raw private run artifacts are retained by Naveen and can be shared with reviewers; their local storage paths are not public downloads.
 

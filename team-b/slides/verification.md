@@ -1,20 +1,21 @@
-# Testing and verification
+# Testing, verification and edit timing
 
-Naveen | Team B | Draft for one presentation slide
+Naveen | Team B | One presentation slide | Updated November 25, 2026
 
-**Question:** Can explicit verification improve patches within a 270-second agent budget?
+**Question:** Can explicit verification or an earlier source edit improve patches within 270 seconds?
 
-- **Reproduce first:** observe failure, edit source, rerun. R2 requests inline checks and one execution before/after.
-- **Regression check:** compare related existing tests before/after editing. Local design only; Poushali coordination and evaluation pending.
-- **Control:** independent base copies; unchanged model, sampling and budgets.
+| Experiment | Resolved | Min/task | Empty patches |
+|---|---:|---:|---:|
+| Reproduce-first initial pilot | 1/2 | 4.085 | 0 (one scratch-only patch) |
+| Reproduce-first R2 pilot | 1/2 | 4.565 | 1 |
+| Edit-early dev | 5/30 | 4.0665 | 6 |
 
-| Two-task pilot | Resolved | Min/task | Empty | Scratch-only |
-|---|---:|---:|---:|---:|
-| Initial | 1/2 | 4.085 | 0 | 1 |
-| R2 | 1/2 | 4.565 | 1 | 0 |
+- **Reproduce-first:** R2 removed scratch scripts without a resolution gain. Its solved task first edited source at 217.6/270 seconds; the failed task never edited.
+- **Edit-early:** 18 session timeouts; no new passes over reported base 7/30. Only 6/30 edited implementation within five recorded tool requests. Not promoted.
+- **Regression-check:** local before/after targeted-test design; Poushali coordination completed. Unevaluated and deferred.
 
-**Takeaway:** R2 removed scratch scripts but showed no resolution gain. Its solved task first edited at **217.6/270 seconds**; the failed task never edited. Verification must leave time for a source fix.
+**Takeaway:** Verification and early-edit instructions were not reliably followed. Preserve time for a source fix and measure actual behavior, not just prompt wording.
 
-Speaker note: Four executions of the same two unique tasks, with one timeout per pilot. No matched base pilot; no general performance claim. Full smoke/dev and official scores remain pending. The historical one-minute baseline is not the control for these 4.5-minute variants. Ashmitha now reports base dev 7/30; those raw artifacts have not been independently checked here.
+Speaker note: Pilots are four executions of the same two unique tasks, without a matched base pilot. Dev is validation used for selection; the base's 7/30 and pass list are team-reported. Do not compare pilot fractions directly with the dev score. Trace request ordinals are not identical to harness tool counts. Edit-early's source and evidence merged through PR #31; no official submission or performance gain is claimed. New GPU experiments are deferred under current team priorities.
 
-Sources: [verification section](../report/sections/verification.md) and [error analysis](../docs/error_analysis_b.md).
+Sources: [verification section](../report/sections/verification.md), [edit-early results](../results/edit-early-dev-20261125.md), [per-task evidence](../results/edit-early-dev-20261125.json), and [error analysis](../docs/error_analysis_b.md).
