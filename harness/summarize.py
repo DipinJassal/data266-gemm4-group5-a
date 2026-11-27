@@ -67,6 +67,9 @@ def main() -> None:
         b = info["budgets"]
         print(f"Budget per task: {b.get('max_time_minutes')} min, {b.get('max_tool_calls')} tool calls, {b.get('max_turns')} turns   "
               f"GPUs: {info.get('gpu_count')}")
+    td = info.get("test_deps")
+    print("Test deps: " + (", ".join(f"{k} {v}" for k, v in td.items()) + "  (--test-deps harness: not comparable with runs without it)"
+                           if td else "none (default harness: dirty-equals / inline-snapshot / pytest-httpbin missing)"))
     print()
     header = f"{'task':22s} {'result':6s} {'min':>5s} {'tools':>5s} {'patch':>6s}"
     if base:
