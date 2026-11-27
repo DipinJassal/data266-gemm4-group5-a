@@ -69,7 +69,7 @@ Review is a rotation: Dipin → Sarvesh → Khushi → Poushali → Bhoomika →
 
 **All three 5/30 variants (structured prompt, output trimming, and per-repo counts for LoRA V1) solve the same tasks:** fastapi_14077, fastapi_14301, fastapi_14492, rich_3718, rich_3905. That points to the shared 4.5 min / 50-call budget doing the work, so the V2 control's own dev/Kaggle score is the most important missing number.
 Takeaways: every variant lands at 1–2/10 on smoke, and the control alone scored 2/10 and 1/10, so **smoke is too noisy to rank variants**; only dev tells them apart.
-7/30 dev tasks can't pass in our harness (missing test packages, `docs/scoring_environment_comparison.md`), so 23/30 is the local ceiling.
+9/30 dev tasks can't pass in our default harness (missing test packages, `docs/scoring_environment_comparison.md`; corrected Nov 27 from 7/30), so 21/30 is the local ceiling. PR #38 adds an opt-in `--test-deps` flag that makes all 30 gradable.
 **Kaggle submissions** (Dipin makes all of them; 1 per team per day, and **only 1 pending at a time**: a new one is refused until the previous one is scored, which took ~25 h):
 - Nov 22: `bhoomika-lora-patches-v1` (ref 58709756) → **0.10** (local dev 5/30 = 16.7%). Public leaderboard top: many teams tied at 0.24.
 - Nov 23: `poushali-skills-pack-v1` (ref 58798802, PR #22, local dev **6/30**, best so far: Khushi V1's 5 tasks + `fastapi_14616`) → pending. Built from her branch at `08f7b70` (SKILL.md sha `bb7d2d4e…`, all 9 files hash-checked) via the private dataset `dipinjassal/g5a-poushali-skills-v1` and notebook `g5a-submit-poushali-skills-pack-v1`. → **0.12** (scored Nov 25 ~04:00 UTC, ~29 h).
@@ -166,13 +166,14 @@ folder and zips it (example: kernel `dipinjassal/g5a-submit-bhoomika-lora-patche
   (inferred; only `requests_7505` tested), including smoke `requests_7505` and **dev `requests_7433`**. Report results with and without them.
   Not verified against Kaggle's official Stage 2 scorer.
   *Update (Nov 15): seen directly on dev `requests_7433` in the V1 dev run (195 `httpbin` errors).*
-- **Everyone (missing fastapi test dependencies, Nov 15; detail in `docs/v1_dev_analysis.md`):** in our evaluator, 6 of 15 dev fastapi tasks
-  (`fastapi_12942`, `13207`, `13713`, `14246`, `14303`, `14356`) fail test collection with `No module named 'dirty_equals'` or `'inline_snapshot'`.
+- **Everyone (missing fastapi test dependencies, Nov 15; detail in `docs/v1_dev_analysis.md`):** in our evaluator, **8** of 15 dev fastapi tasks
+  (`fastapi_12942`, `13207`, `13713`, `14186`, `14246`, `14262`, `14303`, `14356`; `14186` and `14262` added Nov 27 from the base-v2 run) fail test collection with `No module named 'dirty_equals'` or `'inline_snapshot'`.
   Neither package is among the competition wheels, and test files are reset before scoring, so these tasks can't pass for any variant (the baseline included).
-  Together with `requests_7433`, **7/30 dev tasks** are blocked this way (smoke: control's `fastapi_14962`). Cause: our runner, like Kaggle's official
+  Together with `requests_7433`, **9/30 dev tasks** are blocked this way (smoke: control's `fastapi_14962`). Cause: our runner, like Kaggle's official
   Getting Started notebook, uses swegemma's subprocess sandbox, where test-dependency installation is skipped entirely. The official Stage 2 scorer uses
   a Docker path with what looks like a private ~1.7 GB wheels cache, so it very likely has these packages (not verified).
-  Report each full local 30-task dev result, with a 23-task sensitivity analysis alongside (never as a replacement). These are not Kaggle's official scores. Details: `docs/scoring_environment_comparison.md`.
+  Report each full local 30-task dev result, with a 21-task sensitivity analysis alongside (never as a replacement). These are not Kaggle's official scores. Details: `docs/scoring_environment_comparison.md`.
+  *Fix (Nov 27, PR #38, reviewer Bhoomika): `run_kaggle.py --test-deps` installs `dirty-equals`, `inline-snapshot`, `pytest-httpbin` and `httpbin` (repo-pinned) from the private dataset `dipinjassal/g5a-test-deps` (shared with all of Team A). Opt-in; checked in a CPU kernel, no GPU run yet. Scores with it aren't comparable with earlier runs, so one existing variant needs a re-run with the flag. Details: `docs/test_deps_sandbox.md`.*
 - **Everyone (adapter weights):** `.gitignore` excludes `*.safetensors`, but `harness/validate.py` requires `adapters/*/adapter_model.safetensors`,
   so validation (and therefore `run_kaggle.py`) fails on every fresh clone, `baseline/` included. Workaround: download Kaggle's
   `sample_submission/adapters/*/adapter_model.safetensors` into your local folder. Fixed locally for `khushi-structured-prompt-v1` only;
