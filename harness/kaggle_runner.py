@@ -104,6 +104,46 @@ def install_wheelhouse() -> None:
     quiet_loggers()
 
 
+# Test-only packages that some repos' tests import but the competition wheels lack (versions pinned by the repos:
+# fastapi requirements-tests.txt / pyproject, requests requirements-dev.txt).
+TEST_DEPS = ["dirty-equals==0.9.0", "inline-snapshot>=0.21.1,<0.32", "pytest-httpbin==2.1.0", "httpbin~=0.10.0"]
+TEST_DEP_MODULES = {"dirty-equals": "dirty_equals", "inline-snapshot": "inline_snapshot",
+                    "pytest-httpbin": "pytest_httpbin", "httpbin": "httpbin"}
+
+
+def install_test_deps() -> dict:
+    """Opt-in (`run_kaggle.py --test-deps`): install TEST_DEPS from our private wheels dataset (G5A_TEST_DEPS_MARKER).
+
+    swegemma's subprocess sandbox skips test-dependency installation, but each task's venv is created with
+    system_site_packages=True, so packages installed into this kernel are visible to the tests (and to the agent).
+    Every package already installed is pinned with a constraints file, so the wheelhouse/vLLM/swegemma versions can't
+    change; pip only adds what is missing. Returns {package: version} for run_info.json. Any failure stops the run:
+    a run labelled --test-deps must really have the packages."""
+    from importlib import metadata
+    marker = find_one("**/G5A_TEST_DEPS_MARKER", "the test-deps wheels dataset (dipinjassal/g5a-test-deps)")
+    constraints = Path("/tmp/g5a_installed_constraints.txt")
+    pins = {}
+    for dist in metadata.distributions():  # sys.path order: the first copy of a name is the one Python imports
+        name = (dist.metadata["Name"] or "").strip()
+        if name and dist.version:  # setdefault: the image has shadowed duplicates (e.g. six 1.17.0 active, 1.16.0 behind it)
+            pins.setdefault(name.lower(), f"{name}=={dist.version}")
+    constraints.write_text("\n".join(sorted(pins.values())) + "\n")
+    log(f"Installing test deps {TEST_DEPS} from {marker.parent} ({len(pins)} installed packages pinned) ...")
+    proc = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-index", "--find-links", str(marker.parent),
+                           "-c", str(constraints), *TEST_DEPS], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise SystemExit(f"--test-deps install failed (exit {proc.returncode}):\n{proc.stdout[-3000:]}\n{proc.stderr[-3000:]}")
+    importlib.invalidate_caches()
+    versions = {}
+    for pkg, mod in TEST_DEP_MODULES.items():
+        check = subprocess.run([sys.executable, "-c", f"import {mod}"], capture_output=True, text=True)
+        if check.returncode != 0:
+            raise SystemExit(f"--test-deps: `import {mod}` fails after install:\n{check.stderr[-2000:]}")
+        versions[pkg] = metadata.version(pkg)
+    log(f"test deps installed: {versions}")
+    return versions
+
+
 def run_sync(fn, *args, **kwargs):
     """Run an async function to completion, also when an event loop is already running (notebooks)."""
     def go():
@@ -206,6 +246,7 @@ def main() -> None:
         wanted = wanted[: int(cfg["max_tasks"])]
 
     install_wheelhouse()
+    test_deps = install_test_deps() if cfg.get("test_deps") else None
 
     import litellm
     import torch
@@ -301,7 +342,7 @@ def main() -> None:
 
     run_info = {
         "variant": variant, "split": split, "n_tasks": len(tasks), "model": model_name,
-        "git_rev": cfg.get("git_rev"), "dirty": cfg.get("dirty"),
+        "git_rev": cfg.get("git_rev"), "dirty": cfg.get("dirty"), "test_deps": test_deps,
         "adapters": sorted(adapter_map), "gpu_count": gpu_count, "budgets": budgets,
         "vllm_start_seconds": vllm_start_seconds, "started_utc": started.isoformat(),
     }

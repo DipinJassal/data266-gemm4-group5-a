@@ -40,6 +40,9 @@ from validate import Checker  # noqa: E402
 COMPETITION = "gemma-4-developer-agent"
 WHEELHOUSE = "metric/gemma-4-developer-agent-wheelhouse"
 DATASET_SLUG = "g5a-agents"
+# --test-deps: private wheels for dirty-equals, inline-snapshot, pytest-httpbin, httpbin (+deps), shared with the team.
+# Rebuild with harness/build_test_deps.sh. See docs/test_deps_sandbox.md.
+TEST_DEPS_DATASET = "dipinjassal/g5a-test-deps"
 MODEL_SOURCE = "google/gemma-4/Other/{model}/2"
 DEFAULT_MACHINE = "NvidiaL4"  # same as the official Getting Started notebook
 # The wheelhouse is built for Python 3.12; Kaggle's latest image is 3.13. Use the official notebook's pinned image.
@@ -137,7 +140,8 @@ def upload_repo(user: str, message: str) -> tuple[str, str]:
     raise SystemExit(f"Dataset {dataset} not ready after 10 min (last status: {status})")
 
 
-def push_kernel(user: str, kernel_slug: str, run_config: dict, model: str, dataset: str, machine: str, timeout: int | None) -> str:
+def push_kernel(user: str, kernel_slug: str, run_config: dict, model: str, dataset: str, machine: str, timeout: int | None,
+                extra_datasets: list[str] | None = None) -> str:
     kernel_id = f"{user}/{kernel_slug}"
     runner = (HARNESS / "kaggle_runner.py").read_text()
     # repr(), not json.dumps(): the line is Python, so booleans must be True/False, not true/false.
@@ -153,7 +157,7 @@ def push_kernel(user: str, kernel_slug: str, run_config: dict, model: str, datas
             "enable_gpu": True, "enable_tpu": False, "enable_internet": False,
             "machine_shape": machine,
             "docker_image": official_docker_image(),
-            "dataset_sources": [WHEELHOUSE, dataset],
+            "dataset_sources": [WHEELHOUSE, dataset, *(extra_datasets or [])],
             "competition_sources": [COMPETITION],
             "kernel_sources": [],
             "model_sources": [MODEL_SOURCE.format(model=model)],
@@ -204,6 +208,9 @@ def main() -> int:
     ap.add_argument("--no-wait", action="store_true", help="push and return; fetch later with --fetch")
     ap.add_argument("--fetch", action="store_true", help="only download + summarize the latest run of this kernel")
     ap.add_argument("--dry-run", action="store_true", help="build the dataset + kernel folders under harness/runs/_dryrun; upload nothing")
+    ap.add_argument("--test-deps", action="store_true",
+                    help=f"install dirty-equals, inline-snapshot, pytest-httpbin, httpbin into the sandbox (from {TEST_DEPS_DATASET}); "
+                         "separate kernel (-td); scores are NOT comparable with runs without it")
     args = ap.parse_args()
     global DRY_RUN
     if args.dry_run:
@@ -214,7 +221,9 @@ def main() -> int:
     variant = args.variant.replace("\\", "/").strip("/")
     variant_dir = REPO / variant
     user = kaggle_user()
-    kernel_slug = f"g5a-eval-{slugify(variant)}-{args.split}"[:50].strip("-")
+    kernel_slug = f"g5a-eval-{slugify(variant)}-{args.split}"[: 47 if args.test_deps else 50].strip("-")
+    if args.test_deps:  # own kernel, so --fetch never mixes runs with and without the test packages
+        kernel_slug += "-td"
     kernel_id = f"{user}/{kernel_slug}"
 
     if not args.fetch:
@@ -233,8 +242,10 @@ def main() -> int:
         dirty = bool(subprocess.run(["git", "-C", str(REPO), "status", "--porcelain"], capture_output=True, text=True).stdout.strip())
         dataset, upload_id = upload_repo(user, f"{variant} {args.split} @ {git_rev}{'+dirty' if dirty else ''}")
         run_config = {"variant": variant, "split": args.split, "task_ids": args.task_ids,
-                      "max_tasks": args.max_tasks, "git_rev": git_rev, "dirty": dirty, "upload_id": upload_id}
-        push_kernel(user, kernel_slug, run_config, variant_model(variant_dir), dataset, args.machine, args.timeout)
+                      "max_tasks": args.max_tasks, "git_rev": git_rev, "dirty": dirty, "upload_id": upload_id,
+                      "test_deps": args.test_deps}
+        push_kernel(user, kernel_slug, run_config, variant_model(variant_dir), dataset, args.machine, args.timeout,
+                    [TEST_DEPS_DATASET] if args.test_deps else None)
         if DRY_RUN:
             print(f"[dry-run] would push kernel {kernel_id}; nothing uploaded.")
             return 0

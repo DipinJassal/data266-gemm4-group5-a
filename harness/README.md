@@ -23,6 +23,7 @@ python harness/run_kaggle.py variants/<folder> dev                   # 30 tasks:
 python harness/run_kaggle.py variants/<folder> dev --no-wait         # push and come back later:
 python harness/run_kaggle.py --fetch variants/<folder> dev           #   ...download + summarize
 python harness/run_kaggle.py variants/<folder> smoke --dry-run       # build upload folders only, no Kaggle calls
+python harness/run_kaggle.py variants/<folder> dev --test-deps       # also install the missing test packages (below)
 
 python harness/summarize.py harness/runs/<variant>/dev/<stamp> --baseline harness/runs/baseline/dev/<stamp> --csv
 ```
@@ -33,6 +34,14 @@ resolved, wall_seconds, tool_calls, patch_chars, error), `run_info.json` (budget
 
 Each task runs in turn, exactly as on Kaggle, so time per task is realistic. The first ~10–20 minutes of every
 kernel are vLLM start-up, which doesn't count toward task time.
+
+**`--test-deps` (opt-in, Nov 27).** By default 9 dev tasks can't be graded: their tests import `dirty_equals` or
+`inline_snapshot` (8 fastapi tasks) or need `pytest-httpbin` (`requests_7433`), and swegemma's subprocess sandbox doesn't
+install test dependencies. With `--test-deps` the runner installs those four packages (repo-pinned versions) from the private
+dataset `dipinjassal/g5a-test-deps` (shared with all of Team A) before evaluating; already-installed packages are pinned, so
+nothing else changes. The run uses its own kernel (`...-td`), `run_info.json` records the versions, and the summary prints
+a "Test deps" line. **Don't rank `--test-deps` scores against runs without it**: the agent can also run those tests now.
+Details: `docs/test_deps_sandbox.md`. Rebuild the dataset with `harness/build_test_deps.sh`.
 
 ## Validate a variant and build its zip
 
