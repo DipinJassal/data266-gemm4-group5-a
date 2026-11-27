@@ -1,6 +1,6 @@
 # budget-fit: base + budget, timeout and prompt settings from top public notebooks
 
-**Status:** submitted to Kaggle 2026-11-25; score pending. Not yet the selected agent.
+**Status:** Kaggle public score **0.17** (base 0.10), Team B's best Kaggle score so far. Not yet chosen as a final submission.
 
 **What changed vs `variants/base`:**
 - `eval_config.yaml`: 4.5 min / 50 tool calls / 50 turns / 60 s command timeout -> **8 min / 28 tool calls / 80 turns / 240 s**.
@@ -25,4 +25,4 @@ The longer budget was chosen after looking at base's timeouts on dev (15/30). Th
 
 **Gate:** missed by one task (6 < 7). Submitted anyway on 2026-11-25 because a 1-task gap is within noise, timeouts fell by two thirds and the recipe has outside evidence.
 
-**Kaggle:** submission ref 58906584, submitted 2026-11-25 19:29 UTC, pending.
+**Kaggle:** submission ref 58906584, submitted 2026-11-25 19:29 UTC, public score **0.17**. Base scored 0.10 on the same Kaggle team while doing better on dev (7/30 against 6/30), so the dev split did not predict the Kaggle ranking here; the longer budget is the likely reason for the gain.
